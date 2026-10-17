@@ -1,0 +1,3 @@
+[submodule "meman"]
+	path = meman
+	url = git@github.com:yaokai-liu/meman.git
