@@ -28,7 +28,6 @@
 #include "arith.h"
 #include "lmp.h"
 #include "array.h"
-#include "mp_type.h"
 
 struct limb_pos {
   const char * start;
@@ -46,9 +45,6 @@ static void scale_limb_adic16(MP_INT *op, const Allocator *allocator);
 static void scale_limb_adic10(MP_INT *op, const Allocator *allocator);
 static void scale_limb_adic8 (MP_INT *op, const Allocator *allocator);
 static void scale_limb_adic2 (MP_INT *op, const Allocator *allocator);
-
-extern void MP_INT_abs_mul_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator);
-extern void MP_INT_abs_add_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator);
 
 static uint32_t strcmp_o(const char * str1, const char * str2);
 static uint32_t stridx_o(char chr, const char * str);
@@ -334,7 +330,6 @@ inline uint32_t strcmp_o(const char *const str1, const char * const str2) {
   while (str1[i] && str2[i] && (str1[i] == str2[i])) { i++; }
   return i;
 }
-
 
 // [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?[lL]{0,2} |
 // [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2} |

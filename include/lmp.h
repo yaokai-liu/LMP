@@ -79,7 +79,20 @@ typedef union MP_NUMBER {
   MP_FLOAT    FLOAT;
 } MP_NUMBER;
 
-uint32_t LMP_parse(const char * input, uint32_t *type, MP_NUMBER *number, const Allocator *allocator);
+#ifndef MP_ALLOC_LEN
+#define MP_ALLOC_LEN 8
+#endif
+#define aligned(count) (((count) / MP_ALLOC_LEN + 1) * MP_ALLOC_LEN)
+
+void MP_INT_init(MP_INT *val,  int32_t initial_alloc, const Allocator *allocator);
+void MP_INT_realloc(MP_INT *val,  int32_t required, const Allocator *allocator);
+void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator);
+void MP_INT_clear(MP_INT *val, const Allocator *allocator);
+void MP_INT_clamp(MP_INT *val);
+
+void MP_INT_negative(MP_INT *val);
+int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2);
+bool MP_INT_abs_aligned_ge(const MP_INT *op1, const MP_INT *op2);
 
 
 #endif //LMP_H

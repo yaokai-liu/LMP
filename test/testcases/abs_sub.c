@@ -28,6 +28,7 @@
 #include "test.h"
 #include "allocator.h"
 
+
 typedef struct {
   const char       *name;
   const lmp_limb_t *a;
@@ -48,8 +49,9 @@ static void run_sub_case(const SubCase *c)
   MP_INT RES = { .alloc = 0, .size = 0,        .limbs = RES_limbs };
 
   MP_INT_abs_sub_offset(&RES, &A, &B, c->offset, &STDAllocator);
+  MP_INT_clamp(&RES);
 
-  ck_assert_msg(RES.size == c->e_len,
+  ck_assert_msg(abs(RES.size) == c->e_len,
                 "%s: result size %d != %d", c->name, RES.size, c->e_len);
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(RES.limbs[i] == c->e[i],
@@ -114,9 +116,7 @@ Suite *abs_sub_offset_suite()
   TCase *tc = tcase_create("abs_sub_offset");
 
   constexpr int n = sizeof(sub_cases)/sizeof(SubCase);
-  for (int i = 0; i < n; i++) {
-    tcase_add_loop_test(tc, test_abs_sub_offset, 0, n);
-  }
+  tcase_add_loop_test(tc, test_abs_sub_offset, 0, n);
 
   suite_add_tcase(s, tc);
   return s;

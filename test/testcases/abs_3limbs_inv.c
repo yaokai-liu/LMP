@@ -46,25 +46,26 @@ static void run_add_case(const Inv3Case *c)
 static const Inv3Case inv_cases[] = {
   {
     "inv3_one_limb_1",
-    (((lmp_double_limb_t)11350647574145516744ULL) << 64 | 12173594581825583349ULL),
-    11532370747548134652ULL
+    (((lmp_double_limb_t)10512282028032306483ULL) << 64 | 2678291321200806564ULL),
+    (((lmp_double_limb_t)0ULL) << 64 | 13923236679616247875ULL)
+
   },
   {
     "inv3_one_limb_2",
-    (((lmp_double_limb_t)10387967924150620987ULL) << 64 | 8844839056314908642ULL),
-    14310612264465883638ULL
+    (((lmp_double_limb_t)10512282028032306483ULL) << 64 | 2678291321200806564ULL),
+    (((lmp_double_limb_t)0ULL) << 64 | 13923236679616247875ULL)
+
   },
   {
     "inv3_one_limb_3",
-    (((lmp_double_limb_t)18177202509885138023ULL) << 64 | 11893239322447829761ULL),
-    273538474492565108ULL
+    (((lmp_double_limb_t)11373414061963692226ULL) << 64 | 5637707374651487514ULL),
+    (((lmp_double_limb_t)0ULL) << 64 | 11472360697033891273ULL)
 
   },
   {
     "inv3_one_limb_4",
-    (((lmp_double_limb_t)17095896488900598705ULL) << 64 | 5367181085021937236ULL),
-    1457586017541562980ULL
-
+    (((lmp_double_limb_t)14643696743029893023ULL) << 64 | 14398196988406505576ULL),
+    (((lmp_double_limb_t)0ULL) << 64 | 4790719313594345477ULL)
   },
 };
 
@@ -80,9 +81,7 @@ Suite *abs_3limbs_inv_suite()
   TCase *tc = tcase_create("abs_3limbs_inv");
 
   constexpr int n = sizeof(inv_cases)/sizeof(Inv3Case);
-  for (int i = 0; i < n; i++) {
-    tcase_add_loop_test(tc, test_abs_3limbs_inv, 0, n);
-  }
+  tcase_add_loop_test(tc, test_abs_3limbs_inv, 0, n);
 
   suite_add_tcase(s, tc);
   return s;

@@ -25,7 +25,7 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include "mp_type.h"
+#include "lmp.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define abs(a) ((a) > (0) ? (a) : -(a))
@@ -33,12 +33,12 @@
 inline void MP_INT_init(MP_INT *val, const int32_t initial_alloc, const Allocator *allocator) {
   val->alloc = aligned(initial_alloc);
   val->size = 0;
-  val->limbs = allocator->calloc(val->alloc, sizeof(lmp_limb_t));
+  val->limbs = allocator->calloc(val->alloc, LMP_LIMB_SIZE);
 }
 
 void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator) {
   MP_INT_realloc(dest, src->size, allocator);
-  allocator->memcpy(dest->limbs, src->limbs, abs(src->size) * sizeof(lmp_limb_t));
+  allocator->memcpy(dest->limbs, src->limbs, abs(src->size) * LMP_LIMB_SIZE);
   dest->size = src->size;
 }
 
@@ -55,12 +55,14 @@ inline void MP_INT_realloc(MP_INT *val, const int32_t required, const Allocator 
   if (val->alloc == 0) { return ; }
   if (val->alloc < required) {
     const int32_t new_alloc = aligned(required);
-    lmp_limb_t *p = allocator->realloc(val->limbs, new_alloc * sizeof(lmp_limb_t));
+    lmp_limb_t *p = allocator->realloc(val->limbs, new_alloc * LMP_LIMB_SIZE);
     if (!p) return;
+    allocator->memset(&p[val->alloc], 0, (new_alloc - val->alloc) * LMP_LIMB_SIZE);
     val->limbs = p;
     val->alloc = new_alloc;
   }
 }
+
 
 inline void MP_INT_clamp(MP_INT *val) {
   int32_t s = abs(val->size);
@@ -80,4 +82,15 @@ inline int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2) {
     if (op1->limbs[i] < op2->limbs[i]) { return -1; }
   }
   return 0;
+}
+
+inline bool MP_INT_abs_aligned_ge(const MP_INT *op1, const MP_INT *op2) {
+  const int32_t size1 = abs(op1->size);
+  const int32_t size2 = abs(op2->size);
+  if (size1 < size2) { return false; }
+  for (int32_t i = 0; i < size2; i ++) {
+    if (op1->limbs[size1 - 1 - i] < op2->limbs[size2 - 1 - i]) { return false; }
+    if (op1->limbs[size1 - 1 - i] > op2->limbs[size2 - 1 - i]) { return true;  }
+  }
+  return true;
 }

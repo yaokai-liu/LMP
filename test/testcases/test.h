@@ -30,21 +30,9 @@
 
 #include "lmp.h"
 #include "arith.h"
+#include "parse.h"
+#include "print.h"
 #include <check.h>
-
-#define MP_INT_CONST(name, ...)                                                   \
-  lmp_limb_t name##_limbs[] = { __VA_ARGS__ };                                    \
-  MP_INT name = { .alloc = 0,                                                     \
-                  .size  = (int32_t)(sizeof(name##_limbs) / sizeof(lmp_limb_t)),  \
-                  .limbs = name##_limbs }
-#define MP_INT_OUT(name, cap)                                       \
-  lmp_limb_t name##_limbs[(cap)] = {0};                             \
-  MP_INT name = { .alloc = 0, .size = 0, .limbs = name##_limbs }
-
-#define ASSERT_MP_INT_EQ(v, ...) do {                                         \
-    lmp_limb_t _e[] = { __VA_ARGS__ };                                        \
-    assert_mp_int_eq((v), _e, (int32_t)(sizeof(_e)/sizeof(_e[0])), #v);       \
-  } while (0)
 
 Suite *abs_add_offset_suite();
 Suite *abs_sub_offset_suite();
@@ -57,4 +45,5 @@ Suite *abs_mul_suite();
 Suite *mp_int_misc_suite();
 Suite *cmp_suite();
 Suite *abs_3limbs_inv_suite();
+Suite *abs_divmod_suite();
 #endif //LMP_TEST_H

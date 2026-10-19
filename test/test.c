@@ -44,6 +44,7 @@ int main()
   srunner_add_suite(sr, mp_int_misc_suite());
   srunner_add_suite(sr, cmp_suite());
   srunner_add_suite(sr, abs_3limbs_inv_suite());
+  srunner_add_suite(sr, abs_divmod_suite());
 
   srunner_set_fork_status(sr, CK_NOFORK);
   srunner_run_all(sr, CK_NORMAL);

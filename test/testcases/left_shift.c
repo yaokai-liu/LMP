@@ -42,13 +42,13 @@ static void run_left_shift_case(const ShiftCase *c)
 
   lmp_limb_t buf[64] = {};
   ck_assert((size_t)c->a_len + 2 <= sizeof(buf) / sizeof(buf[0]));
-  memcpy(buf, c->a, sizeof(lmp_limb_t) * (size_t)c->a_len);
+  memcpy(buf, c->a, LMP_LIMB_SIZE * (size_t)c->a_len);
 
   MP_INT A = { .alloc = 0, .size = c->a_len, .limbs = buf };
 
   MP_INT_left_shift(&A, c->shift, &STDAllocator);
 
-  ck_assert_msg(A.size == c->e_len,
+  ck_assert_msg(abs(A.size) == c->e_len,
                 "%s: result size %d != %d", c->name, A.size, c->e_len);
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(A.limbs[i] == c->e[i],
@@ -97,9 +97,7 @@ Suite *left_shift_suite()
   TCase *tc = tcase_create("left_shift");
 
   constexpr int n = sizeof(left_cases)/sizeof(ShiftCase);
-  for (int i = 0; i < n; i++) {
-    tcase_add_loop_test(tc, test_left_shift, 0, n);
-  }
+  tcase_add_loop_test(tc, test_left_shift, 0, n);
 
   suite_add_tcase(s, tc);
   return s;

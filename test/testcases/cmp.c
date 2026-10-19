@@ -27,7 +27,7 @@
 
 #include "test.h"
 #include "allocator.h"
-#include "mp_type.h"
+
 
 typedef struct {
   const char       *name;
@@ -129,9 +129,7 @@ Suite *cmp_suite()
   TCase *tc = tcase_create("cmp");
 
   constexpr int n = sizeof(cmp_cases)/sizeof(CmpCase);
-  for (int i = 0; i < n; i++) {
-    tcase_add_loop_test(tc, test_cmp, 0, n);
-  }
+  tcase_add_loop_test(tc, test_cmp, 0, n);
 
   suite_add_tcase(s, tc);
   return s;

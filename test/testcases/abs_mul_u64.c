@@ -47,7 +47,7 @@ static void run_mul_u64_case(const MulU64Case *c)
 
   MP_INT_abs_mul_u64(&DEST, &A, c->val, &STDAllocator);
 
-  ck_assert_msg(DEST.size == c->e_len,
+  ck_assert_msg(abs(DEST.size) == c->e_len,
                 "%s: result size %d != %d", c->name, DEST.size, c->e_len);
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(DEST.limbs[i] == c->e[i],
@@ -118,9 +118,7 @@ Suite *abs_mul_u64_suite()
   TCase *tc = tcase_create("abs_mul_u64");
 
   constexpr int n = sizeof(abs_mul_u64_cases)/sizeof(MulU64Case);
-  for (int i = 0; i < n; i++) {
-    tcase_add_loop_test(tc, test_abs_mul_u64, 0, n);
-  }
+  tcase_add_loop_test(tc, test_abs_mul_u64, 0, n);
 
   suite_add_tcase(s, tc);
   return s;

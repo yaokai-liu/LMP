@@ -27,7 +27,7 @@
 
 #include "test.h"
 #include "allocator.h"
-#include "mp_type.h"
+
 
 START_TEST(test_MP_INT_1) {
   MP_INT num = {};
