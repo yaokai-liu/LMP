@@ -31,8 +31,12 @@
 #include "allocator.h"
 
 #ifndef USING_FFT_SIZE
-#define USING_FFT_SIZE  128
+#define USING_FFT_SIZE  64
 #endif
+#ifndef MP_ALLOC_LEN
+#define MP_ALLOC_LEN 8
+#endif
+#define aligned(count) (((count) / MP_ALLOC_LEN + 1) * MP_ALLOC_LEN)
 
 typedef _BitInt(128) int128_t;
 typedef _BitInt(256) int256_t;
@@ -43,6 +47,7 @@ typedef uint64_t lmp_limb_t;
 typedef uint32_t lmp_half_limb_t;
 typedef uint128_t lmp_double_limb_t;
 typedef uint256_t lmp_quarter_limb_t;
+
 #define LMP_LIMB_SIZE (sizeof(lmp_limb_t))
 #define LMP_LIMB_BITS (LMP_LIMB_SIZE * 8)
 #define LMP_LIMB_MAX  (~(lmp_limb_t)0)
@@ -79,11 +84,6 @@ typedef union MP_NUMBER {
   MP_FLOAT    FLOAT;
 } MP_NUMBER;
 
-#ifndef MP_ALLOC_LEN
-#define MP_ALLOC_LEN 8
-#endif
-#define aligned(count) (((count) / MP_ALLOC_LEN + 1) * MP_ALLOC_LEN)
-
 void MP_INT_init(MP_INT *val,  int32_t initial_alloc, const Allocator *allocator);
 void MP_INT_realloc(MP_INT *val,  int32_t required, const Allocator *allocator);
 void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator);
@@ -92,7 +92,7 @@ void MP_INT_clamp(MP_INT *val);
 
 void MP_INT_negative(MP_INT *val);
 int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2);
-bool MP_INT_abs_aligned_ge(const MP_INT *op1, const MP_INT *op2);
+bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, int32_t offset);
 
 
 #endif //LMP_H

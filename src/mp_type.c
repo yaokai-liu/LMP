@@ -32,8 +32,8 @@
 
 inline void MP_INT_init(MP_INT *val, const int32_t initial_alloc, const Allocator *allocator) {
   val->alloc = aligned(initial_alloc);
-  val->size = 0;
   val->limbs = allocator->calloc(val->alloc, LMP_LIMB_SIZE);
+  val->size = 0;
 }
 
 void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator) {
@@ -84,13 +84,12 @@ inline int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2) {
   return 0;
 }
 
-inline bool MP_INT_abs_aligned_ge(const MP_INT *op1, const MP_INT *op2) {
+inline bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, const int32_t offset) {
   const int32_t size1 = abs(op1->size);
   const int32_t size2 = abs(op2->size);
-  if (size1 < size2) { return false; }
   for (int32_t i = 0; i < size2; i ++) {
-    if (op1->limbs[size1 - 1 - i] < op2->limbs[size2 - 1 - i]) { return false; }
-    if (op1->limbs[size1 - 1 - i] > op2->limbs[size2 - 1 - i]) { return true;  }
+    if (op1->limbs[size1 - 1 - i] < op2->limbs[size1 - offset - 1 - i]) { return false; }
+    if (op1->limbs[size1 - 1 - i] > op2->limbs[size1 - offset - 1 - i]) { return true;  }
   }
   return true;
 }

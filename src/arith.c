@@ -26,6 +26,9 @@
  **/
 
 #include "arith.h"
+
+#include <stdlib.h>
+
 #include "array.h"
 
 #define max(a, b)   ((a) > (b) ? (a) : (b))
@@ -157,7 +160,7 @@ inline void MP_INT_abs_sub_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *
     rop->limbs[i] = val1 - (val2 + borrow);
     borrow = val1 < val2 || (val1 == val2 && borrow);
   }
-  rop->size = op1->limbs[size1 - 1] ? size1 :(size1 - 1);
+  rop->size = op1->limbs[size1 - 1] ? size1 : (size1 - 1);
 }
 
 inline void MP_INT_left_shift(MP_INT *op, const int32_t bit_count, const Allocator *allocator) {
@@ -267,7 +270,7 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
     const lmp_double_limb_t n_tail = (n << LMP_LIMB_BITS) + left_shift_load(dividend, 1, d_leading_zeros);
     if (n_hat_high > n_high || (n_hat_high == n_high && n_hat_tail > n_tail)) { q -= 1; }
     MP_INT_abs_mul_u64(&interval, divisor, q, allocator);
-    if (!MP_INT_abs_aligned_ge(dividend, &interval)) {
+    if (!MP_INT_abs_offset_ge(dividend, &interval, size_quotient - 1)) {
       MP_INT_abs_sub_offset(&interval, &interval, divisor, 0, allocator);
       q --;
     }
@@ -285,20 +288,25 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
       quotient->limbs[size_quotient - i] += 1;
       n = left_shift_load_double(dividend, 0, d_leading_zeros);
     }
+
     lmp_limb_t q = n / d_high;
     const lmp_limb_t n_hat_high = (q * d_high) >> LMP_LIMB_BITS;
     const lmp_limb_t n_high = n >> LMP_LIMB_BITS;
     const lmp_double_limb_t n_hat_tail = ((q * d_high) << LMP_LIMB_BITS) + (((lmp_double_limb_t)q) * (lmp_limb_t) d);
     const lmp_double_limb_t n_tail = (n << LMP_LIMB_BITS) + left_shift_load(dividend, 1, d_leading_zeros);
     if (n_hat_high > n_high || (n_hat_high == n_high && n_hat_tail > n_tail)) { q -= 1; }
-    if (q == 0 && MP_INT_abs_aligned_ge(dividend, divisor)) { q += 1; }
+    if (q == 0 && MP_INT_abs_offset_ge(dividend, divisor, size_quotient - 1 - i)) { q += 1; }
+
+    MP_INT_clamp(dividend);
     MP_INT_abs_mul_u64(&interval, divisor, q, allocator);
-    if (!MP_INT_abs_aligned_ge(dividend, &interval)) {
+    if (!MP_INT_abs_offset_ge(dividend, &interval, size_quotient - 1 - i)) {
       MP_INT_abs_sub_offset(&interval, &interval, divisor, 0, allocator);
       q --;
     }
     MP_INT_abs_sub_offset(dividend, dividend, &interval, size_quotient - 1 - i, allocator);
+
     quotient->limbs[size_quotient - 1 - i] = q;
+
     if (MP_INT_abs_cmp(dividend, divisor) < 0) { break; }
   }
   MP_INT_clear(&interval, allocator);

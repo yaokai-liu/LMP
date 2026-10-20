@@ -46,6 +46,7 @@ static void run_mul_u64_case(const MulU64Case *c)
   MP_INT DEST = { .alloc = 0, .size = 0,        .limbs = dest_limbs };
 
   MP_INT_abs_mul_u64(&DEST, &A, c->val, &STDAllocator);
+  MP_INT_clamp(&DEST);
 
   ck_assert_msg(abs(DEST.size) == c->e_len,
                 "%s: result size %d != %d", c->name, DEST.size, c->e_len);

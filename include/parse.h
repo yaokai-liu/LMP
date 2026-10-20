@@ -27,8 +27,13 @@
 
 #ifndef LMP_PARSE_H
 #define LMP_PARSE_H
-
 #include "lmp.h"
+
+#ifndef MP_PARSE_SCALE
+#define MP_PARSE_SCALE 4
+#endif
+
+
 uint32_t LMP_parse(const char * input, uint32_t *type, MP_NUMBER *number, const Allocator *allocator);
 
 #endif //LMP_PARSE_H

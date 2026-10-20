@@ -25,21 +25,29 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include "lmp.h"
-#include "arith.h"
 #include <stdio.h>
+#include <stdlib.h>
+
+#include "lmp.h"
+#include "parse.h"
+#define lenof(str_literal) ((sizeof str_literal) - 1)
 
 int main () {
-  lmp_limb_t A_limbs[] = {1, 2, 3};
-  lmp_limb_t B_limbs[] = {4, 5, 6};
-  lmp_limb_t RES_limbs[7] = {};
-  MP_INT A = {.alloc = 0, .size = 3, .limbs = A_limbs};
-  MP_INT B = {.alloc = 0, .size = 3, .limbs = B_limbs};
-  MP_INT RES = {.alloc = 0, .size = 0, .limbs = RES_limbs};
-  MP_INT_abs_add_offset(&RES, &A, &B, 1, &STDAllocator);
-  for (uint32_t i = 0; i < 6; i++) {
-    printf("%lld\t", RES_limbs[i]);
+  uint32_t num_type = 0;
+  MP_NUMBER number = {};
+  const char *num_str = "123.1234567899999123456789123456789123456789";
+  const uint32_t str_len = lenof("123.1234567899999123456789123456789123456789");
+  const uint32_t parse_len = LMP_parse(num_str, &num_type, &number, &STDAllocator);
+  if (parse_len != str_len) { return -1; }
+  if (num_type != MP_NUM_TYPE_FLOAT) { return -2; }
+  if (number.FLOAT.size != 4) { return -3; }
+  if (number.FLOAT.exp != 3) { return -4; }
+  const int32_t size = abs(number.FLOAT.size);
+  for (int32_t i = 0; i < size; i++) {
+    printf("%016llX", number.FLOAT.limbs[size - 1 - i]);
+    if (size - 1 - i == number.FLOAT.exp) {
+      printf(".");
+    }
   }
-  printf("\n%d\n", RES.size);
   return 0;
 }
