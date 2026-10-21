@@ -59,11 +59,11 @@ static const lmp_limb_t CB2[] = { 1 };
 static const lmp_limb_t CA3[] = { 7 };
 static const lmp_limb_t CB3[] = { 7 };
 
-static const lmp_limb_t CA4[] = { 1, 0 };
-static const lmp_limb_t CB4[] = { UINT64_MAX };
-
 static const lmp_limb_t CA5[] = { UINT64_MAX };
 static const lmp_limb_t CB5[] = { 1, 0 };
+
+static const lmp_limb_t CA4[] = { 1, 0 };
+static const lmp_limb_t CB4[] = { UINT64_MAX };
 
 static const lmp_limb_t CA6[] = { 5, 7 };
 static const lmp_limb_t CB6[] = { 9, 6 };
@@ -102,8 +102,8 @@ static const CmpCase cmp_cases[] = {
   { "cmp_1_lt_2",        CA1,  CB1,  1, 1, -1 },
   { "cmp_2_gt_1",        CA2,  CB2,  1, 1,  1 },
   { "cmp_7_eq_7",        CA3,  CB3,  1, 1,  0 },
-  { "cmp_len_a_longer",  CA4,  CB4,  2, 1,  1 },
-  { "cmp_len_a_shorter", CA5,  CB5,  1, 2, -1 },
+  { "cmp_len_a_longer",  CA4,  CB4,  2, 1, -1 },
+  { "cmp_len_a_shorter", CA5,  CB5,  1, 2,  1 },
   { "cmp_hi_a_bigger",   CA6,  CB6,  2, 2,  1 },
   { "cmp_hi_a_smaller",  CA7,  CB7,  2, 2, -1 },
   { "cmp_lo_a_bigger",   CA8,  CB8,  2, 2,  1 },

@@ -93,6 +93,10 @@ void MP_INT_clamp(MP_INT *val);
 void MP_INT_negative(MP_INT *val);
 int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2);
 bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, int32_t offset);
+lmp_limb_t offset_load(const MP_INT *restrict num, int32_t index);
+lmp_double_limb_t offset_load_double(const MP_INT *restrict num, int32_t index);
+lmp_limb_t left_shift_load(const MP_INT *restrict num, int32_t index, int32_t bit_count);
+lmp_double_limb_t left_shift_load_double(const MP_INT *restrict num, int32_t index, int32_t bit_count);
 
 
 #endif //LMP_H

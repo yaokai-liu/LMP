@@ -32,11 +32,6 @@
 void MP_INT_left_shift(MP_INT *op, int32_t bit_count, const Allocator *allocator);
 
 void MP_INT_right_shift(MP_INT *op, int32_t bit_count, const Allocator *);
-
-lmp_limb_t left_shift_load(const MP_INT *restrict num, int32_t index, int32_t bit_count);
-
-lmp_double_limb_t left_shift_load_double(const MP_INT *restrict num, int32_t index, int32_t bit_count);
-
 // Allow (dest = op)
 // Force set dest->size >= 0
 void MP_INT_abs_mul_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator);

@@ -324,35 +324,32 @@ uint32_t LMP_parse(const char * const input, uint32_t *type, MP_NUMBER *number, 
       try_special_number(0, "NAN", MP_NUM_TYPE_NAN);
       return 0;
     }
-    case '0': {
-      uint32_t adic_type = ADIC_TYPE_10;
-      switch (pText[1]) {
-        case 'x':
-        case 'X': {
-          pText ++;
-          adic_type = ADIC_TYPE_16;
-          break;
-        }
-        case 'o':
-        case 'O': {
-          pText ++;
-          adic_type = ADIC_TYPE_8;
-          break;
-        }
-        case 'b':
-        case 'B': {
-          pText ++;
-          adic_type = ADIC_TYPE_2;
-          break;
-        }
-        default: {}
-      }
-      return LMP_parse_adic_number(pText, type, number, negative, adic_type, allocator);
-    }
     default:;
   }
   if (isDecDigital(pText)) {
-    return LMP_parse_adic_number(pText, type, number, negative, ADIC_TYPE_10, allocator);
+    uint32_t adic_type = ADIC_TYPE_10;
+    switch (pText[1]) {
+      case 'x':
+      case 'X': {
+        pText ++;
+        adic_type = ADIC_TYPE_16;
+        break;
+      }
+      case 'o':
+      case 'O': {
+        pText ++;
+        adic_type = ADIC_TYPE_8;
+        break;
+      }
+      case 'b':
+      case 'B': {
+        pText ++;
+        adic_type = ADIC_TYPE_2;
+        break;
+      }
+      default: {}
+    }
+    return LMP_parse_adic_number(pText, type, number, negative, adic_type, allocator);
   }
   // TODO
   return 0;
