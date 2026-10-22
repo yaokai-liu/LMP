@@ -45,9 +45,9 @@ static void run_mul_case(const MulCase *c)
   ck_assert((size_t)c->a_len + (size_t)c->b_len <=
             sizeof(dest_limbs) / sizeof(dest_limbs[0]));
 
-  MP_INT A    = { .alloc = 0, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
-  MP_INT B    = { .alloc = 0, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
-  MP_INT DEST = { .alloc = 0, .size = 0,        .limbs = dest_limbs };
+  MP_INT A    = { .alloc = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
+  MP_INT B    = { .alloc = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
+  MP_INT DEST = { .alloc = -(int32_t)(sizeof(dest_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = dest_limbs };
 
   MP_INT_abs_mul(&DEST, &A, &B, &STDAllocator);
   MP_INT_clamp(&DEST);

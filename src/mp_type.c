@@ -31,9 +31,11 @@
 #define abs(a) ((a) > (0) ? (a) : -(a))
 
 inline void MP_INT_init(MP_INT *val, const int32_t initial_alloc, const Allocator *allocator) {
-  val->alloc = aligned(initial_alloc);
-  val->limbs = allocator->calloc(val->alloc, LMP_LIMB_SIZE);
-  val->size = 0;
+  if (val->alloc == 0) {
+    val->alloc = aligned(initial_alloc);
+    val->limbs = allocator->calloc(val->alloc, LMP_LIMB_SIZE);
+    val->size = 0;
+  }
 }
 
 void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator) {
@@ -43,16 +45,16 @@ void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator) {
 }
 
 inline void MP_INT_clear(MP_INT *val, const Allocator *allocator) {
-  if (val->alloc && val->limbs) {
+  if (val->alloc > 0 && val->limbs) {
     allocator->free(val->limbs);
     val->limbs = nullptr;
+    val->alloc = 0;
   }
-  val->alloc = 0;
   val->size = 0;
 }
 
 inline void MP_INT_realloc(MP_INT *val, const int32_t required, const Allocator *allocator) {
-  if (val->alloc == 0) { return ; }
+  if (val->alloc < 0) { return ; }
   if (val->alloc < required) {
     const int32_t new_alloc = aligned(required);
     lmp_limb_t *p = allocator->realloc(val->limbs, new_alloc * LMP_LIMB_SIZE);
@@ -62,7 +64,6 @@ inline void MP_INT_realloc(MP_INT *val, const int32_t required, const Allocator 
     val->alloc = new_alloc;
   }
 }
-
 
 inline void MP_INT_clamp(MP_INT *val) {
   int32_t s = abs(val->size);
@@ -134,7 +135,7 @@ inline lmp_double_limb_t offset_load_double(const MP_INT *restrict num, const in
 }
 
 inline int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2) {
-  const int32_t size = max(op1->size, op2->size);
+  const int32_t size = max(abs(op1->size), abs(op2->size));
   for (int32_t i = size - 1; i >= 0; i --) {
     if (offset_load(op1, i) > offset_load(op2, i)) { return  1; }
     if (offset_load(op1, i) < offset_load(op2, i)) { return -1; }

@@ -49,9 +49,9 @@ static void run_abs_divmod_case(const DivmodCase *c)
   STDAllocator.memcpy(a_limbs, c->a, LMP_LIMB_SIZE * c->a_len);
   STDAllocator.memcpy(b_limbs, c->b, LMP_LIMB_SIZE * c->b_len);
 
-  MP_INT A = { .alloc = 0, .size = c->a_len, .limbs = a_limbs };
-  MP_INT B = { .alloc = 0, .size = c->b_len, .limbs = b_limbs };
-  MP_INT Q = { .alloc = 0, .size = 0,        .limbs = q_limbs };
+  MP_INT A = { .alloc = -c->a_len, .size = c->a_len, .limbs = a_limbs };
+  MP_INT B = { .alloc = -c->b_len, .size = c->b_len, .limbs = b_limbs };
+  MP_INT Q = { .alloc = -(int32_t)(sizeof(q_limbs) / LMP_LIMB_SIZE), .size = 0, .limbs = q_limbs };
 
   MP_INT_abs_divmod(&A, &B, &Q, &STDAllocator);
   MP_INT_clamp(&A);

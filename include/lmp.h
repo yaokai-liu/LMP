@@ -56,27 +56,41 @@ typedef uint256_t lmp_quarter_limb_t;
 
 // This struct is aligned to GMP's mpz
 typedef struct MP_INT {
-  // (alloc == 0) means it's a fixed limb count variable.
-  uint32_t    alloc;
+  // (alloc < 0) means it's a fixed limb count variable.
+  int32_t    alloc;
+  // negative if size < 0
   int32_t     size;
+  // little endian
   lmp_limb_t *limbs;
 } MP_INT;
 
-// This struct is aligned to GMP's mpf
+// if size != 0:
+// FLOAT = limbs * power(LMP_LIMB_VAL, exp)
+// else
+// FLOAT = MP_FLOAT_SPECIAL_VAL_TYPE(exp)
 typedef struct MP_FLOAT {
-  // (prec == 0) means it's a fixed limb count variable.
-  uint32_t    prec;
-  int32_t     size;
-  int64_t     exp;
+  // alloc memory size for limbs
+  // (prec <  0) means it's a fixed limb count variable.
+  // max limbs with out realloc
+  int32_t     prec;
+  int32_t     exp;
+  // current value size
+  // negative if size < 0
+  int64_t     size;
+  // little endian
   lmp_limb_t *limbs;
 } MP_FLOAT;
 
-enum MP_NUMBER_TYPE {
+enum MP_NUMBER_TYPE : int32_t {
   MP_NUM_TYPE_NONE,
   MP_NUM_TYPE_INT,
   MP_NUM_TYPE_FLOAT,
-  MP_NUM_TYPE_INF,
-  MP_NUM_TYPE_NAN,
+};
+
+enum MP_FLOAT_SPECIAL_VAL_TYPE : int32_t {
+  MP_FLOAT_ZERO,
+  MP_FLOAT_INF,
+  MP_FLOAT_NAN,
 };
 
 typedef union MP_NUMBER {
@@ -97,6 +111,5 @@ lmp_limb_t offset_load(const MP_INT *restrict num, int32_t index);
 lmp_double_limb_t offset_load_double(const MP_INT *restrict num, int32_t index);
 lmp_limb_t left_shift_load(const MP_INT *restrict num, int32_t index, int32_t bit_count);
 lmp_double_limb_t left_shift_load_double(const MP_INT *restrict num, int32_t index, int32_t bit_count);
-
 
 #endif //LMP_H

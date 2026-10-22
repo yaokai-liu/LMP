@@ -43,8 +43,8 @@ static void run_add_u64_case(const AddU64Case *c)
   lmp_limb_t dest_limbs[64] = {};
   ck_assert((size_t)c->a_len + 2 <= sizeof(dest_limbs) / sizeof(dest_limbs[0]));
 
-  MP_INT A    = { .alloc = 0, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
-  MP_INT DEST = { .alloc = 0, .size = 0,        .limbs = dest_limbs };
+  MP_INT A    = { .alloc = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
+  MP_INT DEST = { .alloc = -(int32_t)(sizeof(dest_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = dest_limbs };
 
   MP_INT_abs_add_u64(&DEST, &A, c->val, &STDAllocator);
   MP_INT_clamp(&DEST);

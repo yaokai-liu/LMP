@@ -26,3 +26,7 @@
  **/
 
 #include "print.h"
+
+uint32_t LMP_print(const MP_NUMBER *number, uint32_t type, char * dest, const Allocator *allocator) {
+
+}

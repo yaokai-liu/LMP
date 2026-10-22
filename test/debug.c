@@ -31,21 +31,22 @@
 #include "lmp.h"
 #include "parse.h"
 #define lenof(str_literal) ((sizeof str_literal) - 1)
+#define abs(a) ((a) > (0) ? (a) : -(a))
 
 int main () {
   uint32_t num_type = 0;
   MP_NUMBER number = {};
-  const char *num_str = "123.1234567899999123456789123456789123456789";
-  const uint32_t str_len = lenof("123.1234567899999123456789123456789123456789");
+  const char *num_str = "-123.1234567899999123456789123456789123456789";
+  const uint32_t str_len = lenof("-123.1234567899999123456789123456789123456789");
   const uint32_t parse_len = LMP_parse(num_str, &num_type, &number, &STDAllocator);
   if (parse_len != str_len) { return -1; }
   if (num_type != MP_NUM_TYPE_FLOAT) { return -2; }
-  if (number.FLOAT.size != 4) { return -3; }
-  if (number.FLOAT.exp != 3) { return -4; }
-  const int32_t size = abs(number.FLOAT.size);
+  if (number.FLOAT.size != -4) { return -3; }
+  if (number.FLOAT.exp != -3) { return -4; }
+  const int64_t size = abs(number.FLOAT.size);
   for (int32_t i = 0; i < size; i++) {
-    printf((size - 1 - i >= number.FLOAT.exp) ? "%llX" : "%016llX", number.FLOAT.limbs[size - 1 - i]);
-    if (size - 1 - i == number.FLOAT.exp) {
+    printf((size - 1 - i >= - number.FLOAT.exp) ? "%llX" : "%016llX", number.FLOAT.limbs[size - 1 - i]);
+    if (size - 1 - i == - number.FLOAT.exp) {
       printf(".");
     }
   }

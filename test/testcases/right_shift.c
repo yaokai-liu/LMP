@@ -45,7 +45,7 @@ static void run_right_shift_case(const ShiftCase *c)
   ck_assert((size_t)c->a_len + 2 <= sizeof(buf) / sizeof(buf[0]));
   memcpy(buf, c->a, LMP_LIMB_SIZE * (size_t)c->a_len);
 
-  MP_INT A = { .alloc = 0, .size = c->a_len, .limbs = buf };
+  MP_INT A = { .alloc = -c->a_len, .size = c->a_len, .limbs = buf };
 
   MP_INT_right_shift(&A, c->shift, &STDAllocator);
   MP_INT_clamp(&A);

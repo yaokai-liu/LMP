@@ -56,6 +56,7 @@ static uint32_t stridx_o(char chr, const char * str);
 #define isIdentChar(pText)          (startswithLetter(pText) || isDecDigital(pText) || (*pText == '_') || (*pText == '-'))
 #define startswithLetter(pText)   (('a' <= (pText)[0] && (pText)[0] <= 'z') || ('A' <= (pText)[0] && (pText)[0] <= 'Z'))
 #define isSeparator(pText)        (*(pText) == '\'' || *(pText) == '_')
+#define isExponer(pText)          (*(pText) == 'e' || *(pText) == 'E' || *(pText) == 'p' || *(pText) == 'P')
 
 static bool isBinDigital(const char *pText) { return ('0' == (pText)[0] || (pText)[0] == '1'); }
 static bool isOctDigital(const char *pText) { return ('0' <= (pText)[0] && (pText)[0] <= '7'); }
@@ -190,7 +191,7 @@ inline uint32_t LMP_parse_adic_number(const char *const input, uint32_t *num_typ
   uint32_t effective_len = 0;
   uint32_t effective_int_len = 0;
   struct limb_pos curr_limb = {pText, nullptr};
-  MP_INT_init(&NUMBER->INT, MP_PARSE_SCALE * MP_ALLOC_LEN, allocator);
+  MP_INT_init(&NUMBER->INT, LMP_PARSE_ALLOC_SCALE * MP_ALLOC_LEN, allocator);
   while (*pText) {
     if (isSeparator(pText)) {
       if (!fun_check(pText + 1)) { break; }
@@ -224,14 +225,38 @@ inline uint32_t LMP_parse_adic_number(const char *const input, uint32_t *num_typ
   }
   MP_INT_clamp(&NUMBER->INT);
   NUMBER->INT.size = negative ? - NUMBER->INT.size : NUMBER->INT.size;
-  // TODO: parse precision symbols
+  int64_t literal_exp = 0;
+  if (isExponer(pText)) {
+    pText ++;
+    if (*pText == '-') { negative = true; }
+    if (isSign(pText)) { pText++; }
+    curr_limb.start = pText;
+    while (*pText) {
+      if (isSeparator(pText)) {
+        if (!fun_check(pText + 1)) { break; }
+      }else if (!fun_check(pText)) { break; }
+      pText++;
+    }
+    curr_limb.end = pText;
+    if (curr_limb.end > curr_limb.start) {
+      is_float = true;
+      lmp_limb_t exp_val = 0;
+      t_INT_LIMB_adic10(&curr_limb, &exp_val);
+      literal_exp = negative ? - (int64_t) exp_val : (int64_t) exp_val;
+    }
+  }
+  if (!is_float) {
+    *num_type = MP_NUM_TYPE_INT;
+    return pText - input;
+  }
 
-  if (is_float) {
-    const uint32_t divisor_frac_len = effective_len - effective_int_len;
+  uint32_t divisor_frac_len = effective_len - effective_int_len;
+  if ((int64_t)divisor_frac_len > literal_exp) {
+    divisor_frac_len -= literal_exp;
     const int32_t n_limbs = (int32_t) (divisor_frac_len / limb_effective_len);
+
     MP_INT DIVISOR = {};
     MP_INT_init(&DIVISOR, (int32_t) n_limbs + 1, allocator);
-
     DIVISOR.size = 1; DIVISOR.limbs[0] = 1;
     for (uint32_t i = 0; i < n_limbs; i++) {
       func_scale_limb(&DIVISOR, limb_effective_len, allocator);
@@ -241,23 +266,23 @@ inline uint32_t LMP_parse_adic_number(const char *const input, uint32_t *num_typ
     }
     MP_INT_clamp(&DIVISOR);
 
-    const int32_t quotient_exp = abs(DIVISOR.size);
+    const int64_t quotient_exp_abs = abs(DIVISOR.size);
     const int32_t quotient_size = abs(NUMBER->INT.size) + 1;
     MP_INT QUOTIENT = {};
     MP_INT_init(&QUOTIENT, quotient_size, allocator);
-    MP_INT_left_shift(&NUMBER->INT, (int32_t) (quotient_exp * LMP_LIMB_BITS), allocator);
+    MP_INT_left_shift(&NUMBER->INT, (int32_t) (quotient_exp_abs * LMP_LIMB_BITS), allocator);
     MP_INT_divmod(&NUMBER->INT, &DIVISOR, &QUOTIENT, allocator);
     MP_INT_clear(&NUMBER->INT, allocator);
     MP_INT_clear(&DIVISOR, allocator);
     NUMBER->FLOAT.limbs = QUOTIENT.limbs;
     NUMBER->FLOAT.prec = QUOTIENT.alloc;
     NUMBER->FLOAT.size = QUOTIENT.size;
-    NUMBER->FLOAT.exp = quotient_exp;
+    NUMBER->FLOAT.exp = - quotient_exp_abs;
     *num_type = MP_NUM_TYPE_FLOAT;
   } else {
-    *num_type = MP_NUM_TYPE_INT;
+    const int32_t n_limbs = (int32_t) (divisor_frac_len / limb_effective_len);
+    // TODO
   }
-
   return pText - input;
 }
 
@@ -281,6 +306,9 @@ inline uint32_t LMP_parse_adic_number(const char *const input, uint32_t *num_typ
   if (strcmp_o(pText, &(pattern[text_off])) == (lenof(pattern) - text_off)  \
        && !isIdentChar(pText + lenof(pattern))) {                           \
     *type = _type;                                                          \
+    NUMBER->FLOAT.size = 0;                                                 \
+    NUMBER->FLOAT.exp = _type;                                              \
+    NUMBER->FLOAT.limbs = nullptr;                                          \
     return lenof(pattern);                                                  \
   }                                                                         \
 } while (false)
@@ -300,7 +328,7 @@ inline uint32_t strcmp_o(const char *const str1, const char * const str2) {
 // [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2} |
 // [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2} |
 // [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}
-uint32_t LMP_parse(const char * const input, uint32_t *type, MP_NUMBER *number, const Allocator * const allocator) {
+uint32_t LMP_parse(const char * const input, uint32_t *type, MP_NUMBER *NUMBER, const Allocator * const allocator) {
   const char *pText = input;
   const bool negative = ('-' == *pText);
   if (isSign(pText)) {
@@ -309,19 +337,19 @@ uint32_t LMP_parse(const char * const input, uint32_t *type, MP_NUMBER *number, 
   }
   switch (*pText) {
     case 'i': {
-      try_special_number(0, "inf", MP_NUM_TYPE_INF);
+      try_special_number(0, "inf", MP_FLOAT_INF);
       return 0;
     }
     case 'I': {
-      try_special_number(0, "INF", MP_NUM_TYPE_INF);
+      try_special_number(0, "INF", MP_FLOAT_INF);
       return 0;
     }
     case 'n': {
-      try_special_number(0, "nan", MP_NUM_TYPE_NAN);
+      try_special_number(0, "nan", MP_FLOAT_NAN);
       return 0;
     }
     case 'N': {
-      try_special_number(0, "NAN", MP_NUM_TYPE_NAN);
+      try_special_number(0, "NAN", MP_FLOAT_INF);
       return 0;
     }
     default:;
@@ -349,8 +377,8 @@ uint32_t LMP_parse(const char * const input, uint32_t *type, MP_NUMBER *number, 
       }
       default: {}
     }
-    return LMP_parse_adic_number(pText, type, number, negative, adic_type, allocator);
+    pText += LMP_parse_adic_number(pText, type, NUMBER, negative, adic_type, allocator);
+    return pText - input;
   }
-  // TODO
   return 0;
 }

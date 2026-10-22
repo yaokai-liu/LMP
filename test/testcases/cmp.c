@@ -40,8 +40,8 @@ typedef struct {
 
 static void run_cmp_case(const CmpCase *c)
 {
-  MP_INT A = { .alloc = 0, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
-  MP_INT B = { .alloc = 0, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
+  MP_INT A = { .alloc = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
+  MP_INT B = { .alloc = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
 
   int32_t got = MP_INT_abs_cmp(&A, &B);
 

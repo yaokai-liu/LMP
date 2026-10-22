@@ -65,8 +65,8 @@ END_TEST
 
 START_TEST(test_MP_INT_4) {
   lmp_limb_t limbs[2][2] = {1, 2, 3, 4};
-  MP_INT num1 = {.alloc = 0, .size = 2, .limbs = limbs[0]};
-  MP_INT num2 = {.alloc = 0, .size = 2, .limbs = limbs[1]};
+  MP_INT num1 = {.alloc = 2, .size = 2, .limbs = limbs[0]};
+  MP_INT num2 = {.alloc = 2, .size = 2, .limbs = limbs[1]};
   MP_INT_copy(&num2, &num1, &STDAllocator);
   ck_assert_uint_eq(num2.size, num1.size);
   ck_assert_uint_eq(limbs[1][0], limbs[0][0]);
@@ -76,7 +76,7 @@ END_TEST
 
 START_TEST(test_MP_INT_5) {
   lmp_limb_t limbs[2][2] = {1, 2, 1, 2};
-  MP_INT num = {.alloc = 0, .size = 2, .limbs = limbs[0]};
+  MP_INT num = {.alloc = 2, .size = 2, .limbs = limbs[0]};
   MP_INT_negative(&num);
   ck_assert_int_eq(num.size, -2);
   ck_assert_uint_eq(limbs[1][0], limbs[0][0]);
@@ -86,7 +86,7 @@ END_TEST
 
 START_TEST(test_MP_INT_6) {
   lmp_limb_t limbs[2][2] = {1, 2, 1, 2};
-  MP_INT num = {.alloc = 0, .size = 2, .limbs = limbs[0]};
+  MP_INT num = {.alloc = 2, .size = 2, .limbs = limbs[0]};
   MP_INT_negative(&num);
   ck_assert_int_eq(num.size, -2);
   ck_assert_uint_eq(limbs[1][0], limbs[0][0]);

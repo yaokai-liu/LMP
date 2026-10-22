@@ -29,11 +29,16 @@
 #define LMP_PARSE_H
 #include "lmp.h"
 
-#ifndef MP_PARSE_SCALE
-#define MP_PARSE_SCALE 4
+#ifndef LMP_PARSE_ALLOC_SCALE
+#define LMP_PARSE_ALLOC_SCALE 4
+#endif
+#ifndef LMP_LITERAL_EXP_MAX
+#define LMP_LITERAL_EXP_MAX 2048
+#endif
+#ifndef LMP_LITERAL_PREC_MAX
+#define LMP_LITERAL_PREC_MAX 2048
 #endif
 
-
-uint32_t LMP_parse(const char * input, uint32_t *type, MP_NUMBER *number, const Allocator *allocator);
+uint32_t LMP_parse(const char * input, uint32_t *type, MP_NUMBER *NUMBER, const Allocator *allocator);
 
 #endif //LMP_PARSE_H

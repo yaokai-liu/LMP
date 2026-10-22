@@ -13,6 +13,7 @@ else ()
     set(TARGET_PREFIX "LMP_")
 endif ()
 
+add_compile_options("-flto")
 #add_compile_options("-O3" "-Os")
 add_compile_options("-funsigned-char")
 #add_compile_options("-Wall" "-Wextra" "-Werror")
