@@ -39,6 +39,13 @@
 #define LMP_LITERAL_PREC_MAX 2048
 #endif
 
+// Fixed-capacity mode (caller-provided buffer):
+//   If (NUMBER->INT.alloc < 0), the parser will NOT allocate or free
+//   limbs. The caller MUST set NUMBER->INT.limbs to a buffer of at
+//   least abs(NUMBER->INT.alloc) limbs.
+// Dynamic mode (default):
+//   If (NUMBER->INT.alloc >= 0), limbs is allocated by the parser
+//   (and must be freed by the caller via MP_INT_clear).
 uint32_t LMP_parse(const char * input, int32_t *type, MP_NUMBER *NUMBER, const Allocator *allocator);
 
 #endif //LMP_PARSE_H

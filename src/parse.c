@@ -190,7 +190,7 @@ inline void scale_adic2(MP_INT *op, const uint32_t n_digits, const Allocator *al
 
 inline void float_compose_adic16(MP_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
   int32_t n_limbs = 0, remains = 0;
-  if (exp > 0) {
+  if (exp >= 0) {
     const int32_t n_bits = exp * 4;
     n_limbs = n_bits / (int32_t) LMP_LIMB_BITS;
     remains = n_bits % (int32_t) LMP_LIMB_BITS;
@@ -215,7 +215,7 @@ inline void float_compose_adic10(MP_NUMBER *const NUMBER, const int32_t exp, con
   const int32_t limb_max_digit = (int32_t) MAX_DIGIT_PER_LIMB[ADIC_TYPE_10];
   int32_t prec = abs(NUMBER->INT.alloc);
   int32_t limb_exp = 0;
-  if (exp > 0) {
+  if (exp >= 0) {
     const int32_t n_limbs = exp / limb_max_digit;
     const int32_t remains = exp % limb_max_digit;
     for (int32_t i = 0; i < n_limbs; i++) {
@@ -255,26 +255,40 @@ inline void float_compose_adic10(MP_NUMBER *const NUMBER, const int32_t exp, con
     MP_INT_clamp(&DIVISOR);
 
     const int32_t quotient_exp_abs = abs(DIVISOR.size);
-    const int32_t quotient_size = abs(NUMBER->INT.size) + 1;
+    int32_t quotient_size = abs(NUMBER->INT.size) + 1;
     MP_INT QUOTIENT = {};
     MP_INT_init(&QUOTIENT, quotient_size, allocator);
     MP_INT_left_shift(&NUMBER->INT, (int32_t) (quotient_exp_abs * LMP_LIMB_BITS), allocator);
     MP_INT_divmod(&NUMBER->INT, &DIVISOR, &QUOTIENT, allocator);
-    if (NUMBER->INT.alloc < 0) {
-      // TODO:
-    }
-    MP_INT_clear(&NUMBER->INT, allocator);
     MP_INT_clear(&DIVISOR, allocator);
-    NUMBER->FLOAT.limbs = QUOTIENT.limbs;
-    NUMBER->FLOAT.prec = QUOTIENT.alloc;
-    NUMBER->FLOAT.size = QUOTIENT.size;
-    NUMBER->FLOAT.exp = - quotient_exp_abs;
+    MP_INT_clear(&NUMBER->INT, allocator);
+    if (NUMBER->INT.alloc < 0) {
+      quotient_size = abs(QUOTIENT.size);
+      if (quotient_size > abs(NUMBER->INT.alloc)) {
+        const int32_t rounded_limbs = quotient_size - abs(NUMBER->INT.alloc);
+        MP_INT_right_shift(&QUOTIENT, rounded_limbs * (int32_t)LMP_LIMB_BITS, allocator);
+        MP_INT_clamp(&QUOTIENT);
+        quotient_size = abs(NUMBER->INT.alloc);
+      }
+      lmp_limb_t *const limbs = NUMBER->INT.limbs;
+      allocator->memcpy(limbs, QUOTIENT.limbs, quotient_size * LMP_LIMB_SIZE);
+      NUMBER->FLOAT.limbs = limbs;
+      NUMBER->FLOAT.prec = quotient_size;
+      NUMBER->FLOAT.size = QUOTIENT.size;
+      NUMBER->FLOAT.exp = - quotient_exp_abs;
+      MP_INT_clear(&QUOTIENT, allocator);
+    } else {
+      NUMBER->FLOAT.limbs = QUOTIENT.limbs;
+      NUMBER->FLOAT.prec = QUOTIENT.alloc;
+      NUMBER->FLOAT.size = QUOTIENT.size;
+      NUMBER->FLOAT.exp = - quotient_exp_abs;
+    }
   }
 }
 
 inline void float_compose_adic8(MP_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
   int32_t n_limbs = 0, remains = 0;
-  if (exp > 0) {
+  if (exp >= 0) {
     const int32_t n_bits = exp * 3;
     n_limbs = n_bits / (int32_t) LMP_LIMB_BITS;
     remains = n_bits % (int32_t) LMP_LIMB_BITS;
@@ -297,7 +311,7 @@ inline void float_compose_adic8(MP_NUMBER *const NUMBER, const int32_t exp, cons
 
 inline void float_compose_adic2(MP_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
   int32_t n_limbs = 0, remains = 0;
-  if (exp > 0) {
+  if (exp >= 0) {
     const int32_t n_bits = exp;
     n_limbs = n_bits / (int32_t) LMP_LIMB_BITS;
     remains = n_bits % (int32_t) LMP_LIMB_BITS;

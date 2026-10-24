@@ -34,8 +34,9 @@
 #define abs(a) ((a) > (0) ? (a) : -(a))
 
 int main () {
-  uint32_t num_type = 0;
-  MP_NUMBER number = {};
+  int32_t num_type = 0;
+  lmp_limb_t limbs[8] = {};
+  MP_NUMBER number = {.INT = {.alloc = -8, .limbs = limbs}};
   const char *num_str = "-123.1234567899999123456789123456789123456789";
   const uint32_t str_len = lenof("-123.1234567899999123456789123456789123456789");
   const uint32_t parse_len = LMP_parse(num_str, &num_type, &number, &STDAllocator);
