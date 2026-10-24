@@ -46,9 +46,7 @@ int main () {
   const int64_t size = abs(number.FLOAT.size);
   for (int32_t i = 0; i < size; i++) {
     printf((size - 1 - i >= - number.FLOAT.exp) ? "%llX" : "%016llX", number.FLOAT.limbs[size - 1 - i]);
-    if (size - 1 - i == - number.FLOAT.exp) {
-      printf(".");
-    }
+    if (size - 1 - i == - number.FLOAT.exp) { printf("."); }
   }
   return 0;
 }

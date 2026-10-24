@@ -56,7 +56,8 @@ typedef uint256_t lmp_quarter_limb_t;
 
 // This struct is aligned to GMP's mpz
 typedef struct MP_INT {
-  // (alloc < 0) means it's a fixed limb count variable.
+  // (alloc < 0) means it's a fixed capacity variable.
+  // abs(alloc) is how many limbs allowed to use.
   int32_t    alloc;
   // negative if size < 0
   int32_t     size;
@@ -64,38 +65,55 @@ typedef struct MP_INT {
   lmp_limb_t *limbs;
 } MP_INT;
 
-// if size != 0:
-// FLOAT = limbs * power(LMP_LIMB_VAL, exp)
-// else
-// FLOAT = MP_FLOAT_SPECIAL_VAL_TYPE(exp)
+enum MP_FLOAT_SPECIAL_VAL_TYPE : int32_t {
+  MP_FLOAT_ZERO = 0,
+  MP_FLOAT_INF,
+  MP_FLOAT_INS,
+  MP_FLOAT_NAN = INT32_MAX,
+
+  MP_FLOAT_NEG_INF = - MP_FLOAT_INF,
+  MP_FLOAT_NEG_INS = - MP_FLOAT_INS,
+};
+
+// if (size != 0):
+//    FLOAT = limbs * power(LMP_LIMB_VAL, exp)
+//    DECIMAL = limbs * power(10, exp)
+// else:
+//    FLOAT = MP_FLOAT_SPECIAL_VAL_TYPE(exp)
+//    if (prec > 0) limbs will be released.
+//    In this situation, the 'limbs' will not be used by the library,
+//    users can use this field for other means.
+//    But if this value will interactive in the library's arith part,
+//    especially as result-end, the 'limbs' field would be changed.
 typedef struct MP_FLOAT {
   // alloc memory size for limbs
-  // (prec <  0) means it's a fixed limb count variable.
+  // (prec <  0) means it's a fixed capacity variable.
+  // abs(alloc) is how many limbs allowed to use.
   // max limbs with out realloc
   int32_t     prec;
-  int32_t     exp;
   // current value size
-  // negative if size < 0
-  int64_t     size;
+  // negative if (size < 0)
+  int32_t     size;
+  // With 'MP_FLOAT' interpreting, this field based 'LMP_LIMB_VAL';
+  // with 'MP_DECIMAL' interpreting, this field based 10.
+  // No matter with 'MP_FLOAT' or 'MP_DECIMAL', if (size == 0):
+  //    this field will be used to represent special value.
+  int64_t     exp;
   // little endian
   lmp_limb_t *limbs;
-} MP_FLOAT;
+} MP_FLOAT, MP_DECIMAL;
 
 enum MP_NUMBER_TYPE : int32_t {
   MP_NUM_TYPE_NONE,
   MP_NUM_TYPE_INT,
   MP_NUM_TYPE_FLOAT,
-};
-
-enum MP_FLOAT_SPECIAL_VAL_TYPE : int32_t {
-  MP_FLOAT_ZERO,
-  MP_FLOAT_INF,
-  MP_FLOAT_NAN,
+  MP_NUM_TYPE_DECIMAL,
 };
 
 typedef union MP_NUMBER {
   MP_INT      INT;
   MP_FLOAT    FLOAT;
+  MP_DECIMAL  DECIMAL;
 } MP_NUMBER;
 
 void MP_INT_init(MP_INT *val,  int32_t initial_alloc, const Allocator *allocator);
