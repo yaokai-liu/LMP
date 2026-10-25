@@ -29,7 +29,6 @@
 #define LMP_PRINT_H
 #include "lmp.h"
 
-uint32_t LMP_print(const MP_NUMBER *number, uint32_t type, char *dest, const Allocator *allocator);
 uint32_t LMP_printf(const char *restrict fmt, ...);
 uint32_t LMP_sprintf(char *dest, const char *restrict fmt, ...);
 

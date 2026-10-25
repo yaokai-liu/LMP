@@ -39,6 +39,31 @@
 #define LMP_LITERAL_PREC_MAX 2048
 #endif
 
+// Layout in case of (type >= MP_NUM_TYPE_INT_TYPE):
+//     bit [31-16] : kind (MP_NUM_TYPE_*_TYPE)
+//     bit [15-0 ] : target's bit width
+// if (type < MP_NUM_TYPE_INT_TYPE): builtin type, reserved.
+enum MP_NUMBER_TYPE : uint32_t {
+  MP_NUM_TYPE_NONE,
+  MP_NUM_TYPE_INT,
+  MP_NUM_TYPE_FLOAT,
+  MP_NUM_TYPE_DECIMAL,
+
+  MP_NUM_TYPE_INT_TYPE = 0x7000'0000,
+  MP_NUM_TYPE_UINT_TYPE = 0x7001'0000,
+};
+
+#define MP_NUM_TYPE_KIND(t)   ((t) & 0xFFFF'0000u)
+#define MP_NUM_TYPE_BITS(t)  ((t) & 0x0000'FFFFu)
+#define MP_NUM_TYPE_IS_ENCODED(t) ((t) >= MP_NUM_TYPE_INT_TYPE)
+#define MP_NUM_TYPE_OF(t, bits) ((t) | bits)
+
+typedef union MP_NUMBER {
+  MP_INT      INT;
+  MP_FLOAT    FLOAT;
+  MP_DECIMAL  DECIMAL;
+} MP_NUMBER;
+
 // Fixed-capacity mode (caller-provided buffer):
 //   If (NUMBER->INT.alloc < 0), the parser will NOT allocate or free
 //   limbs. The caller MUST set NUMBER->INT.limbs to a buffer of at
@@ -46,6 +71,6 @@
 // Dynamic mode (default):
 //   If (NUMBER->INT.alloc >= 0), limbs is allocated by the parser
 //   (and must be freed by the caller via MP_INT_clear).
-uint32_t LMP_parse(const char * input, int32_t *type, MP_NUMBER *NUMBER, const Allocator *allocator);
+uint32_t LMP_parse(const char * input, uint32_t *type, MP_NUMBER *NUMBER, const Allocator *allocator);
 
 #endif //LMP_PARSE_H

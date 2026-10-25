@@ -68,9 +68,9 @@ static bool isDecDigital(const char *pText) { return ('0' <= pText[0] && pText[0
 static bool isHexDigital(const char *pText) { return isDecDigital(pText) || isHexLetter(pText); }
 
 static uint32_t strcmp_o(const char * str1, const char * str2);
-static uint32_t try_special_number(const char *input, int32_t *type, MP_NUMBER *NUMBER, bool negative);
+static uint32_t try_special_number(const char *input, uint32_t *type, MP_NUMBER *NUMBER, bool negative);
 
-static uint32_t LMP_parse_adic_number(const char *input, int32_t *num_type, MP_NUMBER *NUMBER,
+static uint32_t LMP_parse_adic_number(const char *input, uint32_t *num_type, MP_NUMBER *NUMBER,
                                       bool negative, uint32_t adic_type, const Allocator *allocator);
 
 enum LMP_ADIC_TYPE : int32_t {
@@ -214,8 +214,8 @@ inline void float_compose_adic16(MP_NUMBER *const NUMBER, const int32_t exp, con
 inline void float_compose_adic10(MP_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
   const int32_t limb_max_digit = (int32_t) MAX_DIGIT_PER_LIMB[ADIC_TYPE_10];
   int32_t prec = abs(NUMBER->INT.alloc);
-  int32_t limb_exp = 0;
   if (exp >= 0) {
+    int32_t limb_exp = 0;
     const int32_t n_limbs = exp / limb_max_digit;
     const int32_t remains = exp % limb_max_digit;
     for (int32_t i = 0; i < n_limbs; i++) {
@@ -262,6 +262,12 @@ inline void float_compose_adic10(MP_NUMBER *const NUMBER, const int32_t exp, con
     MP_INT_divmod(&NUMBER->INT, &DIVISOR, &QUOTIENT, allocator);
     MP_INT_clear(&DIVISOR, allocator);
     MP_INT_clear(&NUMBER->INT, allocator);
+    if (QUOTIENT.size == 0) {
+      MP_INT_clear(&QUOTIENT, allocator);
+      NUMBER->FLOAT.exp = MP_FLOAT_ZERO;
+      NUMBER->FLOAT.size = 0;
+      return ;
+    }
     if (NUMBER->INT.alloc < 0) {
       quotient_size = abs(QUOTIENT.size);
       if (quotient_size > abs(NUMBER->INT.alloc)) {
@@ -342,7 +348,7 @@ inline void decimal_compose(MP_NUMBER *const NUMBER, const int32_t exp, const Al
   NUMBER->FLOAT.exp = exp;
 }
 
-inline uint32_t LMP_parse_adic_number(const char *const input, int32_t *num_type, MP_NUMBER *const NUMBER,
+inline uint32_t LMP_parse_adic_number(const char *const input, uint32_t *num_type, MP_NUMBER *const NUMBER,
                                       const bool negative, const uint32_t adic_type, const Allocator *const allocator) {
   auto const fun_check = ADIC_DIGIT_CHECK_FUNCS[adic_type];
   auto const limb_effective_len = MAX_DIGIT_PER_LIMB[adic_type];
@@ -495,7 +501,7 @@ static struct {
   { "NAN", lenof("NAN"), MP_FLOAT_NAN },
 };
 
-inline uint32_t try_special_number(const char *input, int32_t *type, MP_NUMBER *NUMBER, const bool negative) {
+inline uint32_t try_special_number(const char *input, uint32_t *type, MP_NUMBER *NUMBER, const bool negative) {
   constexpr int32_t n_special_val = sizeof(SPECIAL_NUMBER_PATTERNS) / sizeof(SPECIAL_NUMBER_PATTERNS[0]);
   for (int32_t i = 0; i < n_special_val; i++) {
     auto const triple = SPECIAL_NUMBER_PATTERNS[i];
@@ -515,11 +521,11 @@ inline uint32_t strcmp_o(const char *const str1, const char * const str2) {
   return i;
 }
 
-// [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?[lL]{0,2}? |
-// [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}? |
-// [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}? |
-// [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?[lL]{0,2}[dD]?
-uint32_t LMP_parse(const char * const input, int32_t *type, MP_NUMBER *NUMBER, const Allocator * const allocator) {
+// [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<encoding>)?) |
+// [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<encoding>)?) |
+// [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<encoding>)?) |
+// [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<encoding>)?)[dD]?
+uint32_t LMP_parse(const char * const input, uint32_t *type, MP_NUMBER *NUMBER, const Allocator * const allocator) {
   const char *pText = input;
   const bool negative = ('-' == *pText);
   if (isSign(pText)) {

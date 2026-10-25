@@ -28,6 +28,10 @@
 #ifndef LMP_H
 #define LMP_H
 #include <stdint.h>
+#include <limits.h>
+#if CHAR_BIT != 8
+#error "CHAR_BIT is required with 8."
+#endif
 #include "allocator.h"
 
 #ifndef USING_FFT_SIZE
@@ -49,7 +53,7 @@ typedef uint128_t lmp_double_limb_t;
 typedef uint256_t lmp_quarter_limb_t;
 
 #define LMP_LIMB_SIZE (sizeof(lmp_limb_t))
-#define LMP_LIMB_BITS (LMP_LIMB_SIZE * 8)
+#define LMP_LIMB_BITS (LMP_LIMB_SIZE * CHAR_BIT)
 #define LMP_LIMB_MAX  (~(lmp_limb_t)0)
 #define LMP_DOUBLE_LIMB_MAX  (~(lmp_double_limb_t)0)
 #define LMP_LIMB_VAL  (((lmp_double_limb_t)1) << LMP_LIMB_BITS)
@@ -102,19 +106,6 @@ typedef struct MP_FLOAT {
   // little endian
   lmp_limb_t *limbs;
 } MP_FLOAT, MP_DECIMAL;
-
-enum MP_NUMBER_TYPE : int32_t {
-  MP_NUM_TYPE_NONE,
-  MP_NUM_TYPE_INT,
-  MP_NUM_TYPE_FLOAT,
-  MP_NUM_TYPE_DECIMAL,
-};
-
-typedef union MP_NUMBER {
-  MP_INT      INT;
-  MP_FLOAT    FLOAT;
-  MP_DECIMAL  DECIMAL;
-} MP_NUMBER;
 
 void MP_INT_init(MP_INT *val,  int32_t initial_alloc, const Allocator *allocator);
 void MP_INT_realloc(MP_INT *val,  int32_t required, const Allocator *allocator);
