@@ -18,14 +18,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: src/ieee754
+ * Module Name: ext/ieee754
  * Filename: float.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-25
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include "ieee754/float.h"
+#include "ext/ieee754/float.h"
 #include <limits.h>
 #if CHAR_BIT != 8
 #error "CHAR_BIT is required with 8."
@@ -102,7 +102,7 @@ inline unsigned int first_leading_one_u256 (uint256_t x) {
 #define INT(w) int##w##_t
 
 #define u_to_ieee754bin(_w, _ew, _eb)                                                 \
-inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) integer, UINT(_ew) exponent) {    \
+inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) mantissa, UINT(_ew) exponent) {   \
   const uint32_t result_bits = _w;                                                    \
   const uint32_t order_bits = _eb;                                                    \
   const UINT(_w) order_MASK = (((UINT(_w)) 1) << order_bits) - 1;                     \
@@ -113,14 +113,22 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) integer, UINT(_ew) exponent)
   uint32_t final_exp = 0;                                                             \
   UINT(_w) final_mant = 0;                                                            \
                                                                                       \
-  if (integer != 0) {                                                                 \
-    int lz = first_leading_one(integer);                                              \
+  if ( mantissa != 0) {                                                               \
+    int lz = first_leading_one(mantissa) - 1;                                         \
     if (lz >= (int)mant_bits) {                                                       \
-      final_mant = integer >> (lz - mant_bits);                                       \
+      int shift = lz - mant_bits;                                                     \
+      final_mant =  mantissa >> shift;                                                \
+      if (shift > 0 && (mantissa & (((UINT(_w))1) << (shift - 1)))) {                 \
+        final_mant += 1;                                                              \
+        if (final_mant & (((UINT(_w))1) << (mant_bits + 1))) {                        \
+          final_mant >>= 1;                                                           \
+          final_exp += 1;                                                             \
+        }                                                                             \
+      }                                                                               \
     } else {                                                                          \
-      final_mant = integer << (mant_bits - lz);                                       \
+      final_mant =  mantissa << (mant_bits - lz);                                     \
     }                                                                                 \
-    final_exp = (exponent + (lz) + order_offs) & order_MASK;                          \
+    final_exp += (exponent + (lz) + order_offs) & order_MASK;                         \
   }                                                                                   \
                                                                                       \
   union { UINT(_w) I; FLOAT(_w) F; } val = {};                                        \

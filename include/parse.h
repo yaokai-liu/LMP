@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: include
+ * Module Name:
  * Filename: parse.h
  * Creator: Yaokai Liu
  * Create Date: 2026-10-19
@@ -28,6 +28,7 @@
 #ifndef LMP_PARSE_H
 #define LMP_PARSE_H
 #include "lmp.h"
+#include "type.h"
 
 #ifndef LMP_PARSE_ALLOC_SCALE
 #define LMP_PARSE_ALLOC_SCALE 4
@@ -39,38 +40,27 @@
 #define LMP_LITERAL_PREC_MAX 2048
 #endif
 
-// Layout in case of (type >= MP_NUM_TYPE_INT_TYPE):
-//     bit [31-16] : kind (MP_NUM_TYPE_*_TYPE)
-//     bit [15-0 ] : target's bit width
-// if (type < MP_NUM_TYPE_INT_TYPE): builtin type, reserved.
-enum MP_NUMBER_TYPE : uint32_t {
-  MP_NUM_TYPE_NONE,
-  MP_NUM_TYPE_INT,
-  MP_NUM_TYPE_FLOAT,
-  MP_NUM_TYPE_DECIMAL,
-
-  MP_NUM_TYPE_INT_TYPE = 0x7000'0000,
-  MP_NUM_TYPE_UINT_TYPE = 0x7001'0000,
-};
-
-#define MP_NUM_TYPE_KIND(t)   ((t) & 0xFFFF'0000u)
-#define MP_NUM_TYPE_BITS(t)  ((t) & 0x0000'FFFFu)
-#define MP_NUM_TYPE_IS_ENCODED(t) ((t) >= MP_NUM_TYPE_INT_TYPE)
-#define MP_NUM_TYPE_OF(t, bits) ((t) | bits)
-
-typedef union MP_NUMBER {
-  MP_INT      INT;
-  MP_FLOAT    FLOAT;
-  MP_DECIMAL  DECIMAL;
-} MP_NUMBER;
+typedef struct MP_NUMBER {
+  union {
+    MP_INT      INT;
+    MP_FLOAT    FLOAT;
+    MP_DECIMAL  DECIMAL;
+  }         val;
+  uint8_t   repr;
+}MP_NUMBER;
 
 // Fixed-capacity mode (caller-provided buffer):
-//   If (NUMBER->INT.alloc < 0), the parser will NOT allocate or free
-//   limbs. The caller MUST set NUMBER->INT.limbs to a buffer of at
-//   least abs(NUMBER->INT.alloc) limbs.
+//   If (NUMBER->val.INT.alloc < 0), the parser will NOT allocate or free
+//   limbs. The caller MUST set NUMBER->val.INT.limbs to a buffer of at
+//   least abs(NUMBER->val.INT.alloc) limbs.
 // Dynamic mode (default):
-//   If (NUMBER->INT.alloc >= 0), limbs is allocated by the parser
+//   If (NUMBER->val.INT.alloc >= 0), limbs is allocated by the parser
 //   (and must be freed by the caller via MP_INT_clear).
-uint32_t LMP_parse(const char * input, uint32_t *type, MP_NUMBER *NUMBER, const Allocator *allocator);
+// Parse patterns:
+//    [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?) |
+//    [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?) |
+//    [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?) |
+//    [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)[dD]?(-<standard>)?)
+uint32_t LMP_parse(const char * input, MP_NUM_TYPE *type, MP_NUMBER *NUMBER, const Allocator *allocator);
 
 #endif //LMP_PARSE_H

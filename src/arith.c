@@ -26,10 +26,7 @@
  **/
 
 #include "arith.h"
-
 #include <stdlib.h>
-
-#include "array.h"
 
 #define max(a, b)   ((a) > (b) ? (a) : (b))
 #define abs(a)      ((a) > (0) ? (a) : -(a))

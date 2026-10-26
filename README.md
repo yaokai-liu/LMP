@@ -1,6 +1,6 @@
 # LMP - A Lite Multiple Precision Arithmetic Library
 
-LMP is a lightweight, header-driven multiple-precision arithmetic library written in C. 
+LMP is a lightweight, multiple-precision arithmetic library written in C. 
 It provides arbitrary-precision integer, floating-point, 
 and decimal arithmetic built on top of compiler-supported wide integer types (_BitInt), 
 with a parser that understands C-style numeric literals across binary, octal, decimal, and hexadecimal bases.
@@ -16,10 +16,10 @@ and a fixed-capacity mode allows fully allocation-free operation for embedded or
 * **Arbitrary-precision floating-point and decimal**
 * **Special values for floating-point**: zero, infinity, infinitesimal, NaN, and their negatives.
 * **Flexible parser**: supporting binary, octal, decimal, and hexadecimal literals with optional fractional parts,
-`binary/decimal` exponents, `l/L` suffixes, and encoding tags.
+`binary/decimal` exponents, `l/L` suffixes, and standard tags.
 **Support custom float point number standard**. Users just need add custom standard short name and standard id,
 the parser will automatically recognize and record the number's standard type.
-* **IEEE-754 integration**: literals with an `l/L` suffix and no encoding are returned as IEEE-754 float types via `MP_NUMBER_EXTEND_IEEE754_TYPE`.
+* **IEEE-754 integration**: literals with an `l/L` suffix and no standard are returned as IEEE-754 float types via `MP_NUM_IEEE754_STANDARD`.
 * **Allocator abstraction** for custom memory backends.
 * **Fixed-capacity mode** for allocation-free parsing and arithmetic.
 
@@ -53,29 +53,50 @@ typedef struct MP_FLOAT {
 } MP_FLOAT, MP_DECIMAL;
 ```
 
-## Type Encoding
+## Type and Standard
 
 `MP_NUMBER_TYPE` encodes both the kind and the target bit width:
 
 |  Bits   |          Meaning          |
 |:-------:|:-------------------------:|
-| [31:16] | Kind (MP_NUM_TYPE_*_TYPE) |
-| [15:0]  |     Target bit width      |
+| [31-24] | Kind (MP_NUM_TYPE_*_TYPE) |
+| [23-16] |      Target encoding      |
+| [15-0 ] |     Target bit width      |
 
 ```C
-enum MP_NUMBER_TYPE : uint32_t {
-  MP_NUM_TYPE_NONE,
-  MP_NUM_TYPE_INT,
-  MP_NUM_TYPE_FLOAT,
-  MP_NUM_TYPE_DECIMAL,
-
-  MP_NUM_TYPE_INT_TYPE  = 0x7000'0000,
-  MP_NUM_TYPE_UINT_TYPE = 0x7001'0000,
+enum MP_NUMBER_STANDARD_TYPE : uint8_t {
+  MP_NUM_LMP_STANDARD = 0x00,
+  // std C integer
+  MP_NUM_INT_STANDARD = 0x01,
+};
+enum MP_NUMBER_LMP_REPRESENTATION_TYPE : uint8_t {
+  MP_NUM_REPR_MP_NONE = 0x00,
+  MP_NUM_REPR_MP_INT = 0x01,
+  MP_NUM_REPR_MP_FLOAT = 0x02,
+  MP_NUM_REPR_MP_DECIMAL = 0x03,
+};
+enum MP_NUMBER_INT_REPRESENTATION_TYPE : uint8_t {
+  MP_NUM_REPR_STD_C_INT = 0x01,
+  MP_NUM_REPR_STD_C_UINT = 0x02,
 };
 
-enum MP_NUMBER_EXTEND_IEEE754_TYPE : uint32_t {
-  MP_NUM_TYPE_EXT_IEEE754_FLOAT_TYPE   = 0x7002'0000,
-  MP_NUM_TYPE_EXT_IEEE754_DECIMAL_TYPE = 0x7003'0000,
+typedef union {
+  struct {
+#if __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__
+    uint16_t  size;
+    uint8_t   repr;
+    uint8_t   stdd;
+#else
+    uint8_t   stdd;
+    uint8_t   repr;
+    uint16_t  size;
+#endif
+  }     pack __attribute__((__packed__));
+  uint32_t  type;
+} MP_NUM_TYPE;
+
+enum MP_NUMBER_EXTEND_IEEE754_TYPE : uint8_t {
+  MP_NUM_TYPE_EXT_IEEE754_FLOAT_TYPE   = 0x02,
 };
 ```
 
@@ -83,10 +104,10 @@ enum MP_NUMBER_EXTEND_IEEE754_TYPE : uint32_t {
 
 ### Accepted Literal Formats
 ```regexp
-[+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<encoding>)?) |
-[+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<encoding>)?)|
-[+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<encoding>)?)|
-[+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<encoding>)?)[dD]?
+[+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[lL][0-9]+)(-(REPR)?<standard>)?) |
+[+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[lL][0-9]+)(-(REPR)?<standard>)?)|
+[+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[lL][0-9]+)(-(REPR)?<standard>)?)|
+[+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[lL][0-9]+)?(-(REPR)?<standard>)?)
 ```
 In summary:
 * Optional leading `+/-`.
@@ -94,18 +115,20 @@ In summary:
 * Optional fractional part.
 * Optional exponent: `p/P` for hexadecimal exponent bases; `p/P/e/E` for other adic.
 * Optional length suffix: up to two `l/L`, or `l/L` followed by a width in digits.
-* Optional -<encoding> tag selecting a target numeric standard. 
-If none, treat as an IEEE-754 type according to `MP_NUMBER_EXTEND_IEEE754_TYPE`.
+* Optional `REPR` tag selecting a target representation,
+`FLOAT` or `DECIMAL`, `UNSIGNED` or `SIGNED`, or other standard specified representation by letters.
+* Optional `<standard>` tag selecting a target numeric standard.
 
-## Parsing Memory Modes
-* Dynamic mode (default): if `NUMBER->INT.alloc >= 0`, the parser allocates and grows limbs;
-the caller must release them with `MP_*_clear`.
-* Fixed-capacity mode: if `NUMBER->INT.alloc < 0`, the parser performs no allocation or deallocation.
-The caller must supply `NUMBER->INT.limbs` with capacity at least `abs(NUMBER->INT.alloc)`.
+## Memory Modes
+* Dynamic mode (default): if `NUMBER->val.INT.alloc >= 0`, the library allocates and grows limbs;
+the `MP_*_clear` will free `limbs`.
+* Fixed-capacity mode: if `NUMBER->val.INT.alloc < 0`, the library performs no allocation or deallocation.
+The caller must supply `NUMBER->val.INT.limbs` with capacity at least `abs(NUMBER->val.INT.alloc)`.
+If not, it is an undefined behavior.
 
-## Special values
+## Special Values
 
-Via `size == 0`: for `MP_FLOAT/MP_DECIMAL`, a zero size marks the value as a special (`MP_FLOAT_SPECIAL_VAL_TYPE`), and exp carries the tag.
+Via set `size = 0` for `MP_FLOAT/MP_DECIMAL`, a zero size marks the value as a special (`MP_FLOAT_SPECIAL_VAL_TYPE`), and exp carries the tag.
 In that state limbs is free for user use, though the library may overwrite it if the value is used as an arithmetic result destination.
 
 ## License

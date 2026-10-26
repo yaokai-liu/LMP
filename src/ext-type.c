@@ -18,14 +18,21 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: include/ieee754
- * Filename: decimal.h
+ * Module Name: ext/ieee754
+ * Filename: convert.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-25
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef LMP_DECIMAL_H
-#define LMP_DECIMAL_H
+#include "ext-type.h"
+#include "ext/ieee754/float.h"
+#include "ext/ieee754/decimal.h"
 
-#endif //LMP_DECIMAL_H
+#define lenof(str_literal) ((sizeof str_literal) - 1)
+
+const struct MP_STANDARD MP_EXTEND_STANDARDS[] = {
+  {"MP", lenof("MP"), MP_NUM_LMP_STANDARD},
+  {"C-INT", lenof("C-INT"), MP_NUM_INT_STANDARD},
+  {"IEEE754", lenof("IEEE754"), MP_NUM_IEEE754_STANDARD},
+};

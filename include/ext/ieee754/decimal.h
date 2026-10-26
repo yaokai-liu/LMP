@@ -18,23 +18,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: include/ieee754
- * Filename: convert.h
+ * Module Name: ext/ieee754
+ * Filename: decimal.h
  * Creator: Yaokai Liu
  * Create Date: 2026-10-25
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef LMP_CONVERT_H
-#define LMP_CONVERT_H
-#include "parse.h"
-#include "ieee754/float.h"
-#include "ieee754/decimal.h"
+#ifndef LMP_DECIMAL_H
+#define LMP_DECIMAL_H
 
-// follow interpreting of enum MP_NUMBER_TYPE.
-enum MP_NUMBER_EXTEND_IEEE754_TYPE : uint32_t {
-  MP_NUM_TYPE_EXT_IEEE754_FLOAT_TYPE = 0x7002'0000,
-  MP_NUM_TYPE_EXT_IEEE754_DECIMAL_TYPE = 0x7003'0000,
-};
-
-#endif //LMP_CONVERT_H
+#endif //LMP_DECIMAL_H
