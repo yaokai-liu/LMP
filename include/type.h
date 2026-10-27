@@ -34,6 +34,7 @@ enum MP_NUMBER_STANDARD_TYPE : uint8_t {
   MP_NUM_LMP_STANDARD = 0x00,
   // std C integer
   MP_NUM_INT_STANDARD = 0x01,
+  MP_NUM_IEEE754_STANDARD   = 0x02,
 
   MP_NUM_UNKNOWN_STANDARD = 0xFF
 };
@@ -46,6 +47,10 @@ enum MP_NUMBER_LMP_REPRESENTATION_TYPE : uint8_t {
 enum MP_NUMBER_INT_REPRESENTATION_TYPE : uint8_t {
   MP_NUM_REPR_STD_C_INT = 0x00,
   MP_NUM_REPR_STD_C_UINT = 0x01,
+};
+enum MP_NUMBER_IEEE754_REPRESENTATION_TYPE : uint8_t {
+  MP_NUM_REPR_IEEE754_FLOAT = 0x01,
+  MP_NUM_REPR_IEEE754_DECIMAL = 0x02,
 };
 
 #ifndef __BYTE_ORDER__
@@ -77,7 +82,7 @@ typedef union {
   }     pack MP_PACKED;
   uint32_t  type;
 } MP_NUM_TYPE;
-_Static_assert(sizeof(((MP_NUM_TYPE*)nullptr)->pack) == 4, "pack layout broken");
+static_assert(sizeof(((MP_NUM_TYPE*)nullptr)->pack) == 4, "pack layout broken");
 
 #define MP_NUM_TYPE_KIND(t)       (((t) & 0xFF'00'0000u) >> 24)
 #define MP_NUM_TYPE_REPR(t)       (((t) & 0x00'FF'0000u) >> 16)
@@ -87,5 +92,23 @@ _Static_assert(sizeof(((MP_NUM_TYPE*)nullptr)->pack) == 4, "pack layout broken")
   (MP_NUM_TYPE_KIND(t) == (std) && MP_NUM_TYPE_REPR(t) == (repr))
 #define MP_NUM_TYPE_OF(_standard, _repr, _size) \
   ((((_standard) & 0xFFu) << 24) | (((_repr) & 0xFF) << 16) | ((_size) & 0xFFFFu))
+
+
+#define MP_NUM_STANDARD_COUNT 3
+extern const struct MP_STANDARD  {
+  const char * const name;
+  const uint8_t     leng;
+  const uint8_t     stdd;
+} MP_NUM_STANDARDS[MP_NUM_STANDARD_COUNT];
+#define MP_NUM_MAX_REPR_COUNT 16
+extern const struct MP_STANDARD_REPR {
+  const uint16_t count;
+  const uint8_t  L;
+  const uint8_t  LL;
+  struct {
+    const char    chr;
+    const uint8_t repr;
+  } items[MP_NUM_MAX_REPR_COUNT];
+} MP_STANDARD_REPR_CHARS[MP_NUM_STANDARD_COUNT];
 
 #endif //LMP_TYPE_H

@@ -104,17 +104,17 @@ enum MP_NUMBER_EXTEND_IEEE754_TYPE : uint8_t {
 
 ### Accepted Literal Formats
 ```regexp
-[+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[lL][0-9]+)(-(REPR)?<standard>)?) |
-[+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[lL][0-9]+)(-(REPR)?<standard>)?)|
-[+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[lL][0-9]+)(-(REPR)?<standard>)?)|
-[+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[lL][0-9]+)?(-(REPR)?<standard>)?)
+[+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
+[+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?)|
+[+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?)|
+[+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[0-9]+)?((REPR)?<standard>)?)
 ```
 In summary:
 * Optional leading `+/-`.
 * Base prefixes: `0x/0X` (hex), `0b/0B` (binary), `0o/0O` (octal), or none (decimal).
 * Optional fractional part.
 * Optional exponent: `p/P` for hexadecimal exponent bases; `p/P/e/E` for other adic.
-* Optional length suffix: up to two `l/L`, or `l/L` followed by a width in digits.
+* Optional length suffix: up to two `l/L`, or `l/L` followed by a size specified by standard.
 * Optional `REPR` tag selecting a target representation,
 `FLOAT` or `DECIMAL`, `UNSIGNED` or `SIGNED`, or other standard specified representation by letters.
 * Optional `<standard>` tag selecting a target numeric standard.

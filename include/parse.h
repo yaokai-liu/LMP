@@ -34,10 +34,10 @@
 #define LMP_PARSE_ALLOC_SCALE 4
 #endif
 #ifndef LMP_PARSE_EXP_MAX
-#define LMP_PARSE_EXP_MAX 2048
+#define LMP_PARSE_EXP_MAX (UINT16_MAX >> 1)
 #endif
 #ifndef LMP_LITERAL_PREC_MAX
-#define LMP_LITERAL_PREC_MAX 2048
+#define LMP_LITERAL_PREC_MAX (UINT16_MAX >> 1)
 #endif
 
 typedef struct MP_NUMBER {
@@ -57,10 +57,10 @@ typedef struct MP_NUMBER {
 //   If (NUMBER->val.INT.alloc >= 0), limbs is allocated by the parser
 //   (and must be freed by the caller via MP_INT_clear).
 // Parse patterns:
-//    [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?) |
-//    [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?) |
-//    [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?) |
-//    [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)[dD]?(-<standard>)?)
+//    [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
+//    [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
+//    [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
+//    [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)[dD]?((REPR)?<standard>)?)
 uint32_t LMP_parse(const char * input, MP_NUM_TYPE *type, MP_NUMBER *NUMBER, const Allocator *allocator);
 
 #endif //LMP_PARSE_H

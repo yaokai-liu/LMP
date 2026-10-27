@@ -29,7 +29,6 @@
 #include "type.h"
 #include "arith.h"
 #include "allocator.h"
-#include "ext-type.h"
 
 struct limb_pos {
   const char * start;
@@ -53,6 +52,7 @@ static void float_compose_adic10(MP_NUMBER *NUMBER, int32_t exp, const Allocator
 static void float_compose_adic8 (MP_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
 static void float_compose_adic2 (MP_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
 static void decimal_compose(MP_NUMBER *NUMBER,  int32_t exp, const Allocator * allocator);
+static uint32_t LMP_parse_num_suffix(const char *input, bool is_float, uint32_t adic_type, MP_NUM_TYPE *num_type, uint8_t *num_repr);
 
 #define isSign(pText)             ((*(pText) == '-') || (*(pText) == '+'))
 #define isDot(pText)              ((*(pText) == '.'))
@@ -62,8 +62,13 @@ static void decimal_compose(MP_NUMBER *NUMBER,  int32_t exp, const Allocator * a
 #define isSeparator(pText)        (*(pText) == '\'' || *(pText) == '_')
 #define isExponer(pText)          (*(pText) == 'e' || *(pText) == 'E' || *(pText) == 'p' || *(pText) == 'P')
 #define isDecmier(pText)          (*(pText) == 'd' || *(pText) == 'D')
-#define isSizeLimiter(pText)      (*(pText) == 'l' || *(pText) == 'L')
+#define isFloater(pText)          (*(pText) == 'f' || *(pText) == 'F' || *(pText) == 'g' || *(pText) == 'G')
+#define isSigned(pText)           (*(pText) == 's' || *(pText) == 'S')
+#define isUnsigned(pText)         (*(pText) == 'u' || *(pText) == 'U')
+#define isSizeHinter(pText)       (*(pText) == 'l' || *(pText) == 'L')
 #define isHyphen(pText)           (*(pText) == '-' || *(pText) == '_')
+#define isLAngleBracket(pText)    (*(pText) == '<')
+#define isRAngleBracket(pText)    (*(pText) == '>')
 
 static bool isBinDigital(const char *pText) { return ('0' == pText[0] || pText[0] == '1'); }
 static bool isOctDigital(const char *pText) { return ('0' <= pText[0] && pText[0] <= '7'); }
@@ -343,16 +348,105 @@ inline void decimal_compose(MP_NUMBER *const NUMBER, const int32_t exp, const Al
   NUMBER->val.FLOAT.limbs = limbs;
   NUMBER->val.FLOAT.exp = exp;
 }
+// <REPR>?([lL]{0,2}|[0-9]+)<REPR>?\<standard\>
+inline uint32_t LMP_parse_num_suffix(const char *const input, const bool is_float, const uint32_t adic_type,
+                                     MP_NUM_TYPE *const num_type, uint8_t *const num_repr) {
+  const char *pText = input;
+  uint8_t repr = 0;
+  lmp_limb_t size = 0;
+  uint8_t stdd_id = MP_NUM_UNKNOWN_STANDARD;
+
+  /***************************************************/
+  /************** suffix parse ***********************/
+  /***************************************************/
+  // first <REPR>
+  switch (*pText) {
+    case 'd': case 'D':
+    case 'f': case 'F':
+    case 'g': case 'G':
+    case 's': case 'S':
+    case 'u': case 'U': { repr = *pText; pText ++; break; }
+    default: ;
+  }
+  // size
+  if (isSizeHinter(pText)) { size += 0x0001'0000; pText ++;
+    if (isSizeHinter(pText)) { size += 0x0001'0000;  pText ++; }
+  } else if (repr && isDecDigital(pText)) {
+    struct limb_pos curr_limb = { .start = pText, .end = nullptr };
+    while (*pText) {
+      if (isSeparator(pText)) {
+        if (!isDecDigital(pText + 1)) { break; }
+      }else if (!isDecDigital(pText)) { break; }
+      pText++;
+    }
+    curr_limb.end = pText;
+    limb_digit_parse_adic10(&curr_limb, &size);
+  }
+  // second <REPR>
+  if (!repr) {
+    switch (*pText) {
+      case 'd': case 'D':
+      case 'f': case 'F':
+      case 'g': case 'G':
+      case 's': case 'S':
+      case 'u': case 'U': { repr = *pText; pText ++; break; }
+      default: ;
+    }
+  }
+  // standard
+  const char *pText_back = pText;
+  if (isLAngleBracket(pText)) {
+    for (uint32_t i = 0; i < MP_NUM_STANDARD_COUNT; i++) {
+      auto const stdd = MP_NUM_STANDARDS[i];
+      if (strcmp_o(pText, stdd.name) == stdd.leng) {
+        stdd_id = stdd.stdd;
+        pText += stdd.leng;
+        break;
+      }
+    }
+    if (!isRAngleBracket(pText)) { pText = pText_back; }
+    else { pText ++; }
+  }
+
+  /***************************************************/
+  /************** suffix compose *********************/
+  /***************************************************/
+  if (stdd_id == MP_NUM_UNKNOWN_STANDARD) {
+    if (size > 0) {
+      if (is_float) { stdd_id = MP_NUM_IEEE754_STANDARD; }
+      else { stdd_id = MP_NUM_INT_STANDARD; }
+    } else { stdd_id = MP_NUM_LMP_STANDARD; }
+  }
+  auto const STD_REPR = MP_STANDARD_REPR_CHARS[stdd_id];
+  if (size > 0xFFFF) {
+    size >>= 16; size = (size > 1) ? STD_REPR.LL : STD_REPR.L;
+  }
+  if (repr) {
+    if (is_float) {
+      *num_repr = (isDecmier(&repr) && adic_type == ADIC_TYPE_10) ? MP_NUM_REPR_MP_DECIMAL : MP_NUM_REPR_MP_FLOAT;
+    } else { *num_repr = MP_NUM_REPR_MP_INT; }
+    for (uint32_t i = 0; i < STD_REPR.count; i++) {
+      auto const item = STD_REPR.items[i];
+      if (repr == item.chr) { repr = item.repr; goto __repr_matched; }
+    }
+    repr = *num_repr;
+    __repr_matched:
+  }
+  num_type->type = MP_NUM_TYPE_OF(stdd_id, repr, size);
+
+  return pText - input;
+}
+
 //
 // switch @adic_type:
 //    case ADIC_TYPE_16:
-//        [a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?)
+//        [a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
 //    case ADIC_TYPE_2 :
-//        [01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?)
+//        [01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
 //    case ADIC_TYPE_8 :
-//        [0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?)
+//        [0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
 //    case ADIC_TYPE_10:
-//        [0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)[dD]?(-<standard>)?)
+//        [0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
 inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_type, MP_NUMBER *const NUMBER,
                                       const bool negative, const uint32_t adic_type, const Allocator *const allocator) {
   auto const fun_check = ADIC_DIGIT_CHECK_FUNCS[adic_type];
@@ -368,7 +462,7 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
   bool is_float = false;
   uint32_t effective_len = 0;
   uint32_t effective_int_len = 0;
-  struct limb_pos curr_limb = {pText, nullptr};
+ struct limb_pos curr_limb = { .start = pText, .end = nullptr };
   MP_INT_init(&NUMBER->val.INT, LMP_PARSE_ALLOC_SCALE * MP_ALLOC_LEN, allocator);
   while (*pText) {
     if (isSeparator(pText)) {
@@ -426,57 +520,20 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
       pText = pText_back;
     }
   }
-  bool is_decimal = false;
-  if (adic_type == ADIC_TYPE_10) {
-    if (is_float && isDecmier(pText)) { is_decimal = true; pText ++; }
-  }
-  if (isSizeLimiter(pText)) {
-    num_type->pack.size += 1; pText ++;
-    if (isSizeLimiter(pText)) { num_type->pack.size += 1;  pText ++; }
-    else {
-      const char *pText_back = pText;
-      curr_limb.start = pText;
-      while (*pText) {
-        if (isSeparator(pText)) {
-          if (!isDecDigital(pText + 1)) { break; }
-        }else if (!isDecDigital(pText)) { break; }
-        pText++;
-      }
-      curr_limb.end = pText;
-      if (curr_limb.end > curr_limb.start) {
-        lmp_limb_t size = 0;
-        limb_digit_parse_adic10(&curr_limb, &size);
-        num_type->pack.size = size;
-      } else {
-        pText = pText_back;
-      }
-    }
-    if (!is_decimal && adic_type == ADIC_TYPE_10) {
-      if (is_float && isDecmier(pText)) { is_decimal = true; pText ++; }
-    }
-    if (isHyphen(pText)) {
-      const char *pText_back = pText;
-      pText ++;
-      for (uint32_t i = 0; i < MP_EXTEND_STANDARD_COUNT; i++) {
-        auto const stdd = MP_EXTEND_STANDARDS[i];
-        if (strcmp_o(pText, stdd.name) == stdd.leng) {
-          num_type->pack.stdd = stdd.stdd; pText += stdd.leng; goto __stdd_matched;
-        }
-      }
-      pText = pText_back;
-      __stdd_matched:
-    }
+  if (startswithLetter(pText)) {
+    pText += LMP_parse_num_suffix(pText, is_float, adic_type, num_type, &NUMBER->repr);
+  } else if (is_float) {
+    num_type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_FLOAT, 0);
+    NUMBER->repr = MP_NUM_REPR_MP_FLOAT;
+  } else {
+    num_type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_INT, 0);
+    NUMBER->repr = MP_NUM_REPR_MP_INT;
   }
 
   /***************************************************/
   /************** NUMBER compose *********************/
   /***************************************************/
-  if (!is_float) {
-    num_type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_INT, 0);
-    NUMBER->repr = MP_NUM_REPR_MP_INT;
-    // todo: precision (size)
-    return pText - input;
-  }
+  if (NUMBER->repr == MP_NUM_REPR_MP_INT) { return pText - input; }
   literal_exp -= (int32_t) (effective_len - effective_int_len);
   if (literal_exp < - LMP_PARSE_EXP_MAX) {
     MP_INT_clear(&NUMBER->val.INT, allocator);
@@ -494,16 +551,10 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
     NUMBER->val.FLOAT.size = 0;
     NUMBER->val.FLOAT.exp = negative ? MP_FLOAT_NEG_INF : MP_FLOAT_INF;
     NUMBER->val.FLOAT.limbs = limbs;
-  } else if (is_decimal) {
+  } else if (NUMBER->repr == MP_NUM_REPR_MP_DECIMAL) {
     decimal_compose(NUMBER, literal_exp, allocator);
-    // todo: precision (size)
-    num_type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_DECIMAL, 0);
-    NUMBER->repr = MP_NUM_REPR_MP_DECIMAL;
   } else {
     func_float_compose(NUMBER, literal_exp, allocator);
-    // todo: precision (size)
-    num_type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_FLOAT, 0);
-    NUMBER->repr = MP_NUM_REPR_MP_FLOAT;
   }
   return pText - input;
 }
@@ -541,10 +592,10 @@ inline uint32_t strcmp_o(const char *const str1, const char * const str2) {
   return i;
 }
 
-// [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?) |
-// [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?) |
-// [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)(-<standard>)?) |
-// [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[lL][0-9]+)[dD]?(-<standard>)?)
+// [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?) |
+// [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?) |
+// [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?) |
+// [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
 uint32_t LMP_parse(const char * const input, MP_NUM_TYPE *type, MP_NUMBER *NUMBER, const Allocator * const allocator) {
   const char *pText = input;
   const bool negative = ('-' == *pText);
