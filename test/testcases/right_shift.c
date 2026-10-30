@@ -55,8 +55,8 @@ static void run_right_shift_case(const ShiftCase *c)
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(A.limbs[i] == c->e[i],
                   "%s: limb[%d] %llu != %llu", c->name, i,
-                  (unsigned long long)A.limbs[i],
-                  (unsigned long long)c->e[i]);
+                  (lmp_limb_t)A.limbs[i],
+                  (lmp_limb_t)c->e[i]);
   }
 }
 
@@ -73,7 +73,7 @@ static const lmp_limb_t SRE3[] = { 1 };
 static const lmp_limb_t SRA4[] = { 0, 2 };
 static const lmp_limb_t SRE4[] = { 2 };
 
-static const lmp_limb_t SRA5[] = { 1, UINT64_MAX };
+static const lmp_limb_t SRA5[] = { 1, LMP_LIMB_MAX };
 static const lmp_limb_t SRE5[] = { (1ULL << 63),
                                    (1ULL << 63) - 1 };
 

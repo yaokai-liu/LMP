@@ -62,16 +62,16 @@ static void run_abs_divmod_case(const DivmodCase *c)
   for (int32_t i = 0; i < c->eq_len; i++) {
     ck_assert_msg(Q.limbs[i] == c->eq[i],
                   "%s: limb[%d] %llu != %llu", c->name, i,
-                  (unsigned long long)Q.limbs[i],
-                  (unsigned long long)c->eq[i]);
+                  (lmp_limb_t)Q.limbs[i],
+                  (lmp_limb_t)c->eq[i]);
   }
   ck_assert_msg(abs(A.size) == c->er_len,
                 "%s: remainder size %d != %d", c->name, A.size, c->er_len);
   for (int32_t i = 0; i < c->er_len; i++) {
     ck_assert_msg(A.limbs[i] == c->er[i],
                   "%s: limb[%d] %llu != %llu", c->name, i,
-                  (unsigned long long)A.limbs[i],
-                  (unsigned long long)c->er[i]);
+                  (lmp_limb_t)A.limbs[i],
+                  (lmp_limb_t)c->er[i]);
   }
 }
 

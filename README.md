@@ -68,6 +68,9 @@ enum MP_NUMBER_STANDARD_TYPE : uint8_t {
   MP_NUM_LMP_STANDARD = 0x00,
   // std C integer
   MP_NUM_INT_STANDARD = 0x01,
+  MP_NUM_IEEE754_STANDARD   = 0x02,
+
+  MP_NUM_UNKNOWN_STANDARD = 0xFF
 };
 enum MP_NUMBER_LMP_REPRESENTATION_TYPE : uint8_t {
   MP_NUM_REPR_MP_NONE = 0x00,
@@ -76,8 +79,12 @@ enum MP_NUMBER_LMP_REPRESENTATION_TYPE : uint8_t {
   MP_NUM_REPR_MP_DECIMAL = 0x03,
 };
 enum MP_NUMBER_INT_REPRESENTATION_TYPE : uint8_t {
-  MP_NUM_REPR_STD_C_INT = 0x01,
-  MP_NUM_REPR_STD_C_UINT = 0x02,
+  MP_NUM_REPR_STD_C_INT = 0x00,
+  MP_NUM_REPR_STD_C_UINT = 0x01,
+};
+enum MP_NUMBER_IEEE754_REPRESENTATION_TYPE : uint8_t {
+  MP_NUM_REPR_IEEE754_FLOAT = 0x01,
+  MP_NUM_REPR_IEEE754_DECIMAL = 0x02,
 };
 
 typedef union {
@@ -94,30 +101,30 @@ typedef union {
   }     pack __attribute__((__packed__));
   uint32_t  type;
 } MP_NUM_TYPE;
-
-enum MP_NUMBER_EXTEND_IEEE754_TYPE : uint8_t {
-  MP_NUM_TYPE_EXT_IEEE754_FLOAT_TYPE   = 0x02,
-};
 ```
 
 ## Parsing
 
 ### Accepted Literal Formats
-```regexp
-[+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
-[+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?)|
-[+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?)|
-[+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(REPR)?(([lL]{0,2}|[0-9]+)?((REPR)?<standard>)?)
+```BNF
+NUMBER = <sign>? <prefix> <digits> (<dot> <digits>)? <exp>? <suffix>?
+<suffix> = <repr> <size> <standard> 
+         | <size> <repr> <standard>
+         | <size> <standard>
+         | <repr> <standard>
+         | <repr> <size>
+         | <size>
+         | <repr>
 ```
 In summary:
-* Optional leading `+/-`.
-* Base prefixes: `0x/0X` (hex), `0b/0B` (binary), `0o/0O` (octal), or none (decimal).
+* `<sign>`: Optional leading `+/-`.
+* Base prefixes `<prefix>`: `0x/0X` (hexadecimal), `0b/0B` (binary), `0o/0O` (octal), or none (decimal).
 * Optional fractional part.
-* Optional exponent: `p/P` for hexadecimal exponent bases; `p/P/e/E` for other adic.
-* Optional length suffix: up to two `l/L`, or `l/L` followed by a size specified by standard.
-* Optional `REPR` tag selecting a target representation,
-`FLOAT` or `DECIMAL`, `UNSIGNED` or `SIGNED`, or other standard specified representation by letters.
-* Optional `<standard>` tag selecting a target numeric standard.
+* Optional exponent `<exp>`: `p/P` for hexadecimal exponent bases; `p/P/e/E` for other adic.
+* Optional length suffix <size>: up to two `l/L`, or a number that following `<repr>`. Standard specify.
+* Optional `<repr>` tag selecting a target representation,
+`FLOAT` or `DECIMAL`, `UNSIGNED` or `SIGNED`, or other standard specified representation by single letters.
+* Optional `<standard>` tag selecting a target numeric standard, must be in angle brackets.
 
 ## Memory Modes
 * Dynamic mode (default): if `NUMBER->val.INT.alloc >= 0`, the library allocates and grows limbs;

@@ -225,7 +225,7 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
   const int32_t n_leading_zeros = __builtin_clzll(dividend->limbs[size_dividend - 1]);
   const lmp_double_limb_t d = left_shift_load_double(divisor, -2, d_leading_zeros);
 
-  const bool overflow = n_leading_zeros < d_leading_zeros;
+  const bool overflow = n_leading_zeros <= d_leading_zeros;
   const int32_t size_quotient = size_dividend - size_divisor + overflow;
   if (size_quotient == 0) {
     MP_INT_abs_sub_offset(dividend, dividend, divisor, 0, allocator);
@@ -360,5 +360,47 @@ void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
     quotient->size = - quotient->size;
     MP_INT_abs_sub_offset(dividend, divisor, dividend, 0, allocator);
   }
-  dividend->size = sgn(divisor->size) * dividend->size;
+  quotient->size = sgn(divisor->size) * sgn_dividend * abs(quotient->size);
+}
+
+
+inline void MP_FLOAT_left_shift(MP_FLOAT *op, const int32_t bit_count, const Allocator *allocator) {
+  if (op->size == 0) { return; }
+  const int32_t size = abs(op->size);
+  const int32_t shift_limbs = bit_count / (int32_t) LMP_LIMB_BITS;
+  const int32_t shift_bits = bit_count % (int32_t) LMP_LIMB_BITS;
+
+  const int32_t leading_zeros = __builtin_clzll(op->limbs[size - 1]);
+  const int32_t res_size = size + shift_limbs + (shift_bits > leading_zeros);
+  MP_FLOAT_realloc(op, res_size, allocator);
+
+  for (int32_t i = res_size - 1; i >= 0; i--) {
+    const lmp_limb_t current = (i >= shift_limbs && i - shift_limbs <= size - 1)
+                             ? op->limbs[i - shift_limbs] : 0;
+    op->limbs[i] = shift_bits ? current << shift_bits : current;
+    if (i + 1 <= res_size - 1) {
+      op->limbs[i + 1] |= shift_bits ? current >> (LMP_LIMB_BITS - shift_bits) : 0;
+    }
+  }
+  op->size = sgn(op->size) * res_size;
+}
+
+inline void MP_FLOAT_right_shift(MP_FLOAT *op, const int32_t bit_count, const Allocator *) {
+  if (op->size == 0) { return; }
+  const int32_t size = abs(op->size);
+  const int32_t shift_limbs = bit_count / (int32_t) LMP_LIMB_BITS;
+  const int32_t shift_bits = bit_count % (int32_t) LMP_LIMB_BITS;
+
+  if (shift_limbs >= size) {
+    for (int32_t i = 0; i < size; i ++) { op->limbs[i] = 0; }
+    return ;
+  }
+
+  for (int32_t i = shift_limbs; i < size-1; i++) {
+    const lmp_double_limb_t res = op->limbs[i] | (((lmp_double_limb_t)op->limbs[i + 1]) << LMP_LIMB_BITS);
+    op->limbs[i - shift_limbs] = (lmp_limb_t) (res >> shift_bits);
+  }
+  op->limbs[size - 1 - shift_limbs] = op->limbs[size - 1] >> shift_bits;
+
+  op->size = sgn(op->size) * (size - shift_limbs);
 }

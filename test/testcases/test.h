@@ -46,4 +46,6 @@ Suite *mp_int_misc_suite();
 Suite *cmp_suite();
 Suite *abs_3limbs_inv_suite();
 Suite *abs_divmod_suite();
+
+Suite *parse_suite();
 #endif //LMP_TEST_H

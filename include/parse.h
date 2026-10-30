@@ -36,8 +36,8 @@
 #ifndef LMP_PARSE_EXP_MAX
 #define LMP_PARSE_EXP_MAX (UINT16_MAX >> 1)
 #endif
-#ifndef LMP_LITERAL_PREC_MAX
-#define LMP_LITERAL_PREC_MAX (UINT16_MAX >> 1)
+#ifndef LMP_LITERAL_MANT_LEN_MAX
+#define LMP_LITERAL_MANT_LEN_MAX (UINT16_MAX >> 1)
 #endif
 
 typedef struct MP_NUMBER {

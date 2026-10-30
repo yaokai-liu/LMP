@@ -59,11 +59,11 @@ static const lmp_limb_t CB2[] = { 1 };
 static const lmp_limb_t CA3[] = { 7 };
 static const lmp_limb_t CB3[] = { 7 };
 
-static const lmp_limb_t CA5[] = { UINT64_MAX };
+static const lmp_limb_t CA5[] = { LMP_LIMB_MAX };
 static const lmp_limb_t CB5[] = { 1, 0 };
 
 static const lmp_limb_t CA4[] = { 1, 0 };
-static const lmp_limb_t CB4[] = { UINT64_MAX };
+static const lmp_limb_t CB4[] = { LMP_LIMB_MAX };
 
 static const lmp_limb_t CA6[] = { 5, 7 };
 static const lmp_limb_t CB6[] = { 9, 6 };

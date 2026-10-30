@@ -54,8 +54,8 @@ static void run_add_u64_case(const AddU64Case *c)
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(DEST.limbs[i] == c->e[i],
                   "%s: limb[%d] %llu != %llu", c->name, i,
-                  (unsigned long long)DEST.limbs[i],
-                  (unsigned long long)c->e[i]);
+                  (lmp_limb_t)DEST.limbs[i],
+                  (lmp_limb_t)c->e[i]);
   }
 }
 
@@ -65,13 +65,13 @@ static const lmp_limb_t AE1[] = { 2 };
 static const lmp_limb_t AA2[] = { 1234 };
 static const lmp_limb_t AE2[] = { 2234 };
 
-static const lmp_limb_t AA3[] = { UINT64_MAX };
+static const lmp_limb_t AA3[] = { LMP_LIMB_MAX };
 static const lmp_limb_t AE3[] = { 0, 1 };
 
 static const lmp_limb_t AA4[] = { 2, 3 };
 static const lmp_limb_t AE4[] = { 3, 3 };
 
-static const lmp_limb_t AA5[] = { UINT64_MAX, 1 };
+static const lmp_limb_t AA5[] = { LMP_LIMB_MAX, 1 };
 static const lmp_limb_t AE5[] = { 0, 2 };
 
 static const lmp_limb_t AA6[] = { 0 };
@@ -80,8 +80,8 @@ static const lmp_limb_t AE6[] = { 12345 };
 static const lmp_limb_t AA7[] = { 5, 6 };
 static const lmp_limb_t AE7[] = { 5, 6 };
 
-static const lmp_limb_t AA8[] = { UINT64_MAX,
-                                  UINT64_MAX };
+static const lmp_limb_t AA8[] = { LMP_LIMB_MAX,
+                                  LMP_LIMB_MAX };
 static const lmp_limb_t AE8[] = { 0, 0, 1 };
 
 static const lmp_limb_t AA9[] = { 0, 0 };
@@ -90,9 +90,9 @@ static const lmp_limb_t AE9[] = { 7 };
 static const lmp_limb_t AA10[] = { (1ULL << 63) };
 static const lmp_limb_t AE10[] = { 0, 1 };
 
-static const lmp_limb_t AA11[] = { UINT64_MAX,
-                                   UINT64_MAX,
-                                   UINT64_MAX };
+static const lmp_limb_t AA11[] = { LMP_LIMB_MAX,
+                                   LMP_LIMB_MAX,
+                                   LMP_LIMB_MAX };
 static const lmp_limb_t AE11[] = { 0, 0, 0, 1 };
 
 static const AddU64Case abs_add_u64_cases[] = {

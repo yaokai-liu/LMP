@@ -26,6 +26,7 @@
  **/
 
 #include "lmp.h"
+#include "arith.h"
 
 #define max(a, b) ((a) > (b) ? (a) : (b))
 #define abs(a) ((a) > (0) ? (a) : -(a))
@@ -94,7 +95,7 @@ inline lmp_limb_t left_shift_load(const MP_INT *restrict num, const int32_t inde
 inline lmp_double_limb_t left_shift_load_double(const MP_INT *restrict num, const int32_t index, const int32_t bit_count) {
   const int32_t size = abs(num->size);
   if (index < 0) {
-    lmp_double_limb_t val1 = (-1 <= size + index && index <=  0)
+    lmp_double_limb_t val1 = ( 1 <= size + index && index <=  0)
                            ? (((lmp_double_limb_t)num->limbs[size + index - 1]) << bit_count) : 0;
     lmp_double_limb_t val2 = ( 0 <= size + index && index <= -1)
                            ? (((lmp_double_limb_t)num->limbs[size + index    ]) << bit_count) : 0;
@@ -151,4 +152,67 @@ inline bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, const int
     if (offset_load(op1, size1 - 1 - i) > offset_load(op2, size1 - offset - 1 - i)) { return true;  }
   }
   return true;
+}
+
+inline void MP_FLOAT_init(MP_FLOAT *val, const int32_t initial_alloc, const Allocator *allocator) {
+  if (val->prec == 0) {
+    val->prec = aligned(initial_alloc);
+    val->limbs = allocator->calloc(val->prec, LMP_LIMB_SIZE);
+    val->exp = MP_FLOAT_ZERO;
+    val->size = 0;
+  }
+}
+
+inline void MP_FLOAT_realloc(MP_FLOAT *val, const int32_t required, const Allocator *allocator) {
+  if (val->prec < 0) { return ; }
+  if (val->prec < required) {
+    const int32_t new_alloc = aligned(required);
+    lmp_limb_t *p = allocator->realloc(val->limbs, new_alloc * LMP_LIMB_SIZE);
+    if (!p) return;
+    allocator->memset(&p[val->prec], 0, (new_alloc - val->prec) * LMP_LIMB_SIZE);
+    val->limbs = p;
+    val->prec = new_alloc;
+  }
+}
+
+void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator) {
+  MP_FLOAT_realloc(dest, src->size, allocator);
+  allocator->memcpy(dest->limbs, src->limbs, abs(src->size) * LMP_LIMB_SIZE);
+  dest->size = src->size;
+}
+
+void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator) {
+  if (val->prec > 0 && val->limbs) {
+    allocator->free(val->limbs);
+    val->limbs = nullptr;
+    val->prec = 0;
+  }
+  val->exp = MP_FLOAT_ZERO;
+  val->size = 0;
+}
+
+inline void MP_FLOAT_clamp(MP_FLOAT *val) {
+  if (!val->size) { return; }
+  int32_t size = abs(val->size);
+
+  int32_t tail_zeros = 0;
+  for (; tail_zeros < size; tail_zeros ++) { if (val->limbs[tail_zeros] != 0) { break; } }
+  if (tail_zeros) {
+    for (int32_t i = tail_zeros; i < size; i ++) {
+      val->limbs[i - tail_zeros] = val->limbs[i];
+    }
+    for (int32_t i = size - tail_zeros; i < size; i ++) { val->limbs[i] = 0; }
+    val->exp += tail_zeros;
+  }
+
+  while (size > 0 && val->limbs[size - 1] == 0) { size--; }
+  val->size = (val->size >= 0) ? size : -size;
+}
+
+inline void MP_FLOAT_negative(MP_FLOAT *val) {
+  val->size = -val->size;
+}
+
+inline void MP_FLOAT_trivert(MP_FLOAT *val) {
+  val->exp = -val->exp;
 }

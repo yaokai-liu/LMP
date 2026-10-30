@@ -30,6 +30,7 @@
 
 #include <stdint.h>
 
+#define MP_NUM_STANDARD_COUNT   3
 enum MP_NUMBER_STANDARD_TYPE : uint8_t {
   MP_NUM_LMP_STANDARD = 0x00,
   // std C integer
@@ -39,14 +40,14 @@ enum MP_NUMBER_STANDARD_TYPE : uint8_t {
   MP_NUM_UNKNOWN_STANDARD = 0xFF
 };
 enum MP_NUMBER_LMP_REPRESENTATION_TYPE : uint8_t {
-  MP_NUM_REPR_MP_NONE = 0x00,
+  MP_NUM_REPR_NONE = 0x00,
   MP_NUM_REPR_MP_INT = 0x01,
   MP_NUM_REPR_MP_FLOAT = 0x02,
   MP_NUM_REPR_MP_DECIMAL = 0x03,
 };
 enum MP_NUMBER_INT_REPRESENTATION_TYPE : uint8_t {
-  MP_NUM_REPR_STD_C_INT = 0x00,
-  MP_NUM_REPR_STD_C_UINT = 0x01,
+  MP_NUM_REPR_STD_C_INT = 0x01,
+  MP_NUM_REPR_STD_C_UINT = 0x02,
 };
 enum MP_NUMBER_IEEE754_REPRESENTATION_TYPE : uint8_t {
   MP_NUM_REPR_IEEE754_FLOAT = 0x01,
@@ -93,22 +94,27 @@ static_assert(sizeof(((MP_NUM_TYPE*)nullptr)->pack) == 4, "pack layout broken");
 #define MP_NUM_TYPE_OF(_standard, _repr, _size) \
   ((((_standard) & 0xFFu) << 24) | (((_repr) & 0xFF) << 16) | ((_size) & 0xFFFFu))
 
-
-#define MP_NUM_STANDARD_COUNT 3
-extern const struct MP_STANDARD  {
+struct MP_STANDARD {
   const char * const name;
   const uint8_t     leng;
   const uint8_t     stdd;
-} MP_NUM_STANDARDS[MP_NUM_STANDARD_COUNT];
+};
 #define MP_NUM_MAX_REPR_COUNT 16
-extern const struct MP_STANDARD_REPR {
-  const uint16_t count;
-  const uint8_t  L;
-  const uint8_t  LL;
+struct MP_STANDARD_REPR {
+  const uint16_t  count;
+  const uint16_t  L;
+  const uint16_t  LL;
+  const uint16_t  fallback_index;
   struct {
     const char    chr;
     const uint8_t repr;
   } items[MP_NUM_MAX_REPR_COUNT];
-} MP_STANDARD_REPR_CHARS[MP_NUM_STANDARD_COUNT];
+};
+
+extern const struct MP_STANDARD MP_NUM_INT_STANDARDS[MP_NUM_STANDARD_COUNT];
+extern const struct MP_STANDARD MP_NUM_FLOAT_STANDARDS[MP_NUM_STANDARD_COUNT];
+
+extern const struct MP_STANDARD_REPR MP_NUM_INT_REPR_CHARS[MP_NUM_STANDARD_COUNT];
+extern const struct MP_STANDARD_REPR MP_NUM_FLOAT_REPR_CHARS[MP_NUM_STANDARD_COUNT];
 
 #endif //LMP_TYPE_H

@@ -54,8 +54,8 @@ static void run_sub_u64_case(const SubU64Case *c)
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(DEST.limbs[i] == c->e[i],
                   "%s: limb[%d] %llu != %llu", c->name, i,
-                  (unsigned long long)DEST.limbs[i],
-                  (unsigned long long)c->e[i]);
+                  (lmp_limb_t)DEST.limbs[i],
+                  (lmp_limb_t)c->e[i]);
   }
 }
 
@@ -66,13 +66,13 @@ static const lmp_limb_t SA2[] = { 2234 };
 static const lmp_limb_t SE2[] = { 1234 };
 
 static const lmp_limb_t SA3[] = { 0, 1 };
-static const lmp_limb_t SE3[] = { UINT64_MAX };
+static const lmp_limb_t SE3[] = { LMP_LIMB_MAX };
 
 static const lmp_limb_t SA4[] = { 3, 3 };
 static const lmp_limb_t SE4[] = { 2, 3 };
 
-static const lmp_limb_t SA5[] = { UINT64_MAX, 1 };
-static const lmp_limb_t SE5[] = { UINT64_MAX - 1, 1 };
+static const lmp_limb_t SA5[] = { LMP_LIMB_MAX, 1 };
+static const lmp_limb_t SE5[] = { LMP_LIMB_MAX - 1, 1 };
 
 static const lmp_limb_t SA6[] = { 1 };
 static const lmp_limb_t SE6[] = { 0 };
@@ -84,21 +84,21 @@ static const lmp_limb_t SA8[] = { 0 };
 static const lmp_limb_t SE8[] = { 0 };
 
 static const lmp_limb_t SA9[] = { 0, 0, 1 };
-static const lmp_limb_t SE9[] = { UINT64_MAX,
-                                  UINT64_MAX };
+static const lmp_limb_t SE9[] = { LMP_LIMB_MAX,
+                                  LMP_LIMB_MAX };
 
-static const lmp_limb_t SA10[] = { UINT64_MAX,
-                                   UINT64_MAX,
-                                   UINT64_MAX };
-static const lmp_limb_t SE10[] = { UINT64_MAX - 1,
-                                   UINT64_MAX,
-                                   UINT64_MAX };
+static const lmp_limb_t SA10[] = { LMP_LIMB_MAX,
+                                   LMP_LIMB_MAX,
+                                   LMP_LIMB_MAX };
+static const lmp_limb_t SE10[] = { LMP_LIMB_MAX - 1,
+                                   LMP_LIMB_MAX,
+                                   LMP_LIMB_MAX };
 
 static const lmp_limb_t SA11[] = { (1ULL << 63) };
 static const lmp_limb_t SE11[] = { 0 };
 
 static const lmp_limb_t SA12[] = { 0, 5 };
-static const lmp_limb_t SE12[] = { UINT64_MAX - 1, 4 };
+static const lmp_limb_t SE12[] = { LMP_LIMB_MAX - 1, 4 };
 
 static const SubU64Case abs_sub_u64_cases[] = {
   { "sub1_simple",        SA1,  SE1,  1, 1, 1 },

@@ -53,8 +53,8 @@ static void run_mul_u64_case(const MulU64Case *c)
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(DEST.limbs[i] == c->e[i],
                   "%s: limb[%d] %llu != %llu", c->name, i,
-                  (unsigned long long)DEST.limbs[i],
-                  (unsigned long long)c->e[i]);
+                  (lmp_limb_t)DEST.limbs[i],
+                  (lmp_limb_t)c->e[i]);
   }
 }
 
@@ -64,8 +64,8 @@ static const lmp_limb_t ME1[] = { 1 };
 static const lmp_limb_t MA2[] = { 1234 };
 static const lmp_limb_t ME2[] = { 1234000 };
 
-static const lmp_limb_t MA3[] = { UINT64_MAX };
-static const lmp_limb_t ME3[] = { UINT64_MAX - 1, 1 };
+static const lmp_limb_t MA3[] = { LMP_LIMB_MAX };
+static const lmp_limb_t ME3[] = { LMP_LIMB_MAX - 1, 1 };
 
 static const lmp_limb_t MA4[] = { 2, 3 };
 static const lmp_limb_t ME4[] = { 4, 6 };
@@ -79,10 +79,10 @@ static const lmp_limb_t ME6[] = { 0 };
 static const lmp_limb_t MA7[] = { 0 };
 static const lmp_limb_t ME7[] = { 0 };
 
-static const lmp_limb_t MA8[] = { UINT64_MAX,
-                                  UINT64_MAX };
-static const lmp_limb_t ME8[] = { UINT64_MAX - 1,
-                                  UINT64_MAX, 1 };
+static const lmp_limb_t MA8[] = { LMP_LIMB_MAX,
+                                  LMP_LIMB_MAX };
+static const lmp_limb_t ME8[] = { LMP_LIMB_MAX - 1,
+                                  LMP_LIMB_MAX, 1 };
 
 static const lmp_limb_t MA9[] = { 7 };
 static const lmp_limb_t ME9[] = { 21 };
@@ -91,7 +91,7 @@ static const lmp_limb_t MA10[] = { 2 };
 static const lmp_limb_t ME10[] = { 0, 1 };
 
 static const lmp_limb_t MA11[] = { 2, 1 };
-static const lmp_limb_t ME11[] = { UINT64_MAX - 1, 0, 1 };
+static const lmp_limb_t ME11[] = { LMP_LIMB_MAX - 1, 0, 1 };
 
 static const MulU64Case abs_mul_u64_cases[] = {
   { "mul1_simple",      MA1,  ME1,  1, 1, 1 },
@@ -104,7 +104,7 @@ static const MulU64Case abs_mul_u64_cases[] = {
   { "mul8_all_ff",      MA8,  ME8,  2, 3, 2 },
   { "mul9_simple2",     MA9,  ME9,  1, 1, 3 },
   { "mul10_big_val",    MA10, ME10, 1, 2, (1ULL << 63) },
-  { "mul11_carry_mid",  MA11, ME11, 2, 3, UINT64_MAX },
+  { "mul11_carry_mid",  MA11, ME11, 2, 3, LMP_LIMB_MAX },
 };
 
 START_TEST(test_abs_mul_u64)

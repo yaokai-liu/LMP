@@ -72,7 +72,7 @@ typedef struct MP_INT {
 enum MP_FLOAT_SPECIAL_VAL_TYPE : int32_t {
   MP_FLOAT_ZERO = 0,
   MP_FLOAT_INF,
-  MP_FLOAT_INS,
+  MP_FLOAT_INS, // infinity small
   MP_FLOAT_NAN = INT32_MAX,
 
   MP_FLOAT_NEG_INF = - MP_FLOAT_INF,
@@ -120,5 +120,16 @@ lmp_limb_t offset_load(const MP_INT *restrict num, int32_t index);
 lmp_double_limb_t offset_load_double(const MP_INT *restrict num, int32_t index);
 lmp_limb_t left_shift_load(const MP_INT *restrict num, int32_t index, int32_t bit_count);
 lmp_double_limb_t left_shift_load_double(const MP_INT *restrict num, int32_t index, int32_t bit_count);
+
+void MP_FLOAT_init(MP_FLOAT *val, const int32_t initial_alloc, const Allocator *allocator);
+void MP_FLOAT_realloc(MP_FLOAT *val, const int32_t required, const Allocator *allocator);
+void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator);
+void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator);
+void MP_FLOAT_clamp(MP_FLOAT *val);
+
+// size = - size
+void MP_FLOAT_negative(MP_FLOAT *val);
+// exp = - exp
+void MP_FLOAT_trivert(MP_FLOAT *val);
 
 #endif //LMP_H

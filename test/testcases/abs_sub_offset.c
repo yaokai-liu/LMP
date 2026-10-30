@@ -56,8 +56,8 @@ static void run_sub_case(const SubCase *c)
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(RES.limbs[i] == c->e[i],
                   "%s: limb[%d] %llu != %llu", c->name, i,
-                  (unsigned long long)RES.limbs[i],
-                  (unsigned long long)c->e[i]);
+                  (lmp_limb_t)RES.limbs[i],
+                  (lmp_limb_t)c->e[i]);
   }
 }
 
@@ -65,13 +65,13 @@ static const lmp_limb_t SA1[] = { 1234 };
 static const lmp_limb_t SB1[] = { 1000 };
 static const lmp_limb_t SE1[] = { 234 };
 
-static const lmp_limb_t SA2[] = { UINT64_MAX, 1 };
+static const lmp_limb_t SA2[] = { LMP_LIMB_MAX, 1 };
 static const lmp_limb_t SB2[] = { 1, 1 };
-static const lmp_limb_t SE2[] = { UINT64_MAX - 1 };
+static const lmp_limb_t SE2[] = { LMP_LIMB_MAX - 1 };
 
 static const lmp_limb_t SA3[] = { 0, 1 };
 static const lmp_limb_t SB3[] = { 1, 0 };
-static const lmp_limb_t SE3[] = { UINT64_MAX };
+static const lmp_limb_t SE3[] = { LMP_LIMB_MAX };
 
 static const lmp_limb_t SA4[] = { 5, 3 };
 static const lmp_limb_t SB4[] = { 1 };
@@ -79,7 +79,7 @@ static const lmp_limb_t SE4[] = { 0, 2 };
 
 static const lmp_limb_t SA5[] = { 0, 0, 5 };
 static const lmp_limb_t SB5[] = { 1, 2 };
-static const lmp_limb_t SE5[] = { 0, UINT64_MAX, 2 };
+static const lmp_limb_t SE5[] = { 0, LMP_LIMB_MAX, 2 };
 
 static const lmp_limb_t SA6[] = { 16, 0, 3 };
 static const lmp_limb_t SB6[] = { 2 };
@@ -91,7 +91,7 @@ static const lmp_limb_t SE7[] = { 0 };
 
 static const lmp_limb_t SA8[] = { 0, 0, 2 };
 static const lmp_limb_t SB8[] = { 1, 1 };
-static const lmp_limb_t SE8[] = { 0, UINT64_MAX };
+static const lmp_limb_t SE8[] = { 0, LMP_LIMB_MAX };
 
 static const SubCase sub_cases[] = {
   { "case1_simple",         SA1, SB1, SE1, 1, 1, 1, 0 },

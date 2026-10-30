@@ -46,26 +46,26 @@ static void run_add_case(const Inv3Case *c)
 static const Inv3Case inv_cases[] = {
   {
     "inv3_one_limb_1",
-    (((lmp_double_limb_t)10512282028032306483ULL) << 64 | 2678291321200806564ULL),
-    (((lmp_double_limb_t)0ULL) << 64 | 13923236679616247875ULL)
+    (((lmp_double_limb_t)10512282028032306483ULL) << LMP_LIMB_BITS | 2678291321200806564ULL),
+    (((lmp_double_limb_t)0ULL) << LMP_LIMB_BITS | 13923236679616247875ULL)
 
   },
   {
     "inv3_one_limb_2",
-    (((lmp_double_limb_t)10512282028032306483ULL) << 64 | 2678291321200806564ULL),
-    (((lmp_double_limb_t)0ULL) << 64 | 13923236679616247875ULL)
+    (((lmp_double_limb_t)10512282028032306483ULL) << LMP_LIMB_BITS | 2678291321200806564ULL),
+    (((lmp_double_limb_t)0ULL) << LMP_LIMB_BITS | 13923236679616247875ULL)
 
   },
   {
     "inv3_one_limb_3",
-    (((lmp_double_limb_t)11373414061963692226ULL) << 64 | 5637707374651487514ULL),
-    (((lmp_double_limb_t)0ULL) << 64 | 11472360697033891273ULL)
+    (((lmp_double_limb_t)11373414061963692226ULL) << LMP_LIMB_BITS | 5637707374651487514ULL),
+    (((lmp_double_limb_t)0ULL) << LMP_LIMB_BITS | 11472360697033891273ULL)
 
   },
   {
     "inv3_one_limb_4",
-    (((lmp_double_limb_t)14643696743029893023ULL) << 64 | 14398196988406505576ULL),
-    (((lmp_double_limb_t)0ULL) << 64 | 4790719313594345477ULL)
+    (((lmp_double_limb_t)14643696743029893023ULL) << LMP_LIMB_BITS | 14398196988406505576ULL),
+    (((lmp_double_limb_t)0ULL) << LMP_LIMB_BITS | 4790719313594345477ULL)
   },
 };
 

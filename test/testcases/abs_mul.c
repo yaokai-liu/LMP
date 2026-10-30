@@ -57,8 +57,8 @@ static void run_mul_case(const MulCase *c)
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(DEST.limbs[i] == c->e[i],
                   "%s: limb[%d] %llu != %llu", c->name, i,
-                  (unsigned long long)DEST.limbs[i],
-                  (unsigned long long)c->e[i]);
+                  (lmp_limb_t)DEST.limbs[i],
+                  (lmp_limb_t)c->e[i]);
   }
 }
 
@@ -71,9 +71,9 @@ static const lmp_limb_t MA2[] = { 1234 };
 static const lmp_limb_t MB2[] = { 5678 };
 static const lmp_limb_t ME2[] = { 7006652 };
 
-static const lmp_limb_t MA3[] = { UINT64_MAX };
+static const lmp_limb_t MA3[] = { LMP_LIMB_MAX };
 static const lmp_limb_t MB3[] = { 2 };
-static const lmp_limb_t ME3[] = { UINT64_MAX - 1, 1 };
+static const lmp_limb_t ME3[] = { LMP_LIMB_MAX - 1, 1 };
 
 static const lmp_limb_t MA4[] = { (1ULL << 63) };
 static const lmp_limb_t MB4[] = { 2 };
@@ -83,13 +83,13 @@ static const lmp_limb_t MA5[] = { 2, 3 };
 static const lmp_limb_t MB5[] = { 2 };
 static const lmp_limb_t ME5[] = { 4, 6 };
 
-static const lmp_limb_t MA6[] = { UINT64_MAX, 1 };
+static const lmp_limb_t MA6[] = { LMP_LIMB_MAX, 1 };
 static const lmp_limb_t MB6[] = { 2 };
-static const lmp_limb_t ME6[] = { UINT64_MAX - 1, 3 };
+static const lmp_limb_t ME6[] = { LMP_LIMB_MAX - 1, 3 };
 
-static const lmp_limb_t MA7[] = { UINT64_MAX };
-static const lmp_limb_t MB7[] = { UINT64_MAX };
-static const lmp_limb_t ME7[] = { 1, UINT64_MAX - 1 };
+static const lmp_limb_t MA7[] = { LMP_LIMB_MAX };
+static const lmp_limb_t MB7[] = { LMP_LIMB_MAX };
+static const lmp_limb_t ME7[] = { 1, LMP_LIMB_MAX - 1 };
 
 static const lmp_limb_t MA8[] = { 2, 1 };
 static const lmp_limb_t MB8[] = { 3, 1 };
@@ -103,9 +103,9 @@ static const lmp_limb_t MA10[] = { 123, 456 };
 static const lmp_limb_t MB10[] = { 0 };
 static const lmp_limb_t ME10[] = { 0 };
 
-static const lmp_limb_t MA11[] = { UINT64_MAX, UINT64_MAX };
-static const lmp_limb_t MB11[] = { UINT64_MAX, UINT64_MAX };
-static const lmp_limb_t ME11[] = { 1, 0, UINT64_MAX - 1, UINT64_MAX };
+static const lmp_limb_t MA11[] = { LMP_LIMB_MAX, LMP_LIMB_MAX };
+static const lmp_limb_t MB11[] = { LMP_LIMB_MAX, LMP_LIMB_MAX };
+static const lmp_limb_t ME11[] = { 1, 0, LMP_LIMB_MAX - 1, LMP_LIMB_MAX };
 
 static const MulCase abs_mul_cases[] = {
   { "mul1_simple",     MA1,  MB1,  ME1,  1, 1, 1 },

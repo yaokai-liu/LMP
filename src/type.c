@@ -29,33 +29,43 @@
 
 #define lenof(str_literal) ((sizeof str_literal) - 1)
 
-const struct MP_STANDARD MP_NUM_STANDARDS[MP_NUM_STANDARD_COUNT] = {
-  [MP_NUM_LMP_STANDARD] = { .name = "MP", .leng = lenof("MP"), .stdd = MP_NUM_LMP_STANDARD},
-  [MP_NUM_INT_STANDARD] = { .name = "C-INT", .leng = lenof("C-INT"), .stdd = MP_NUM_INT_STANDARD},
-  [MP_NUM_IEEE754_STANDARD] = { .name = "IEEE754", .leng = lenof("IEEE754"), .stdd = MP_NUM_IEEE754_STANDARD},
+const struct MP_STANDARD MP_NUM_INT_STANDARDS[MP_NUM_STANDARD_COUNT] = {
+  [MP_NUM_LMP_STANDARD] = { .name = "LMP", .leng = lenof("LMP"), .stdd = MP_NUM_LMP_STANDARD },
+  [MP_NUM_INT_STANDARD] = { .name = "C-INT", .leng = lenof("C-INT"), .stdd = MP_NUM_INT_STANDARD },
 };
 
-const struct MP_STANDARD_REPR MP_STANDARD_REPR_CHARS[MP_NUM_STANDARD_COUNT] = {
-  [MP_NUM_LMP_STANDARD] =  {.count = 6, .L = 0, .LL = 0, .items = {
-      {.chr = 'f', .repr = MP_NUM_REPR_MP_FLOAT},
-      {.chr = 'F', .repr = MP_NUM_REPR_MP_FLOAT},
-      {.chr = 'g', .repr = MP_NUM_REPR_MP_FLOAT},
-      {.chr = 'G', .repr = MP_NUM_REPR_MP_FLOAT},
-      {.chr = 'd', .repr = MP_NUM_REPR_MP_DECIMAL},
-      {.chr = 'D', .repr = MP_NUM_REPR_MP_DECIMAL},
+const struct MP_STANDARD MP_NUM_FLOAT_STANDARDS[MP_NUM_STANDARD_COUNT] = {
+  [MP_NUM_LMP_STANDARD] = { .name = "LMP", .leng = lenof("LMP"), .stdd = MP_NUM_LMP_STANDARD },
+  [MP_NUM_IEEE754_STANDARD] = { .name = "IEEE754", .leng = lenof("IEEE754"), .stdd = MP_NUM_IEEE754_STANDARD },
+};
+
+const struct MP_STANDARD_REPR MP_NUM_INT_REPR_CHARS[MP_NUM_STANDARD_COUNT] = {
+  [MP_NUM_LMP_STANDARD] =  {.count = 0, .L = 0, .LL = 0, .fallback_index = 0, .items = {
+      {.chr = '\0', .repr = MP_NUM_REPR_MP_INT},
+    }},
+  [MP_NUM_INT_STANDARD] =  {.count = 4, .L = 8, .LL = 16, .fallback_index = 0, .items = {
+    {.chr = 's', .repr = MP_NUM_REPR_STD_C_INT},
+    {.chr = 'S', .repr = MP_NUM_REPR_STD_C_INT},
+    {.chr = 'u', .repr = MP_NUM_REPR_STD_C_UINT},
+    {.chr = 'U', .repr = MP_NUM_REPR_STD_C_UINT},
   }},
-  [MP_NUM_INT_STANDARD] =  {.count = 4, .L = 8, .LL = 16, .items = {
-      {.chr = 's', .repr = MP_NUM_REPR_STD_C_INT},
-      {.chr = 'S', .repr = MP_NUM_REPR_STD_C_INT},
-      {.chr = 'u', .repr = MP_NUM_REPR_STD_C_UINT},
-      {.chr = 'U', .repr = MP_NUM_REPR_STD_C_UINT},
+};
+
+const struct MP_STANDARD_REPR MP_NUM_FLOAT_REPR_CHARS[MP_NUM_STANDARD_COUNT] = {
+  [MP_NUM_LMP_STANDARD] =  {.count = 6,.L = 0, .LL = 0, .fallback_index = 0, .items = {
+    {.chr = 'f', .repr = MP_NUM_REPR_MP_FLOAT},
+    {.chr = 'F', .repr = MP_NUM_REPR_MP_FLOAT},
+    {.chr = 'g', .repr = MP_NUM_REPR_MP_FLOAT},
+    {.chr = 'G', .repr = MP_NUM_REPR_MP_FLOAT},
+    {.chr = 'd', .repr = MP_NUM_REPR_MP_DECIMAL},
+    {.chr = 'D', .repr = MP_NUM_REPR_MP_DECIMAL},
   }},
-  [MP_NUM_IEEE754_STANDARD] =  {.count = 6, .L = 8, .LL = 16, .items = {
-      {.chr = 'f', .repr = MP_NUM_REPR_IEEE754_FLOAT},
-      {.chr = 'F', .repr = MP_NUM_REPR_IEEE754_FLOAT},
-      {.chr = 'g', .repr = MP_NUM_REPR_IEEE754_FLOAT},
-      {.chr = 'G', .repr = MP_NUM_REPR_IEEE754_FLOAT},
-      {.chr = 'd', .repr = MP_NUM_REPR_IEEE754_DECIMAL},
-      {.chr = 'D', .repr = MP_NUM_REPR_IEEE754_DECIMAL},
+  [MP_NUM_IEEE754_STANDARD] =  {.count = 6, .L = 8, .LL = 16, .fallback_index = 0, .items = {
+    {.chr = 'f', .repr = MP_NUM_REPR_IEEE754_FLOAT},
+    {.chr = 'F', .repr = MP_NUM_REPR_IEEE754_FLOAT},
+    {.chr = 'g', .repr = MP_NUM_REPR_IEEE754_FLOAT},
+    {.chr = 'G', .repr = MP_NUM_REPR_IEEE754_FLOAT},
+    {.chr = 'd', .repr = MP_NUM_REPR_IEEE754_DECIMAL},
+    {.chr = 'D', .repr = MP_NUM_REPR_IEEE754_DECIMAL},
   }},
 };

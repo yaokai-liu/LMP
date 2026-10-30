@@ -81,5 +81,7 @@ void MP_INT_sub(MP_INT *rop, const MP_INT *op1, const MP_INT * op2, const Alloca
 void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
                    MP_INT *restrict quotient, const Allocator *allocator);
 
+void MP_FLOAT_left_shift(MP_FLOAT *op, int32_t bit_count, const Allocator *allocator);
+void MP_FLOAT_right_shift(MP_FLOAT *op, int32_t bit_count, const Allocator *);
 
 #endif //LMP_ARITH_H

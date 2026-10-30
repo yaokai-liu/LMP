@@ -36,15 +36,16 @@
 int main () {
   MP_NUM_TYPE num_type = {};
   lmp_limb_t limbs[8] = {};
-  MP_NUMBER number = {.val.INT = {.alloc = -8, .limbs = limbs}, .repr = MP_NUM_REPR_MP_NONE};
-  const char *num_str = "-123.1234567899999123456789123456789123456789";
-  constexpr uint32_t str_len = lenof("-123.1234567899999123456789123456789123456789");
+  MP_NUMBER number = {.val.INT = {.alloc = -8, .limbs = limbs}, .repr = MP_NUM_REPR_NONE};
+  const char *num_str = "-123.12345678999991234'56789123456789_123456789LL<IEEE754>";
+  constexpr uint32_t str_len = lenof("-123.12345678999991234'56789123456789_123456789LL<IEEE754>");
   const uint32_t parse_len = LMP_parse(num_str, &num_type, &number, &STDAllocator);
   if (parse_len != str_len) { return -1; }
-  if (num_type.type != MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_FLOAT, 0)) { return -2; }
+  if (num_type.type != MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT, 16)) { return -2; }
   if (number.val.FLOAT.size != -4) { return -3; }
   if (number.val.FLOAT.exp != -3) { return -4; }
   const int64_t size = abs(number.val.FLOAT.size);
+  if (number.val.FLOAT.size < 0) { printf("-0x"); } else { printf("0x"); }
   for (int32_t i = 0; i < size; i++) {
     printf((size - 1 - i >= - number.val.FLOAT.exp) ? "%llX" : "%016llX", number.val.FLOAT.limbs[size - 1 - i]);
     if (size - 1 - i == - number.val.FLOAT.exp) { printf("."); }
