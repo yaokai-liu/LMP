@@ -68,6 +68,10 @@ static uint32_t LMP_parse_num_suffix(const char *input, bool is_float, uint32_t 
 #define isUnsigned(pText)         (*(pText) == 'u' || *(pText) == 'U')
 #define isSizeHinter(pText)       (*(pText) == 'l' || *(pText) == 'L')
 #define isHyphen(pText)           (*(pText) == '-' || *(pText) == '_')
+#define isHexPrefix(pText)        (*(pText) == 'x' || *(pText) == 'X')
+#define isDecPrefix(pText)        (*(pText) == 'd' || *(pText) == 'D')
+#define isOctPrefix(pText)        (*(pText) == 'o' || *(pText) == 'O')
+#define isBinPrefix(pText)        (*(pText) == 'b' || *(pText) == 'B')
 #define isLAngleBracket(pText)    (*(pText) == '<')
 #define isRAngleBracket(pText)    (*(pText) == '>')
 

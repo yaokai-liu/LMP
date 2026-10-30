@@ -121,8 +121,8 @@ lmp_double_limb_t offset_load_double(const MP_INT *restrict num, int32_t index);
 lmp_limb_t left_shift_load(const MP_INT *restrict num, int32_t index, int32_t bit_count);
 lmp_double_limb_t left_shift_load_double(const MP_INT *restrict num, int32_t index, int32_t bit_count);
 
-void MP_FLOAT_init(MP_FLOAT *val, const int32_t initial_alloc, const Allocator *allocator);
-void MP_FLOAT_realloc(MP_FLOAT *val, const int32_t required, const Allocator *allocator);
+void MP_FLOAT_init(MP_FLOAT *val, int32_t initial_alloc, const Allocator *allocator);
+void MP_FLOAT_realloc(MP_FLOAT *val, int32_t required, const Allocator *allocator);
 void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator);
 void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator);
 void MP_FLOAT_clamp(MP_FLOAT *val);

@@ -30,8 +30,6 @@
 
 #include "lmp.h"
 #include "arith.h"
-#include "parse.h"
-#include "print.h"
 #include <check.h>
 
 Suite *abs_add_offset_suite();
@@ -48,4 +46,7 @@ Suite *abs_3limbs_inv_suite();
 Suite *abs_divmod_suite();
 
 Suite *parse_suite();
+
+Suite *ieee754_suite();
+
 #endif //LMP_TEST_H

@@ -18,15 +18,15 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: ext/ieee754
- * Filename: float.h
+ * Module Name: ext
+ * Filename: ieee754.h
  * Creator: Yaokai Liu
- * Create Date: 2026-10-25
+ * Create Date: 2026-10-30
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef LMP_FLOAT_H
-#define LMP_FLOAT_H
+#ifndef LMP_IEEE754_H
+#define LMP_IEEE754_H
 
 #include <stdint.h>
 #ifndef INT128_T_DEFINED
@@ -61,15 +61,15 @@ typedef uint128_t   float128_t;
 static_assert(sizeof(float16_t) == 2, "float16_t must be 16-bit");
 static_assert(sizeof(float128_t) == 16, "float128_t must be 128-bit");
 
-// argument @mantissa includes leading 1
-float16_t ieee754bin16(bool sign, uint16_t mantissa, uint8_t exponent);
-// argument @mantissa includes leading 1
-float32_t ieee754bin32(bool sign, uint32_t mantissa, uint8_t exponent);
-// argument @mantissa includes leading 1
-float64_t ieee754bin64(bool sign, uint64_t mantissa, uint16_t exponent);
-// argument @mantissa includes leading 1
-float128_t ieee754bin128(bool sign, uint128_t mantissa, uint16_t exponent);
-// argument @mantissa includes leading 1
-// float256_t ieee754bin256(bool sign, uint256_t  mantissa, uint32_t exponent);
+// @mantissa: includes leading 1
+float16_t ieee754bin16(bool sign, uint16_t mantissa, int8_t exponent);
+// @mantissa: includes leading 1
+float32_t ieee754bin32(bool sign, uint32_t mantissa, int8_t exponent);
+// @mantissa: includes leading 1
+float64_t ieee754bin64(bool sign, uint64_t mantissa, int16_t exponent);
+// @mantissa: includes leading 1
+float128_t ieee754bin128(bool sign, uint128_t mantissa, int16_t exponent);
+// @mantissa: includes leading 1
+// float256_t ieee754bin256(bool sign, uint256_t  mantissa, int32_t exponent);
 
-#endif //LMP_FLOAT_H
+#endif //LMP_IEEE754_H

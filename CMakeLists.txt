@@ -45,6 +45,7 @@ file(GLOB_RECURSE LMP_TESTCASE_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/tes
 add_executable(${TARGET_PREFIX}test test/test.c ${LMP_TESTCASE_SRC})
 target_link_libraries(${TARGET_PREFIX}test PRIVATE LMP check)
 target_include_directories(${TARGET_PREFIX}test PRIVATE src)
+target_include_directories(${TARGET_PREFIX}test PRIVATE src test/testcases)
 
 add_executable(${TARGET_PREFIX}debug test/debug.c)
 target_link_libraries(${TARGET_PREFIX}debug PRIVATE LMP)
