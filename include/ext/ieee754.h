@@ -63,17 +63,6 @@ typedef uint128_t   float128_t;
 static_assert(sizeof(float16_t) == 2, "float16_t must be 16-bit");
 static_assert(sizeof(float128_t) == 16, "float128_t must be 128-bit");
 
-// @mantissa: includes leading 1
-float16_t ieee754bin16(bool sign, uint16_t mantissa, int8_t exponent);
-// @mantissa: includes leading 1
-float32_t ieee754bin32(bool sign, uint32_t mantissa, int8_t exponent);
-// @mantissa: includes leading 1
-float64_t ieee754bin64(bool sign, uint64_t mantissa, int16_t exponent);
-// @mantissa: includes leading 1
-float128_t ieee754bin128(bool sign, uint128_t mantissa, int16_t exponent);
-// @mantissa: includes leading 1
-// float256_t ieee754bin256(bool sign, uint256_t  mantissa, int32_t exponent);
-
 #define IEEE754_F16_EXP_BITS    5
 #define IEEE754_F16_MANT_BITS   10
 #define IEEE754_F32_EXP_BITS    8
@@ -96,6 +85,27 @@ float128_t ieee754bin128(bool sign, uint128_t mantissa, int16_t exponent);
 #define IEEE754_F64_EXP_OFF     (((uint64_t) 1U << (IEEE754_F64_EXP_BITS - 1)) - 1)
 #define IEEE754_F128_EXP_OFF    (((uint128_t)1U << (IEEE754_F128_EXP_BITS - 1)) - 1)
 
+// never return the NaN
+// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
+//            assumed not more than MANT_MAX (not include leading 1)
+float16_t ieee754bin16(bool sign, uint16_t mantissa, int16_t exponent);
+// never return the NaN
+// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
+//            assumed not more than MANT_MAX (not include leading 1)
+float32_t ieee754bin32(bool sign, uint32_t mantissa, int16_t exponent);
+// never return the NaN
+// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
+//            assumed not more than MANT_MAX (not include leading 1)
+float64_t ieee754bin64(bool sign, uint64_t mantissa, int16_t exponent);
+// never return the NaN
+// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
+//            assumed not more than MANT_MAX (not include leading 1)
+float128_t ieee754bin128(bool sign, uint128_t mantissa, int16_t exponent);
+// never return the NaN
+// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
+//            assumed not more than MANT_MAX (not include leading 1)
+// float256_t ieee754bin256(bool sign, uint256_t  mantissa, int32_t exponent);
+
 #define IEEE754_F32_MAX         FLT_MAX
 #define IEEE754_F32_INS         FLT_TRUE_MIN
 #define IEEE754_F64_MAX         DBL_MAX
@@ -103,11 +113,11 @@ float128_t ieee754bin128(bool sign, uint128_t mantissa, int16_t exponent);
 
 // if abs(mp_val) > abs(IEEE754_F32_MAX): result INFs
 // if abs(mp_val) < abs(IEEE754_F32_INS): result IEEE754_F32_INS/0
-// (round-to-nearest, ties-away-from-zero)
+// (round-to-nearest, ties-away-from-zero) for normal range
 uint32_t MP_FLOAT_to_ieee754_f32(float32_t *restrict dest, const MP_FLOAT *restrict mp_val);
 // if abs(mp_val) > abs(IEEE754_F64_MAX): result INFs
 // if abs(mp_val) < abs(IEEE754_F64_INS): result IEEE754_F64_INS/0
-// (round-to-nearest, ties-away-from-zero)
+// (round-to-nearest, ties-away-from-zero) for normal range
 uint32_t MP_FLOAT_to_ieee754_f64(float64_t *restrict dest, const MP_FLOAT *restrict mp_val);
 
 #endif //LMP_IEEE754_H

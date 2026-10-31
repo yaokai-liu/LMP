@@ -54,13 +54,15 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) mantissa, INT(_ew) exponent)
   uint32_t final_exp = 0;                                                             \
   UINT(_w) final_mant = 0;                                                            \
                                                                                       \
-  exponent += IEEE754_F##_w##_EXP_OFF;                                                \
-  if (exponent == 0) {                                                                \
-    final_exp  = 0;                                                                   \
-    final_mant  = mantissa ? (mantissa & mant_MASK) : 0;                              \
+  exponent += (INT(_ew))IEEE754_F##_w##_EXP_OFF;                                      \
+  if (exponent < -IEEE754_F##_w##_MANT_BITS) {                                        \
+    final_exp = 0; final_mant = 0;                                                    \
   } else if (((UINT(_ew))exponent) >= order_MASK) {                                   \
     final_exp  = order_MASK;                                                          \
-    final_mant  = mantissa ? (mantissa & mant_MASK) : 0;                              \
+    final_mant  = 0;                                                                  \
+  } else if (exponent <= 0) {                                                         \
+    final_exp = 0;                                                                    \
+    final_mant = (mantissa & mant_MASK) >> (-exponent);                               \
   } else {                                                                            \
     final_exp  = exponent & order_MASK;                                               \
     final_mant = mantissa & mant_MASK;                                                \
@@ -72,15 +74,15 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) mantissa, INT(_ew) exponent)
   return val.F;                                                                       \
 }
 
-u_to_ieee754bin(16, 8, IEEE754_F16_EXP_BITS)
-u_to_ieee754bin(32, 8, IEEE754_F32_EXP_BITS)
-u_to_ieee754bin(64, 16, IEEE754_F64_EXP_BITS)
+u_to_ieee754bin(16,  16, IEEE754_F16_EXP_BITS)
+u_to_ieee754bin(32,  16, IEEE754_F32_EXP_BITS)
+u_to_ieee754bin(64,  16, IEEE754_F64_EXP_BITS)
 u_to_ieee754bin(128, 16, IEEE754_F128_EXP_BITS)
 
 static_assert(sizeof(lmp_limb_t) == sizeof(uint64_t), "'lmp_limb_t' is required has same size with 'uint64_t'");
 static_assert(((lmp_limb_t)-1) > ((lmp_limb_t) 0), "'lmp_limb_t' is required an unsigned type.");
 
-#define MP_FLOAT_to_ieee754bin(_w)                                                                                  \
+#define MP_FLOAT_to_ieee754bin(_w, _ew)                                                                             \
 uint32_t MP_FLOAT_to_ieee754_f##_w(FLOAT(_w) *restrict dest, const MP_FLOAT *restrict mp_val) {                     \
   if (mp_val->size == 0) {                                                                                          \
     switch (mp_val->exp) {                                                                                          \
@@ -103,11 +105,9 @@ uint32_t MP_FLOAT_to_ieee754_f##_w(FLOAT(_w) *restrict dest, const MP_FLOAT *res
   if ((mantissa & IEEE754_F##_w##_MANT_MAX) == IEEE754_F##_w##_MANT_MAX && round_bit) {                             \
     mantissa += 1; mantissa >>= 1; exp2 += 1;                                                                       \
   } else if (round_bit) { mantissa += 1; }                                                                          \
-  *dest = ieee754bin##_w(mp_val->size < 0, (uint##_w##_t)mantissa, (int8_t) exp2);                                  \
+  *dest = ieee754bin##_w(mp_val->size < 0, (uint##_w##_t)mantissa, (int##_ew##_t) exp2);                            \
   return 0;                                                                                                         \
 }
 
-MP_FLOAT_to_ieee754bin(32)
-MP_FLOAT_to_ieee754bin(64)
-
-
+MP_FLOAT_to_ieee754bin(32, 16)
+MP_FLOAT_to_ieee754bin(64, 16)
