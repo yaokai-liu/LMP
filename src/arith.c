@@ -223,7 +223,7 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
 
   const int32_t d_leading_zeros = __builtin_clzll(divisor->limbs[abs(divisor->size) - 1]);
   const int32_t n_leading_zeros = __builtin_clzll(dividend->limbs[size_dividend - 1]);
-  const lmp_double_limb_t d = left_shift_load_double(divisor, -2, d_leading_zeros);
+  const lmp_double_limb_t d = MP_INT_left_shift_load_double(divisor, -2, d_leading_zeros);
 
   const bool overflow = n_leading_zeros <= d_leading_zeros;
   const int32_t size_quotient = size_dividend - size_divisor + overflow;
@@ -239,12 +239,12 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
   MP_INT interval = {};
   MP_INT_init(&interval, size_divisor + 1, allocator);
   if (overflow) {
-    const lmp_double_limb_t n = left_shift_load_double(dividend, -1, d_leading_zeros);
+    const lmp_double_limb_t n = MP_INT_left_shift_load_double(dividend, -1, d_leading_zeros);
     lmp_limb_t q = n / d_high;
     const lmp_limb_t n_hat_high = (q * d_high) >> LMP_LIMB_BITS;
     const lmp_limb_t n_high = n >> LMP_LIMB_BITS;
     const lmp_double_limb_t n_hat_tail = ((q * d_high) << LMP_LIMB_BITS) + (((lmp_double_limb_t)q) * (lmp_limb_t) d);
-    const lmp_double_limb_t n_tail = (n << LMP_LIMB_BITS) + left_shift_load(dividend, -2, d_leading_zeros);
+    const lmp_double_limb_t n_tail = (n << LMP_LIMB_BITS) + MP_INT_left_shift_load(dividend, -2, d_leading_zeros);
     if (n_hat_high > n_high || (n_hat_high == n_high && n_hat_tail > n_tail)) { q -= 1; }
     MP_INT_abs_mul_u64(&interval, divisor, q, allocator);
     if (!MP_INT_abs_offset_ge(dividend, &interval, size_quotient - 1)) {
@@ -257,7 +257,7 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
   for (int32_t i = overflow; i < size_quotient; i++) {
     const int32_t load_index = size_dividend - 2 + overflow - i;
     const int32_t curr_q_idx = size_quotient - 1 - i;
-    lmp_double_limb_t n = left_shift_load_double(dividend, load_index, d_leading_zeros);
+    lmp_double_limb_t n = MP_INT_left_shift_load_double(dividend, load_index, d_leading_zeros);
     if (n < d_high) {
       quotient->limbs[curr_q_idx] = 0;
       continue;
@@ -265,14 +265,14 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
     if (n > d) { // maybe never be reached
       MP_INT_abs_sub_offset(dividend, dividend, divisor, curr_q_idx, allocator);
       quotient->limbs[curr_q_idx + 1] += 1;
-      n = left_shift_load_double(dividend, load_index, d_leading_zeros);
+      n = MP_INT_left_shift_load_double(dividend, load_index, d_leading_zeros);
     }
 
     lmp_limb_t q = n / d_high;
     const lmp_limb_t n_hat_high = (q * d_high) >> LMP_LIMB_BITS;
     const lmp_limb_t n_high = n >> LMP_LIMB_BITS;
     const lmp_double_limb_t n_hat_tail = ((q * d_high) << LMP_LIMB_BITS) + (((lmp_double_limb_t)q) * (lmp_limb_t) d);
-    const lmp_double_limb_t n_tail = (n << LMP_LIMB_BITS) + left_shift_load(dividend, -3, d_leading_zeros);
+    const lmp_double_limb_t n_tail = (n << LMP_LIMB_BITS) + MP_INT_left_shift_load(dividend, -3, d_leading_zeros);
     if (n_hat_high > n_high || (n_hat_high == n_high && n_hat_tail > n_tail)) { q -= 1; }
     if (q == 0 && MP_INT_abs_offset_ge(dividend, divisor, curr_q_idx)) { q += 1; }
 

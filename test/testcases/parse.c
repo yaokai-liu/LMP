@@ -151,19 +151,19 @@ static const ParseCase parse_cases[] = {
   { "exp_hex_P_neg",  "0x1P-2",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), -1,  L_0x1PN2, MP_NUM_REPR_MP_FLOAT,  6 },
 
   /* -------- suffix <repr><size><standard> -------- */
-  { "suf_sll<C-INT>",  "123sll<C-INT>", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT, 16), 0, L_123, MP_NUM_REPR_MP_INT,  13 },
-  { "suf_ull<C-INT>",  "123ull<C-INT>", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,16), 0, L_123, MP_NUM_REPR_MP_INT, 13 },
+  { "suf_sll<C-INT>",  "123sll<C-INT>", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT, 128), 0, L_123, MP_NUM_REPR_MP_INT,  13 },
+  { "suf_ull<C-INT>",  "123ull<C-INT>", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,128), 0, L_123, MP_NUM_REPR_MP_INT, 13 },
   { "suf_f32<IEEE754>",  "1.5f32<IEEE754>", 2, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT, 32), -1, L_15eLIMB, MP_NUM_REPR_MP_FLOAT,   15 },
   { "suf_d64<C-INT>",  "123d64<C-INT>", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123, MP_NUM_REPR_MP_INT, 13 },
 
   /* -------- suffix <size><repr><standard> -------- */
-  { "suf_ls<C-INT>",   "123ls<C-INT>",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT, 8), 0, L_123, MP_NUM_REPR_STD_C_INT,  12 },
+  { "suf_ls<C-INT>",   "123ls<C-INT>",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT, 64), 0, L_123, MP_NUM_REPR_STD_C_INT,  12 },
   { "suf_32f<IEEE754>",  "12332f<IEEE754>", 1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_INT, 0), 0, L_12332, MP_NUM_REPR_MP_INT,    15 },
-  { "suf_hex_ull<C-INT>","0xFFull<C-INT>",1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,16),0, L_255, MP_NUM_REPR_MP_INT, 14 },
+  { "suf_hex_ull<C-INT>","0xFFull<C-INT>",1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,128),0, L_255, MP_NUM_REPR_MP_INT, 14 },
 
   /* -------- suffix <size><standard> -------- */
-  { "suf_l<C-INT>",    "123l<C-INT>",   1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,8), 0, L_123,  MP_NUM_REPR_MP_INT, 11 },
-  { "suf_bin_l<C-INT>","0b1010l<C-INT>",1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,8), 0, L_1010, MP_NUM_REPR_MP_INT, 14 },
+  { "suf_l<C-INT>",    "123l<C-INT>",   1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123,  MP_NUM_REPR_MP_INT, 11 },
+  { "suf_bin_l<C-INT>","0b1010l<C-INT>",1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_1010, MP_NUM_REPR_MP_INT, 14 },
 
   /* -------- suffix <repr><standard> -------- */
   { "suf_u<C-INT>",  "123u<C-INT>",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,0), 0, L_123, MP_NUM_REPR_MP_INT, 11 },
@@ -171,14 +171,14 @@ static const ParseCase parse_cases[] = {
   { "suf_d<C-INT>",  "123d<C-INT>",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_123, MP_NUM_REPR_MP_INT,11 },
 
   /* -------- suffix <repr><size> -------- */
-  { "suf_sl",  "123sl",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT, 8), 0, L_123, MP_NUM_REPR_MP_INT,  5 },
+  { "suf_sl",  "123sl",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT, 64), 0, L_123, MP_NUM_REPR_MP_INT,  5 },
   { "suf_f32", "1.5f32", 2, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD,MP_NUM_REPR_IEEE754_FLOAT,   32), -1,L_15eLIMB,  MP_NUM_REPR_MP_FLOAT,   6 },
   { "suf_d64", "123d64", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123, MP_NUM_REPR_MP_INT, 6 },
 
   /* -------- suffix <size> -------- */
-  { "suf_l",  "123l",   1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,8), 0, L_123, MP_NUM_REPR_MP_INT, 4 },
-  { "suf_L",  "123L",   1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,8), 0, L_123, MP_NUM_REPR_MP_INT, 4 },
-  { "suf_hex_l","0xFFl",1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,8), 0, L_255, MP_NUM_REPR_MP_INT, 5 },
+  { "suf_l",  "123l",   1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123, MP_NUM_REPR_MP_INT, 4 },
+  { "suf_L",  "123L",   1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123, MP_NUM_REPR_MP_INT, 4 },
+  { "suf_hex_l","0xFFl",1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_255, MP_NUM_REPR_MP_INT, 5 },
 
   /* -------- suffix <repr> -------- */
   { "suf_s",  "123s",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT, 0), 0, L_123, MP_NUM_REPR_MP_INT,  4 },
@@ -188,10 +188,10 @@ static const ParseCase parse_cases[] = {
   { "suf_d",  "123d",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_123, MP_NUM_REPR_MP_INT, 4 },
 
   /* -------- full consists -------- */
-  { "full_neg_hex",   "-0xFFull<C-INT>",         -1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT, 16), 0, L_255, MP_NUM_REPR_MP_INT, 15 },
+  { "full_neg_hex",   "-0xFFull<C-INT>",         -1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT, 128), 0, L_255, MP_NUM_REPR_MP_INT, 15 },
   { "full_pos_float", "+1.5e-3f32<IEEE754>",        1, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,    32), -1,L_15eN3,  MP_NUM_REPR_MP_FLOAT,   19 },
   { "full_hex_float", "0x1.8p3f32<IEEE754>",        1, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,    32), 0, L_C,   MP_NUM_REPR_MP_FLOAT,   19 },
-  { "full_hex_us_L",  "-0xdead_beefL",     -1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD, MP_NUM_REPR_STD_C_INT,   8), 0, L_DEAD, MP_NUM_REPR_MP_INT,  13 },
+  { "full_hex_us_L",  "-0xdead_beefL",     -1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD, MP_NUM_REPR_STD_C_INT,   64), 0, L_DEAD, MP_NUM_REPR_MP_INT,  13 },
   { "full_X_P_g<IEEE754>",    "0X1P-2g<IEEE754>",           1, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,     0), -1,L_0x1PN2,   MP_NUM_REPR_MP_FLOAT,    16 },
 
   /* -------- error and fallback cases -------- */
@@ -206,7 +206,7 @@ static const ParseCase parse_cases[] = {
   { "err_exp_plus",   "1e+",    1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0,  L_1,  MP_NUM_REPR_MP_INT,   1 },
   { "err_double_dot", "1..2",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0,  L_1,  MP_NUM_REPR_MP_INT, 1 },
   { "err_unknown_suffix", "123x",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0,  L_123,MP_NUM_REPR_MP_INT,   4 },
-  { "err_dup_size",   "123lll", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,16), 0,  L_123,MP_NUM_REPR_MP_INT,  5 },
+  { "err_dup_size",   "123lll", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,128), 0,  L_123,MP_NUM_REPR_MP_INT,  5 },
   { "err_sep_start",  "'123",   0, 0, 0, nullptr, 0, 0 },
   { "err_double_sign","--123",  0, 0, 0, nullptr, 0, 0 },
   { "err_mixed_sign", "+-123",  0, 0, 0, nullptr, 0, 0 },

@@ -27,8 +27,8 @@
 
 #ifndef LMP_TYPE_H
 #define LMP_TYPE_H
-
 #include <stdint.h>
+#include "lmp.h"
 
 #define MP_NUM_STANDARD_COUNT   3
 enum MP_NUMBER_STANDARD_TYPE : uint8_t {
@@ -93,6 +93,10 @@ static_assert(sizeof(((MP_NUM_TYPE*)nullptr)->pack) == 4, "pack layout broken");
   (MP_NUM_TYPE_KIND(t) == (std) && MP_NUM_TYPE_REPR(t) == (repr))
 #define MP_NUM_TYPE_OF(_standard, _repr, _size) \
   ((((_standard) & 0xFFu) << 24) | (((_repr) & 0xFF) << 16) | ((_size) & 0xFFFFu))
+
+typedef uint32_t func_int_convert_t(void *restrict dest, const MP_INT   *restrict mp_val);
+typedef uint32_t func_flt_convert_t(void *restrict dest, const MP_FLOAT *restrict mp_val);
+typedef uint32_t func_dec_convert_t(void *restrict dest, const MP_FLOAT *restrict mp_val);
 
 struct MP_STANDARD {
   const char * const name;

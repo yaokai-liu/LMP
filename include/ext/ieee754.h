@@ -27,8 +27,10 @@
 
 #ifndef LMP_IEEE754_H
 #define LMP_IEEE754_H
-
 #include <stdint.h>
+#include <float.h>
+#include "lmp.h"
+
 #ifndef INT128_T_DEFINED
 typedef _BitInt(128) int128_t;
 typedef _BitInt(256) int256_t;
@@ -71,5 +73,19 @@ float64_t ieee754bin64(bool sign, uint64_t mantissa, int16_t exponent);
 float128_t ieee754bin128(bool sign, uint128_t mantissa, int16_t exponent);
 // @mantissa: includes leading 1
 // float256_t ieee754bin256(bool sign, uint256_t  mantissa, int32_t exponent);
+
+#define FLOAT32_MAX FLT_MAX
+#define FLOAT32_INS FLT_TRUE_MIN
+#define FLOAT64_MAX DBL_MAX
+#define FLOAT64_INS DBL_TRUE_MIN
+
+// if abs(mp_val) > abs(FLOAT32_MAX): result INFs
+// if abs(mp_val) < abs(FLOAT32_INS): result FLOAT32_INS/0
+// (round-to-nearest, ties-to-even)
+uint32_t MP_FLOAT_to_ieee754_f32(float32_t *restrict dest, const MP_FLOAT *restrict mp_val);
+// if abs(mp_val) > abs(FLOAT64_MAX): result INFs
+// if abs(mp_val) < abs(FLOAT64_INS): result FLOAT64_INS/0
+// (round-to-nearest, ties-to-even)
+uint32_t MP_FLOAT_to_ieee754_f64(float64_t *restrict dest, const MP_FLOAT *restrict mp_val);
 
 #endif //LMP_IEEE754_H

@@ -76,7 +76,7 @@ inline void MP_INT_negative(MP_INT *val) {
   val->size = -val->size;
 }
 
-inline lmp_limb_t left_shift_load(const MP_INT *restrict num, const int32_t index, const int32_t bit_count) {
+inline lmp_limb_t MP_INT_left_shift_load(const MP_INT *restrict num, const int32_t index, const int32_t bit_count) {
   const int32_t size = abs(num->size);
   if (index < 0) {
     lmp_limb_t val1 = (-1 <= size + index && index <= 0) ? ((num->limbs[size + index - 1]) << bit_count) : 0;
@@ -92,7 +92,7 @@ inline lmp_limb_t left_shift_load(const MP_INT *restrict num, const int32_t inde
   return res;
 }
 
-inline lmp_double_limb_t left_shift_load_double(const MP_INT *restrict num, const int32_t index, const int32_t bit_count) {
+inline lmp_double_limb_t MP_INT_left_shift_load_double(const MP_INT *restrict num, const int32_t index, const int32_t bit_count) {
   const int32_t size = abs(num->size);
   if (index < 0) {
     lmp_double_limb_t val1 = ( 1 <= size + index && index <=  0)
@@ -115,31 +115,29 @@ inline lmp_double_limb_t left_shift_load_double(const MP_INT *restrict num, cons
   return res;
 }
 
-inline lmp_limb_t offset_load(const MP_INT *restrict num, const int32_t index) {
+inline lmp_limb_t MP_INT_get_limb(const MP_INT *restrict num, const int32_t index) {
   const int32_t size = abs(num->size);
-  if (index < 0) {
-    return -index < size ? num->limbs[size + index] : 0;
-  }
+  if (index < 0) { return -index < size ? num->limbs[size + index] : 0; }
   return  index < size ? num->limbs[index] : 0;
 }
 
-inline lmp_double_limb_t offset_load_double(const MP_INT *restrict num, const int32_t index) {
+inline lmp_double_limb_t MP_INT_get_double_limbs(const MP_INT *restrict num, const int32_t index) {
   const int32_t size = abs(num->size);
   if (index < 0) {
-    lmp_double_limb_t val1 = (size + index >= 0) ? (lmp_double_limb_t)num->limbs[size + index] : 0;
-    lmp_double_limb_t val2 = (-size - 2 <= index && index <= -2 ) ? (lmp_double_limb_t)num->limbs[size + index + 1] : 0;
+    const lmp_double_limb_t val1 = (size + index >= 0) ? (lmp_double_limb_t)num->limbs[size + index] : 0;
+    const lmp_double_limb_t val2 = (-size - 2 <= index && index <= -2 ) ? (lmp_double_limb_t)num->limbs[size + index + 1] : 0;
     return (val2 << LMP_LIMB_BITS) | val1;
   }
-  lmp_double_limb_t val1 = (index < size) ? (lmp_double_limb_t)num->limbs[index] : 0;
-  lmp_double_limb_t val2 = (index + 1 < size) ? (lmp_double_limb_t)num->limbs[index + 1] : 0;
+  const lmp_double_limb_t val1 = (index < size) ? (lmp_double_limb_t)num->limbs[index] : 0;
+  const lmp_double_limb_t val2 = (index + 1 < size) ? (lmp_double_limb_t)num->limbs[index + 1] : 0;
   return (val2 << LMP_LIMB_BITS) | val1;
 }
 
 inline int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2) {
   const int32_t size = max(abs(op1->size), abs(op2->size));
   for (int32_t i = size - 1; i >= 0; i --) {
-    if (offset_load(op1, i) > offset_load(op2, i)) { return  1; }
-    if (offset_load(op1, i) < offset_load(op2, i)) { return -1; }
+    if (MP_INT_get_limb(op1, i) > MP_INT_get_limb(op2, i)) { return  1; }
+    if (MP_INT_get_limb(op1, i) < MP_INT_get_limb(op2, i)) { return -1; }
   }
   return 0;
 }
@@ -148,8 +146,8 @@ inline bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, const int
   const int32_t size1 = abs(op1->size);
   const int32_t size2 = abs(op2->size);
   for (int32_t i = 0; i < size2; i ++) {
-    if (offset_load(op1, size1 - 1 - i) < offset_load(op2, size1 - offset - 1 - i)) { return false; }
-    if (offset_load(op1, size1 - 1 - i) > offset_load(op2, size1 - offset - 1 - i)) { return true;  }
+    if (MP_INT_get_limb(op1, size1 - 1 - i) < MP_INT_get_limb(op2, size1 - offset - 1 - i)) { return false; }
+    if (MP_INT_get_limb(op1, size1 - 1 - i) > MP_INT_get_limb(op2, size1 - offset - 1 - i)) { return true;  }
   }
   return true;
 }
