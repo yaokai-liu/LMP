@@ -77,6 +77,9 @@ enum MP_FLOAT_SPECIAL_VAL_TYPE : int32_t {
 
   MP_FLOAT_NEG_INF = - MP_FLOAT_INF,
   MP_FLOAT_NEG_INS = - MP_FLOAT_INS,
+  MP_FLOAT_NEG_NAN = -MP_FLOAT_NAN,
+
+  MP_FLOAT_BAD_VALUE = INT32_MIN, // this value should not be reached
 };
 
 // if (size != 0):
@@ -126,6 +129,12 @@ void MP_FLOAT_realloc(MP_FLOAT *val, int32_t required, const Allocator *allocato
 void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator);
 void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator);
 void MP_FLOAT_clamp(MP_FLOAT *val);
+
+lmp_limb_t MP_FLOAT_get_limb(const MP_FLOAT *restrict num, int32_t index);
+lmp_double_limb_t MP_FLOAT_get_double_limbs(const MP_FLOAT *restrict num, int32_t index);
+lmp_limb_t MP_FLOAT_left_shift_load(const MP_FLOAT *restrict num, int32_t index, int32_t bit_count);
+lmp_double_limb_t MP_FLOAT_left_shift_load_double(const MP_FLOAT *restrict num, int32_t index, int32_t bit_count);
+
 
 // size = - size
 void MP_FLOAT_negative(MP_FLOAT *val);

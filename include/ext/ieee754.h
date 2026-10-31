@@ -74,18 +74,40 @@ float128_t ieee754bin128(bool sign, uint128_t mantissa, int16_t exponent);
 // @mantissa: includes leading 1
 // float256_t ieee754bin256(bool sign, uint256_t  mantissa, int32_t exponent);
 
-#define FLOAT32_MAX FLT_MAX
-#define FLOAT32_INS FLT_TRUE_MIN
-#define FLOAT64_MAX DBL_MAX
-#define FLOAT64_INS DBL_TRUE_MIN
+#define IEEE754_F16_EXP_BITS    5
+#define IEEE754_F16_MANT_BITS   10
+#define IEEE754_F32_EXP_BITS    8
+#define IEEE754_F32_MANT_BITS   23
+#define IEEE754_F64_EXP_BITS    11
+#define IEEE754_F64_MANT_BITS   52
+#define IEEE754_F128_EXP_BITS   15
+#define IEEE754_F128_MANT_BITS  112
+#define IEEE754_F16_EXP_MAX     (((uint16_t )1U << IEEE754_F16_EXP_BITS) - 1)
+#define IEEE754_F16_MANT_MAX    (((uint16_t )1U << IEEE754_F16_MANT_BITS) - 1)
+#define IEEE754_F32_EXP_MAX     (((uint32_t )1U << IEEE754_F32_EXP_BITS) - 1)
+#define IEEE754_F32_MANT_MAX    (((uint32_t )1U << IEEE754_F32_MANT_BITS) - 1)
+#define IEEE754_F64_EXP_MAX     (((uint64_t )1U << IEEE754_F64_EXP_BITS) - 1)
+#define IEEE754_F64_MANT_MAX    (((uint64_t )1U << IEEE754_F64_MANT_BITS) - 1)
+#define IEEE754_F128_EXP_MAX    (((uint128_t)1U << IEEE754_F128_EXP_BITS) - 1)
+#define IEEE754_F128_MANT_MAX   (((uint128_t)1U << IEEE754_F128_MANT_BITS) - 1)
 
-// if abs(mp_val) > abs(FLOAT32_MAX): result INFs
-// if abs(mp_val) < abs(FLOAT32_INS): result FLOAT32_INS/0
-// (round-to-nearest, ties-to-even)
+#define IEEE754_F16_EXP_OFF     (((uint16_t) 1U << (IEEE754_F16_EXP_BITS - 1)) - 1)
+#define IEEE754_F32_EXP_OFF     (((uint32_t) 1U << (IEEE754_F32_EXP_BITS - 1)) - 1)
+#define IEEE754_F64_EXP_OFF     (((uint64_t) 1U << (IEEE754_F64_EXP_BITS - 1)) - 1)
+#define IEEE754_F128_EXP_OFF    (((uint128_t)1U << (IEEE754_F128_EXP_BITS - 1)) - 1)
+
+#define IEEE754_F32_MAX         FLT_MAX
+#define IEEE754_F32_INS         FLT_TRUE_MIN
+#define IEEE754_F64_MAX         DBL_MAX
+#define IEEE754_F64_INS         DBL_TRUE_MIN
+
+// if abs(mp_val) > abs(IEEE754_F32_MAX): result INFs
+// if abs(mp_val) < abs(IEEE754_F32_INS): result IEEE754_F32_INS/0
+// (round-to-nearest, ties-away-from-zero)
 uint32_t MP_FLOAT_to_ieee754_f32(float32_t *restrict dest, const MP_FLOAT *restrict mp_val);
-// if abs(mp_val) > abs(FLOAT64_MAX): result INFs
-// if abs(mp_val) < abs(FLOAT64_INS): result FLOAT64_INS/0
-// (round-to-nearest, ties-to-even)
+// if abs(mp_val) > abs(IEEE754_F64_MAX): result INFs
+// if abs(mp_val) < abs(IEEE754_F64_INS): result IEEE754_F64_INS/0
+// (round-to-nearest, ties-away-from-zero)
 uint32_t MP_FLOAT_to_ieee754_f64(float64_t *restrict dest, const MP_FLOAT *restrict mp_val);
 
 #endif //LMP_IEEE754_H

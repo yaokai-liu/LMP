@@ -54,6 +54,7 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) mantissa, INT(_ew) exponent)
   uint32_t final_exp = 0;                                                             \
   UINT(_w) final_mant = 0;                                                            \
                                                                                       \
+  exponent += IEEE754_F##_w##_EXP_OFF;                                                \
   if (exponent == 0) {                                                                \
     final_exp  = 0;                                                                   \
     final_mant  = mantissa ? (mantissa & mant_MASK) : 0;                              \
@@ -66,45 +67,47 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) mantissa, INT(_ew) exponent)
   }                                                                                   \
   union { UINT(_w) I; FLOAT(_w) F; } val = {};                                        \
   val.I = (((UINT(_w))sign) << (result_bits - 1))                                     \
-        | (((UINT(_w))final_exp) << mant_bits)                                        \
+        | ((((UINT(_w))final_exp)) << mant_bits)                                      \
         | (final_mant & mant_MASK);                                                   \
   return val.F;                                                                       \
 }
 
-u_to_ieee754bin(16, 8, 5)
-u_to_ieee754bin(32, 8, 8)
-u_to_ieee754bin(64, 16, 11)
-u_to_ieee754bin(128, 16, 15)
+u_to_ieee754bin(16, 8, IEEE754_F16_EXP_BITS)
+u_to_ieee754bin(32, 8, IEEE754_F32_EXP_BITS)
+u_to_ieee754bin(64, 16, IEEE754_F64_EXP_BITS)
+u_to_ieee754bin(128, 16, IEEE754_F128_EXP_BITS)
 
-uint32_t MP_FLOAT_to_ieee754_f32(float32_t *restrict dest, const MP_FLOAT *restrict mp_val) {
-  if (mp_val->size == 0) {
-    if (mp_val->exp ==  MP_FLOAT_ZERO) { *dest =  0;            return 0; }
-    if (mp_val->exp ==  MP_FLOAT_NAN)  { *dest =  NAN;          return 0; }
-    if (mp_val->exp ==  MP_FLOAT_INF)  { *dest =  INFINITY;     return 0; }
-    if (mp_val->exp == -MP_FLOAT_INF)  { *dest = -INFINITY;     return 0; }
-    if (mp_val->exp ==  MP_FLOAT_INS)  { *dest =  FLT_TRUE_MIN; return 0; }
-    if (mp_val->exp == -MP_FLOAT_INS)  { *dest = -FLT_TRUE_MIN; return 0; }
-  }
-  const int64_t size = abs(mp_val->size);
-  if ((size + mp_val->exp) > FLT_MAX_EXP) { *dest = mp_val->size > 0 ?     INFINITY :     -INFINITY; return 0; }
-  if ((size + mp_val->exp) < FLT_MIN_EXP) { *dest = mp_val->size > 0 ? FLT_TRUE_MIN : -FLT_TRUE_MIN; return 0; }
-  // TODO:
-  return 0;
+static_assert(sizeof(lmp_limb_t) == sizeof(uint64_t), "'lmp_limb_t' is required has same size with 'uint64_t'");
+static_assert(((lmp_limb_t)-1) > ((lmp_limb_t) 0), "'lmp_limb_t' is required an unsigned type.");
+
+#define MP_FLOAT_to_ieee754bin(_w)                                                                                  \
+uint32_t MP_FLOAT_to_ieee754_f##_w(FLOAT(_w) *restrict dest, const MP_FLOAT *restrict mp_val) {                     \
+  if (mp_val->size == 0) {                                                                                          \
+    switch (mp_val->exp) {                                                                                          \
+      case  MP_FLOAT_ZERO: { *dest =  0;                    return 0; }                                             \
+      case  MP_FLOAT_NAN : { *dest =  NAN;                  return 0; }                                             \
+      case -MP_FLOAT_NAN : { *dest = -NAN;                  return 0; }                                             \
+      case  MP_FLOAT_INF : { *dest =  INFINITY;             return 0; }                                             \
+      case -MP_FLOAT_INF : { *dest = -INFINITY;             return 0; }                                             \
+      case  MP_FLOAT_INS : { *dest =  IEEE754_F##_w##_INS;  return 0; }                                             \
+      case -MP_FLOAT_INS : { *dest = -IEEE754_F##_w##_INS;  return 0; }                                             \
+      default:{ /*TODO: error report */ return 0; }                                                                 \
+    }                                                                                                               \
+  }                                                                                                                 \
+  const int64_t leading_zeros = __builtin_clzll(MP_FLOAT_get_limb(mp_val, -1));                                     \
+  int64_t exp2 = (abs(mp_val->size) + mp_val->exp) * (int64_t)LMP_LIMB_BITS - leading_zeros - 1;                    \
+  uint128_t mantissa = MP_FLOAT_get_double_limbs(mp_val, -2);                                                       \
+  const int64_t mant_bits = (2 * (int64_t)LMP_LIMB_BITS) - leading_zeros;                                           \
+  const bool round_bit = (mantissa << (leading_zeros + IEEE754_F##_w##_MANT_BITS + 1)) >= (((uint128_t)1) << 127);  \
+  mantissa >>= mant_bits - IEEE754_F##_w##_MANT_BITS - 1;                                                           \
+  if ((mantissa & IEEE754_F##_w##_MANT_MAX) == IEEE754_F##_w##_MANT_MAX && round_bit) {                             \
+    mantissa += 1; mantissa >>= 1; exp2 += 1;                                                                       \
+  } else if (round_bit) { mantissa += 1; }                                                                          \
+  *dest = ieee754bin##_w(mp_val->size < 0, (uint##_w##_t)mantissa, (int8_t) exp2);                                  \
+  return 0;                                                                                                         \
 }
 
-uint32_t MP_FLOAT_to_ieee754_f64(float64_t *restrict dest, const MP_FLOAT *restrict mp_val) {
-  if (mp_val->size == 0) {
-    if (mp_val->exp ==  MP_FLOAT_ZERO) { *dest =  0;            return 0; }
-    if (mp_val->exp ==  MP_FLOAT_NAN)  { *dest =  NAN;          return 0; }
-    if (mp_val->exp ==  MP_FLOAT_INF)  { *dest =  INFINITY;     return 0; }
-    if (mp_val->exp == -MP_FLOAT_INF)  { *dest = -INFINITY;     return 0; }
-    if (mp_val->exp ==  MP_FLOAT_INS)  { *dest =  DBL_TRUE_MIN; return 0; }
-    if (mp_val->exp == -MP_FLOAT_INS)  { *dest = -DBL_TRUE_MIN; return 0; }
-  }
-  const int64_t size = abs(mp_val->size);
-  if ((size + mp_val->exp) > DBL_MAX_EXP) { *dest = mp_val->size > 0 ?     INFINITY :     -INFINITY; return 0; }
-  if ((size + mp_val->exp) < DBL_MIN_EXP) { *dest = mp_val->size > 0 ? DBL_TRUE_MIN : -DBL_TRUE_MIN; return 0; }
-  // TODO:
-  return 0;
-}
+MP_FLOAT_to_ieee754bin(32)
+MP_FLOAT_to_ieee754bin(64)
+
 
