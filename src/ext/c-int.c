@@ -63,14 +63,15 @@ uint32_t MP_INT_to_stdc_i128(int128_t *restrict dest, const MP_INT *restrict mp_
 uint32_t MP_INT_to_stdc_u32 (uint32_t  *restrict dest, const MP_INT *restrict mp_val) {
   if (mp_val->size == 0) { *dest = 0; return 0; }
   const uint64_t val = MP_INT_get_limb(mp_val, 0);
-  if (abs(mp_val->size) > 1 || val > UINT32_MAX) { *dest = UINT32_MAX; return 0; }
+  if (abs(mp_val->size) > 1 || val > UINT32_MAX)
+  { *dest = mp_val->size > 0 ? UINT32_MAX : (0 - UINT32_MAX); return 0; }
   *dest = mp_val->size >= 0 ? (uint32_t)val : (uint32_t)(0 - val);
   return 0;
 }
 
 uint32_t MP_INT_to_stdc_u64 (uint64_t  *restrict dest, const MP_INT *restrict mp_val) {
   if (mp_val->size == 0) { *dest = 0; return 0; }
-  if (abs(mp_val->size) > 1) { *dest = UINT64_MAX; return 0; }
+  if (abs(mp_val->size) > 1) { *dest = mp_val->size > 0 ? UINT64_MAX : (0 - UINT64_MAX); return 0; }
   const uint64_t val = (uint64_t) MP_INT_get_limb(mp_val, 0);
   *dest = mp_val->size >= 0 ? val : ((uint64_t)0 - val);
   return 0;
@@ -78,7 +79,7 @@ uint32_t MP_INT_to_stdc_u64 (uint64_t  *restrict dest, const MP_INT *restrict mp
 
 uint32_t MP_INT_to_stdc_u128(uint128_t *restrict dest, const MP_INT *restrict mp_val) {
   if (mp_val->size == 0) { *dest = 0; return 0; }
-  if (abs(mp_val->size) > 2) { *dest = UINT128_MAX; return 0; }
+  if (abs(mp_val->size) > 2) { *dest = mp_val->size > 0 ? UINT128_MAX : (0 - UINT128_MAX); return 0; }
   const uint128_t val = (uint128_t) MP_INT_get_double_limbs(mp_val, 0);
   *dest = mp_val->size >= 0 ? val : ((uint128_t)0 - val);
   return 0;

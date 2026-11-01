@@ -135,7 +135,6 @@ lmp_double_limb_t MP_FLOAT_get_double_limbs(const MP_FLOAT *restrict num, int32_
 lmp_limb_t MP_FLOAT_left_shift_load(const MP_FLOAT *restrict num, int32_t index, int32_t bit_count);
 lmp_double_limb_t MP_FLOAT_left_shift_load_double(const MP_FLOAT *restrict num, int32_t index, int32_t bit_count);
 
-
 // size = - size
 void MP_FLOAT_negative(MP_FLOAT *val);
 // exp = - exp

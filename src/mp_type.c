@@ -117,7 +117,7 @@ inline lmp_double_limb_t MP_INT_left_shift_load_double(const MP_INT *restrict nu
 
 inline lmp_limb_t MP_INT_get_limb(const MP_INT *restrict num, const int32_t index) {
   const int32_t size = abs(num->size);
-  if (index < 0) { return -index < size ? num->limbs[size + index] : 0; }
+  if (index < 0) { return -size <= index ? num->limbs[size + index] : 0; }
   return  index < size ? num->limbs[index] : 0;
 }
 
@@ -248,7 +248,7 @@ inline lmp_double_limb_t MP_FLOAT_left_shift_load_double(const MP_FLOAT *restric
 
 inline lmp_limb_t MP_FLOAT_get_limb(const MP_FLOAT *restrict num, const int32_t index) {
   const int32_t size = abs(num->size);
-  if (index < 0) { return -index < size ? num->limbs[size + index] : 0; }
+  if (index < 0) { return -size <= index ? num->limbs[size + index] : 0; }
   return  index < size ? num->limbs[index] : 0;
 }
 

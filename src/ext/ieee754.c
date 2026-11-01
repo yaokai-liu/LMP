@@ -57,12 +57,11 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) mantissa, INT(_ew) exponent)
   exponent += (INT(_ew))IEEE754_F##_w##_EXP_OFF;                                      \
   if (exponent < -IEEE754_F##_w##_MANT_BITS) {                                        \
     final_exp = 0; final_mant = 0;                                                    \
-  } else if (((UINT(_ew))exponent) >= order_MASK) {                                   \
-    final_exp  = order_MASK;                                                          \
-    final_mant  = 0;                                                                  \
   } else if (exponent <= 0) {                                                         \
     final_exp = 0;                                                                    \
     final_mant = (mantissa & mant_MASK) >> (-exponent);                               \
+  } else if (exponent >= (INT(_ew))order_MASK) {                                      \
+    final_exp  = order_MASK; final_mant  = 0;                                         \
   } else {                                                                            \
     final_exp  = exponent & order_MASK;                                               \
     final_mant = mantissa & mant_MASK;                                                \
@@ -70,7 +69,7 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) mantissa, INT(_ew) exponent)
   union { UINT(_w) I; FLOAT(_w) F; } val = {};                                        \
   val.I = (((UINT(_w))sign) << (result_bits - 1))                                     \
         | ((((UINT(_w))final_exp)) << mant_bits)                                      \
-        | (final_mant & mant_MASK);                                                   \
+        | (final_mant);                                                               \
   return val.F;                                                                       \
 }
 
@@ -105,6 +104,7 @@ uint32_t MP_FLOAT_to_ieee754_f##_w(FLOAT(_w) *restrict dest, const MP_FLOAT *res
   if ((mantissa & IEEE754_F##_w##_MANT_MAX) == IEEE754_F##_w##_MANT_MAX && round_bit) {                             \
     mantissa += 1; mantissa >>= 1; exp2 += 1;                                                                       \
   } else if (round_bit) { mantissa += 1; }                                                                          \
+  if (exp2 <= -(int##_ew##_t) IEEE754_F##_w##_EXP_OFF) { mantissa >>= 1; }                                          \
   *dest = ieee754bin##_w(mp_val->size < 0, (uint##_w##_t)mantissa, (int##_ew##_t) exp2);                            \
   return 0;                                                                                                         \
 }

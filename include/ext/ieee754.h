@@ -86,24 +86,29 @@ static_assert(sizeof(float128_t) == 16, "float128_t must be 128-bit");
 #define IEEE754_F128_EXP_OFF    (((uint128_t)1U << (IEEE754_F128_EXP_BITS - 1)) - 1)
 
 // never return the NaN
-// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
-//            assumed not more than MANT_MAX (not include leading 1)
+// @mantissa: is required in form of '1BB...BB', here IEEE754_F16_MANT_BITS count of 'B'.
+//            assumed 'BB...BB' not more than IEEE754_F16_MANT_MAX
+//            'xxxxxBB...BB' can be accepted (only BB...BB are effective), but not suggested.
 float16_t ieee754bin16(bool sign, uint16_t mantissa, int16_t exponent);
 // never return the NaN
-// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
-//            assumed not more than MANT_MAX (not include leading 1)
+// @mantissa: is required in form of 1BB...BB, here IEEE754_F32_MANT_BITS count of 'B'.
+//            assumed 'BB...BB' not more than IEEE754_F32_MANT_MAX
+//            'xxxxxBB...BB' can be accepted (only BB...BB are effective), but not suggested.
 float32_t ieee754bin32(bool sign, uint32_t mantissa, int16_t exponent);
 // never return the NaN
-// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
-//            assumed not more than MANT_MAX (not include leading 1)
+// @mantissa: is required in form of 1BB...BB, here IEEE754_F64_MANT_BITS count of 'B'.
+//            assumed 'BB...BB' not more than IEEE754_F64_MANT_MAX
+//            'xxxxxBB...BB' can be accepted (only BB...BB are effective), but not suggested.
 float64_t ieee754bin64(bool sign, uint64_t mantissa, int16_t exponent);
 // never return the NaN
-// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
-//            assumed not more than MANT_MAX (not include leading 1)
+// @mantissa: is required in form of 1BB...BB, here IEEE754_F128_MANT_BITS count of 'B'.
+//            assumed 'BB...BB' not more than IEEE754_F128_MANT_MAX
+//            'xxxxxBB...BB' can be accepted (only BB...BB are effective), but not suggested.
 float128_t ieee754bin128(bool sign, uint128_t mantissa, int16_t exponent);
 // never return the NaN
-// @mantissa: is required aligned to MANT_BITS (leading 1 will be ignored) and
-//            assumed not more than MANT_MAX (not include leading 1)
+// @mantissa: is required in form of 1BB...BB, here IEEE754_F256_MANT_BITS count of 'B'.
+//            assumed 'BB...BB' not more than IEEE754_F256_MANT_MAX
+//            'xxxxxBB...BB' can be accepted (only BB...BB are effective), but not suggested.
 // float256_t ieee754bin256(bool sign, uint256_t  mantissa, int32_t exponent);
 
 #define IEEE754_F32_MAX         FLT_MAX

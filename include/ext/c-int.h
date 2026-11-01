@@ -53,17 +53,17 @@ uint32_t MP_INT_to_stdc_i64 (int64_t  *restrict dest, const MP_INT *restrict mp_
 uint32_t MP_INT_to_stdc_i128(int128_t *restrict dest, const MP_INT *restrict mp_val);
 
 // result range [0, 2^{32} - 1]
-// if abs(mp_val) >= UINT32_MAX: result UINT32_MAX
+// if abs(mp_val) >= UINT32_MAX: result sgn(mp_val)*UINT32_MAX
 // promise that if @mp_val in range of 'int32_t', there is
 //    (int32_t)MP_INT_to_stdc_u32(mp_val) == MP_INT_to_stdc_i32(mp_val)
 uint32_t MP_INT_to_stdc_u32 (uint32_t  *restrict dest, const MP_INT *restrict mp_val);
 // result range [0, 2^{64} - 1]
-// if abs(mp_val) >= UINT64_MAX: result UINT64_MAX
+// if abs(mp_val) >= UINT64_MAX: result sgn(mp_val)*UINT64_MAX
 // and promise that if @mp_val in range of 'int64_t', there is
 //    (int64_t)MP_INT_to_stdc_u64(mp_val) == MP_INT_to_stdc_i64(mp_val)
 uint32_t MP_INT_to_stdc_u64 (uint64_t  *restrict dest, const MP_INT *restrict mp_val);
 // result range [0, 2^{128} - 1]
-// if abs(mp_val) >= UINT128_MAX: result UINT128_MAX
+// if abs(mp_val) >= UINT128_MAX: result sgn(mp_val)*UINT128_MAX
 // and promise that if @mp_val in range of 'int128_t', there is
 //    (int128_t)MP_INT_to_stdc_u128(mp_val) == MP_INT_to_stdc_i128(mp_val)
 uint32_t MP_INT_to_stdc_u128(uint128_t *restrict dest, const MP_INT *restrict mp_val);
