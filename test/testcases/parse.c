@@ -109,6 +109,7 @@ static const lmp_limb_t L_25[] = { 0x4000'0000'0000'0000ULL };
 static const lmp_limb_t L_0x1PN2[] = { 0x0100'0000'0000'0000ULL };
 static const lmp_limb_t L_1eN10[] = { 0x0000'0000'6DF3'7F67 };
 static const lmp_limb_t L_1_2[] = { 0x3333'3333'3333'3333, 1 };
+static const lmp_limb_t L_long[] = { 0x437430C1913D27FF, 0x05CA0698478CF1B3, 0x1F9ADD3B84CDAD12, 0x7B };
 
 static const ParseCase parse_cases[] = {
   /* -------- decimal -------- */
@@ -120,6 +121,8 @@ static const ParseCase parse_cases[] = {
   { "dec_lead0",      "007",       1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_7,    MP_NUM_REPR_MP_INT,   3 },
   { "dec_sep_quote",  "1'000'000", 1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_1M,   MP_NUM_REPR_MP_INT,   9 },
   { "dec_sep_us",     "1_000_000", 1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_1M,   MP_NUM_REPR_MP_INT,   9 },
+  { "dec_long_value",     "-123.12345678999991234'56789123456789_123456789LL<IEEE754>", -4,
+    MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT, 128), -3, L_long,   MP_NUM_REPR_MP_FLOAT,   58 },
 
   /* -------- hexadecimal -------- */
   { "hex_ff",         "0xFF",           1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_255,  MP_NUM_REPR_MP_INT,  4  },

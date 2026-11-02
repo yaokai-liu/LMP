@@ -29,17 +29,17 @@
 
 #define lenof(str_literal) ((sizeof str_literal) - 1)
 
-const struct MP_STANDARD MP_NUM_INT_STANDARDS[MP_NUM_STANDARD_COUNT] = {
-  [MP_NUM_LMP_STANDARD] = { .name = "LMP", .leng = lenof("LMP"), .stdd = MP_NUM_LMP_STANDARD },
-  [MP_NUM_INT_STANDARD] = { .name = "C-INT", .leng = lenof("C-INT"), .stdd = MP_NUM_INT_STANDARD },
+const struct MP_STANDARD MP_NUM_INT_STANDARD_LIST[MP_NUM_INT_STANDARD_COUNT] = {
+  [MP_NUM_INT_STD_LMP] = { .name = "LMP", .leng = lenof("LMP"), .stdd = MP_NUM_LMP_STANDARD },
+  [MP_NUM_INT_STD_C] = { .name = "C-INT", .leng = lenof("C-INT"), .stdd = MP_NUM_INT_STANDARD },
 };
 
-const struct MP_STANDARD MP_NUM_FLOAT_STANDARDS[MP_NUM_STANDARD_COUNT] = {
-  [MP_NUM_LMP_STANDARD] = { .name = "LMP", .leng = lenof("LMP"), .stdd = MP_NUM_LMP_STANDARD },
-  [MP_NUM_IEEE754_STANDARD] = { .name = "IEEE754", .leng = lenof("IEEE754"), .stdd = MP_NUM_IEEE754_STANDARD },
+const struct MP_STANDARD MP_NUM_FLOAT_STANDARD_LIST[MP_NUM_FLOAT_STANDARD_COUNT] = {
+  [MP_NUM_FLOAT_STD_LMP] = { .name = "LMP", .leng = lenof("LMP"), .stdd = MP_NUM_LMP_STANDARD },
+  [MP_NUM_FLOAT_STD_IEEE754] = { .name = "IEEE754", .leng = lenof("IEEE754"), .stdd = MP_NUM_IEEE754_STANDARD },
 };
 
-const struct MP_STANDARD_REPR MP_NUM_INT_REPR_CHARS[MP_NUM_STANDARD_COUNT] = {
+const struct MP_STANDARD_REPR MP_NUM_INT_STD_REPR__LIST[MP_NUM_INT_STANDARD_COUNT] = {
   [MP_NUM_LMP_STANDARD] =  {.count = 0, .L = 0, .LL = 0, .fallback_index = 0, .items = {
       {.chr = '\0', .repr = MP_NUM_REPR_MP_INT},
     }},
@@ -51,8 +51,8 @@ const struct MP_STANDARD_REPR MP_NUM_INT_REPR_CHARS[MP_NUM_STANDARD_COUNT] = {
   }},
 };
 
-const struct MP_STANDARD_REPR MP_NUM_FLOAT_REPR_CHARS[MP_NUM_STANDARD_COUNT] = {
-  [MP_NUM_LMP_STANDARD] =  {.count = 6,.L = 0, .LL = 0, .fallback_index = 0, .items = {
+const struct MP_STANDARD_REPR MP_NUM_FLOAT_STD_REPR__LIST[MP_NUM_FLOAT_STANDARD_COUNT] = {
+  [MP_NUM_FLOAT_STD_LMP] =  {.count = 6,.L = 0, .LL = 0, .fallback_index = 0, .items = {
     {.chr = 'f', .repr = MP_NUM_REPR_MP_FLOAT},
     {.chr = 'F', .repr = MP_NUM_REPR_MP_FLOAT},
     {.chr = 'g', .repr = MP_NUM_REPR_MP_FLOAT},
@@ -60,7 +60,7 @@ const struct MP_STANDARD_REPR MP_NUM_FLOAT_REPR_CHARS[MP_NUM_STANDARD_COUNT] = {
     {.chr = 'd', .repr = MP_NUM_REPR_MP_DECIMAL},
     {.chr = 'D', .repr = MP_NUM_REPR_MP_DECIMAL},
   }},
-  [MP_NUM_IEEE754_STANDARD] =  {.count = 6, .L = 64, .LL = 128, .fallback_index = 0, .items = {
+  [MP_NUM_FLOAT_STD_IEEE754] =  {.count = 6, .L = 64, .LL = 128, .fallback_index = 0, .items = {
     {.chr = 'f', .repr = MP_NUM_REPR_IEEE754_FLOAT},
     {.chr = 'F', .repr = MP_NUM_REPR_IEEE754_FLOAT},
     {.chr = 'g', .repr = MP_NUM_REPR_IEEE754_FLOAT},

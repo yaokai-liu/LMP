@@ -31,6 +31,11 @@
 #include "lmp.h"
 #include "arith.h"
 #include <check.h>
+#define lenof(str_literal) ((sizeof str_literal) - 1)
+#define bitsof(w)          (sizeof(w) * CHAR_BIT)
+#define max(a, b)          ((a) > (b) ? (a) : (b))
+#define min(a, b)          ((a) < (b) ? (a) : (b))
+#define abs(a)             ((a) > (0) ? (a) : -(a))
 
 Suite *abs_add_offset_suite();
 Suite *abs_sub_offset_suite();

@@ -26,7 +26,6 @@
  **/
 
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "lmp.h"
 #include "parse.h"
@@ -41,7 +40,7 @@ int main () {
   constexpr uint32_t str_len = lenof("-123.12345678999991234'56789123456789_123456789LL<IEEE754>");
   const uint32_t parse_len = LMP_parse(num_str, &num_type, &number, &STDAllocator);
   if (parse_len != str_len) { return -1; }
-  if (num_type.type != MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT, 16)) { return -2; }
+  if (num_type.type != MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT, 128)) { return -2; }
   if (number.val.FLOAT.size != -4) { return -3; }
   if (number.val.FLOAT.exp != -3) { return -4; }
   const int64_t size = abs(number.val.FLOAT.size);

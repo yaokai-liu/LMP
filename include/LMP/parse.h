@@ -49,6 +49,24 @@ typedef struct MP_NUMBER {
   uint8_t   repr;
 }MP_NUMBER;
 
+enum LMP_PARSE_MODE_TYPE : uint8_t {
+  LMP_PARSE_NO_SIGN     = 0b1110'1111,
+  LMP_PARSE_NO_SEPA     = 0b1101'1111,
+  LMP_PARSE_NO_REPR     = 0b1111'1110,
+  LMP_PARSE_NO_SIZE     = 0b1111'1101,
+
+  LMP_PARSE_FULL_DRESS  = 0b1111'1111,
+  LMP_PARSE_NO_PREFIX   = 0b0000'1111,
+  LMP_PARSE_NO_SUFFIX   = 0b1111'0000,
+  LMP_PARSE_NO_DRESS    = 0b0000'0000
+};
+enum LMP_PARSE_ADIC_TYPE : uint8_t {
+  ADIC_TYPE_NONE,
+  ADIC_TYPE_16,
+  ADIC_TYPE_10,
+  ADIC_TYPE_8 ,
+  ADIC_TYPE_2 ,
+};
 // Fixed-capacity mode (caller-provided buffer):
 //   If (NUMBER->val.INT.alloc < 0), the parser will NOT allocate or free
 //   limbs. The caller MUST set NUMBER->val.INT.limbs to a buffer of at

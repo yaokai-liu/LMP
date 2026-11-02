@@ -55,7 +55,7 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) mantissa, INT(_ew) exponent)
   UINT(_w) final_mant = 0;                                                            \
                                                                                       \
   exponent += (INT(_ew))IEEE754_F##_w##_EXP_OFF;                                      \
-  if (exponent < -IEEE754_F##_w##_MANT_BITS) {                                        \
+  if (exponent < -IEEE754_F##_w##_MANT_BIT) {                                        \
     final_exp = 0; final_mant = 0;                                                    \
   } else if (exponent <= 0) {                                                         \
     final_exp = 0;                                                                    \
@@ -73,10 +73,8 @@ inline FLOAT(_w) ieee754bin##_w(bool sign, UINT(_w) mantissa, INT(_ew) exponent)
   return val.F;                                                                       \
 }
 
-u_to_ieee754bin(16,  16, IEEE754_F16_EXP_BITS)
-u_to_ieee754bin(32,  16, IEEE754_F32_EXP_BITS)
-u_to_ieee754bin(64,  16, IEEE754_F64_EXP_BITS)
-u_to_ieee754bin(128, 16, IEEE754_F128_EXP_BITS)
+u_to_ieee754bin(32,  16, IEEE754_F32_EXP_BIT)
+u_to_ieee754bin(64,  16, IEEE754_F64_EXP_BIT)
 
 static_assert(sizeof(lmp_limb_t) == sizeof(uint64_t), "'lmp_limb_t' is required has same size with 'uint64_t'");
 static_assert(((lmp_limb_t)-1) > ((lmp_limb_t) 0), "'lmp_limb_t' is required an unsigned type.");
@@ -96,11 +94,11 @@ uint32_t MP_FLOAT_to_ieee754_f##_w(FLOAT(_w) *restrict dest, const MP_FLOAT *res
     }                                                                                                               \
   }                                                                                                                 \
   const int64_t leading_zeros = __builtin_clzll(MP_FLOAT_get_limb(mp_val, -1));                                     \
-  int64_t exp2 = (abs(mp_val->size) + mp_val->exp) * (int64_t)LMP_LIMB_BITS - leading_zeros - 1;                    \
+  int64_t exp2 = (abs(mp_val->size) + mp_val->exp) * (int64_t)LMP_LIMB_BIT - leading_zeros - 1;                    \
   uint128_t mantissa = MP_FLOAT_get_double_limbs(mp_val, -2);                                                       \
-  const int64_t mant_bits = (2 * (int64_t)LMP_LIMB_BITS) - leading_zeros;                                           \
-  const bool round_bit = (mantissa << (leading_zeros + IEEE754_F##_w##_MANT_BITS + 1)) >= (((uint128_t)1) << 127);  \
-  mantissa >>= mant_bits - IEEE754_F##_w##_MANT_BITS - 1;                                                           \
+  const int64_t mant_bits = (2 * (int64_t)LMP_LIMB_BIT) - leading_zeros;                                           \
+  const bool round_bit = (mantissa << (leading_zeros + IEEE754_F##_w##_MANT_BIT + 1)) >= (((uint128_t)1) << 127);  \
+  mantissa >>= mant_bits - IEEE754_F##_w##_MANT_BIT - 1;                                                           \
   if ((mantissa & IEEE754_F##_w##_MANT_MAX) == IEEE754_F##_w##_MANT_MAX && round_bit) {                             \
     mantissa += 1; mantissa >>= 1; exp2 += 1;                                                                       \
   } else if (round_bit) { mantissa += 1; }                                                                          \

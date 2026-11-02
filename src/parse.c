@@ -30,6 +30,15 @@
 #include "arith.h"
 #include "allocator.h"
 
+enum LMP_PARSE_MODE_MASK_TYPE : uint8_t {
+  LMP_PARSE_SIGN_MASK = (uint8_t)~LMP_PARSE_NO_SIGN,
+  LMP_PARSE_SEPA_MASK = (uint8_t)~LMP_PARSE_NO_SEPA,
+  LMP_PARSE_REPR_MASK = (uint8_t)~LMP_PARSE_NO_REPR,
+  LMP_PARSE_SIZE_MASK = (uint8_t)~LMP_PARSE_NO_SIZE,
+  LMP_PARSE_PREFIX_MASK = (uint8_t)~LMP_PARSE_NO_PREFIX,
+  LMP_PARSE_SUFFIX_MASK = (uint8_t)~LMP_PARSE_NO_SUFFIX,
+};
+
 struct limb_pos {
   const char * start;
   const char * end;
@@ -87,19 +96,18 @@ static uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_NUMB
 static uint32_t LMP_parse_adic_number(const char *input, MP_NUM_TYPE *num_type, MP_NUMBER *NUMBER,
                                       bool negative, uint32_t adic_type, const Allocator *allocator);
 
-enum LMP_ADIC_TYPE : int32_t {
-  ADIC_TYPE_16 = 0,
-  ADIC_TYPE_10 = 1,
-  ADIC_TYPE_8  = 2,
-  ADIC_TYPE_2  = 3,
-};
+extern const struct MP_STANDARD MP_NUM_INT_STANDARD_LIST[MP_NUM_INT_STANDARD_COUNT];
+extern const struct MP_STANDARD MP_NUM_FLOAT_STANDARD_LIST[MP_NUM_FLOAT_STANDARD_COUNT];
+extern const struct MP_STANDARD_REPR MP_NUM_INT_STD_REPR__LIST[MP_NUM_INT_STANDARD_COUNT];
+extern const struct MP_STANDARD_REPR MP_NUM_FLOAT_STD_REPR__LIST[MP_NUM_FLOAT_STANDARD_COUNT];
+
 static constexpr uint32_t MAX_DIGIT_PER_LIMB[] = {
-  [ADIC_TYPE_16] = (LMP_LIMB_BITS / 4),
-  [ADIC_TYPE_10] = ((19 * 64) / LMP_LIMB_BITS),
-  [ADIC_TYPE_8 ] = (LMP_LIMB_BITS / 3),
-  [ADIC_TYPE_2 ] = LMP_LIMB_BITS,
+  [ADIC_TYPE_16] = (LMP_LIMB_BIT / 4),
+  [ADIC_TYPE_10] = ((19 * 64) / LMP_LIMB_BIT),
+  [ADIC_TYPE_8 ] = (LMP_LIMB_BIT / 3),
+  [ADIC_TYPE_2 ] = LMP_LIMB_BIT,
 };
-static void (*const DIGITAL_FUNC_TOOLS[4])(const struct limb_pos *, lmp_limb_t *) = {
+static void (*const DIGITAL_FUNC_TOOLS[])(const struct limb_pos *, lmp_limb_t *) = {
   [ADIC_TYPE_16] = limb_digit_parse_adic16,
   [ADIC_TYPE_10] = limb_digit_parse_adic10,
   [ADIC_TYPE_8 ] = limb_digit_parse_adic8 ,
@@ -199,12 +207,12 @@ inline void float_compose_adic16(MP_NUMBER *const NUMBER, const int32_t exp, con
   int32_t n_limbs = 0, remains = 0;
   if (exp >= 0) {
     const int32_t n_bits = exp * 4;
-    n_limbs = n_bits / (int32_t) LMP_LIMB_BITS;
-    remains = n_bits % (int32_t) LMP_LIMB_BITS;
+    n_limbs = n_bits / (int32_t) LMP_LIMB_BIT;
+    remains = n_bits % (int32_t) LMP_LIMB_BIT;
   } else {
     const int32_t n_bits = exp * 4;
-    n_limbs = n_bits / (int32_t) LMP_LIMB_BITS - 1;
-    remains = LMP_LIMB_BITS + (n_bits % (int32_t) LMP_LIMB_BITS);
+    n_limbs = n_bits / (int32_t) LMP_LIMB_BIT - 1;
+    remains = LMP_LIMB_BIT + (n_bits % (int32_t) LMP_LIMB_BIT);
   }
   MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
   MP_INT_clamp(&NUMBER->val.INT);
@@ -227,13 +235,13 @@ inline void float_compose_adic10(MP_NUMBER *const NUMBER, const int32_t exp, con
     for (int32_t i = 0; i < n_limbs; i++) {
       scale_adic10(&NUMBER->val.INT, MAX_DIGIT_PER_LIMB[ADIC_TYPE_10], allocator);
       if (abs(NUMBER->val.INT.size) >= prec && i < n_limbs - 1) {
-        MP_INT_right_shift(&NUMBER->val.INT, LMP_LIMB_BITS, allocator);
+        MP_INT_right_shift(&NUMBER->val.INT, LMP_LIMB_BIT, allocator);
         limb_exp ++;
       }
     }
     if (remains > 0) {
       if (abs(NUMBER->val.INT.size) >= prec) {
-        MP_INT_right_shift(&NUMBER->val.INT, LMP_LIMB_BITS, allocator);
+        MP_INT_right_shift(&NUMBER->val.INT, LMP_LIMB_BIT, allocator);
       }
       scale_adic10(&NUMBER->val.INT, remains, allocator);
     }
@@ -261,7 +269,7 @@ inline void float_compose_adic10(MP_NUMBER *const NUMBER, const int32_t exp, con
     MP_INT_clamp(&DIVISOR);
 
     const int32_t quotient_exp_abs = abs(DIVISOR.size);
-    MP_INT_left_shift(&NUMBER->val.INT, (int32_t) (quotient_exp_abs * LMP_LIMB_BITS), allocator);
+    MP_INT_left_shift(&NUMBER->val.INT, (int32_t) (quotient_exp_abs * LMP_LIMB_BIT), allocator);
     int32_t quotient_size = abs(NUMBER->val.INT.size) - abs(DIVISOR.size);
     MP_INT QUOTIENT = {};
     MP_INT_init(&QUOTIENT, quotient_size, allocator);
@@ -279,7 +287,7 @@ inline void float_compose_adic10(MP_NUMBER *const NUMBER, const int32_t exp, con
       quotient_size = abs(QUOTIENT.size);
       if (quotient_size > abs(NUMBER->val.INT.alloc)) {
         const int32_t rounded_limbs = quotient_size - abs(NUMBER->val.INT.alloc);
-        MP_INT_right_shift(&QUOTIENT, rounded_limbs * (int32_t)LMP_LIMB_BITS, allocator);
+        MP_INT_right_shift(&QUOTIENT, rounded_limbs * (int32_t)LMP_LIMB_BIT, allocator);
         MP_INT_clamp(&QUOTIENT);
         quotient_size = abs(NUMBER->val.INT.alloc);
       }
@@ -304,13 +312,13 @@ inline void float_compose_adic8(MP_NUMBER *const NUMBER, const int32_t exp, cons
   int32_t n_limbs = 0, remains = 0;
   if (exp >= 0) {
     const int32_t n_bits = exp * 3;
-    n_limbs = n_bits / (int32_t) LMP_LIMB_BITS;
-    remains = n_bits % (int32_t) LMP_LIMB_BITS;
+    n_limbs = n_bits / (int32_t) LMP_LIMB_BIT;
+    remains = n_bits % (int32_t) LMP_LIMB_BIT;
     MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
   } else {
     const int32_t n_bits = exp * 3;
-    n_limbs = n_bits / (int32_t) LMP_LIMB_BITS - 1;
-    remains = LMP_LIMB_BITS + (n_bits % (int32_t) LMP_LIMB_BITS);
+    n_limbs = n_bits / (int32_t) LMP_LIMB_BIT - 1;
+    remains = LMP_LIMB_BIT + (n_bits % (int32_t) LMP_LIMB_BIT);
   }
   MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
   MP_INT_clamp(&NUMBER->val.INT);
@@ -327,13 +335,13 @@ inline void float_compose_adic2(MP_NUMBER *const NUMBER, const int32_t exp, cons
   int32_t n_limbs = 0, remains = 0;
   if (exp >= 0) {
     const int32_t n_bits = exp;
-    n_limbs = n_bits / (int32_t) LMP_LIMB_BITS;
-    remains = n_bits % (int32_t) LMP_LIMB_BITS;
+    n_limbs = n_bits / (int32_t) LMP_LIMB_BIT;
+    remains = n_bits % (int32_t) LMP_LIMB_BIT;
     MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
   } else {
     const int32_t n_bits = exp;
-    n_limbs = n_bits / (int32_t) LMP_LIMB_BITS - 1;
-    remains = LMP_LIMB_BITS + (n_bits % (int32_t) LMP_LIMB_BITS);
+    n_limbs = n_bits / (int32_t) LMP_LIMB_BIT - 1;
+    remains = LMP_LIMB_BIT + (n_bits % (int32_t) LMP_LIMB_BIT);
   }
   MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
   MP_INT_clamp(&NUMBER->val.INT);
@@ -362,9 +370,11 @@ inline uint32_t LMP_parse_num_suffix(const char *const input, const bool is_floa
   const char *pText = input;
   char repr_chr = 0;
   lmp_limb_t size = 0;
+  uint8_t stdd_index = -1;
   uint8_t stdd_id = MP_NUM_UNKNOWN_STANDARD;
-  auto const STD_LIST = is_float ? MP_NUM_FLOAT_STANDARDS : MP_NUM_INT_STANDARDS;
-  auto const STD_REPR_LIST = is_float ? MP_NUM_FLOAT_REPR_CHARS : MP_NUM_INT_REPR_CHARS;
+  auto const STD_LIST = is_float ? MP_NUM_FLOAT_STANDARD_LIST : MP_NUM_INT_STANDARD_LIST;
+  auto const STD_REPR_LIST = is_float ? MP_NUM_FLOAT_STD_REPR__LIST : MP_NUM_INT_STD_REPR__LIST;
+  auto const STD_COUNT = is_float ? MP_NUM_FLOAT_STANDARD_COUNT : MP_NUM_INT_STANDARD_COUNT;
 
   /***************************************************/
   /************** suffix parse ***********************/
@@ -395,12 +405,13 @@ inline uint32_t LMP_parse_num_suffix(const char *const input, const bool is_floa
   if (isLAngleBracket(pText)) {
     pText ++;
     bool stdd_matched = false;
-    for (uint32_t i = 0; i < MP_NUM_STANDARD_COUNT; i++) {
+    for (size_t i = 0; i < STD_COUNT; i++) {
       auto const stdd = STD_LIST[i];
       if (!stdd.name) { continue; }
       if (strcmp_o(pText, stdd.name) == stdd.leng) {
         if (!isRAngleBracket(pText + stdd.leng)) { continue; }
         stdd_id = stdd.stdd;
+        stdd_index = i;
         pText += stdd.leng + 1;
         stdd_matched = true;
         break;
@@ -425,11 +436,11 @@ inline uint32_t LMP_parse_num_suffix(const char *const input, const bool is_floa
   // stdd
   if (stdd_id == MP_NUM_UNKNOWN_STANDARD) {
     if (size > 0) {
-      if (is_float) { stdd_id = MP_NUM_IEEE754_STANDARD; }
-      else { stdd_id = MP_NUM_INT_STANDARD; }
-    } else { stdd_id = MP_NUM_LMP_STANDARD; }
+      if (is_float) { stdd_id = MP_NUM_IEEE754_STANDARD; stdd_index = MP_NUM_FLOAT_STD_IEEE754; }
+      else { stdd_id = MP_NUM_INT_STANDARD; stdd_index = MP_NUM_INT_STD_C; }
+    } else { stdd_id = MP_NUM_LMP_STANDARD; stdd_index = MP_NUM_INT_STD_LMP; }
   }
-  auto const STD_REPR = STD_REPR_LIST[stdd_id];
+  auto const STD_REPR = STD_REPR_LIST[stdd_index];
   // size
   if (size > UINT16_MAX) { size >>= bitsof(uint16_t); size = (size > 1) ? STD_REPR.LL : STD_REPR.L; }
   // repr

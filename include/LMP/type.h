@@ -30,8 +30,7 @@
 #include <stdint.h>
 #include "lmp.h"
 
-#define MP_NUM_STANDARD_COUNT   3
-enum MP_NUMBER_STANDARD_TYPE : uint8_t {
+enum MP_NUMBER_STANDARD_LIST : uint8_t {
   MP_NUM_LMP_STANDARD = 0x00,
   // std C integer
   MP_NUM_INT_STANDARD = 0x01,
@@ -39,6 +38,20 @@ enum MP_NUMBER_STANDARD_TYPE : uint8_t {
 
   MP_NUM_UNKNOWN_STANDARD = 0xFF
 };
+
+#define MP_NUM_INT_STANDARD_COUNT     ((size_t) 2)
+enum MP_NUMBER_INT_STD_LIST : uint8_t {
+  MP_NUM_INT_STD_LMP = 0x00,
+  // std C integer
+  MP_NUM_INT_STD_C = 0x01,
+};
+#define MP_NUM_FLOAT_STANDARD_COUNT   ((size_t) 2)
+enum MP_NUMBER_FLOAT_STD_LIST : uint8_t {
+  MP_NUM_FLOAT_STD_LMP = 0x00,
+  // std C integer
+  MP_NUM_FLOAT_STD_IEEE754 = 0x01,
+};
+
 enum MP_NUMBER_LMP_REPRESENTATION_TYPE : uint8_t {
   MP_NUM_REPR_NONE = 0x00,
   MP_NUM_REPR_MP_INT = 0x01,
@@ -87,7 +100,7 @@ static_assert(sizeof(((MP_NUM_TYPE*)nullptr)->pack) == 4, "pack layout broken");
 
 #define MP_NUM_TYPE_KIND(t)       (((t) & 0xFF'00'0000u) >> 24)
 #define MP_NUM_TYPE_REPR(t)       (((t) & 0x00'FF'0000u) >> 16)
-#define MP_NUM_TYPE_BITS(t)       ((t) & 0x000'0'FFFFu)
+#define MP_NUM_TYPE_BIT(t)        ( (t) & 0x000'0'FFFFu       )
 #define MP_NUM_TYPE_IS_MP_TYPE(t) (MP_NUM_TYPE_KIND(t) == MP_NUM_LMP_STANDARD)
 #define MP_NUM_TYPE_REPR_IS(t, std, repr) \
   (MP_NUM_TYPE_KIND(t) == (std) && MP_NUM_TYPE_REPR(t) == (repr))
@@ -114,11 +127,5 @@ struct MP_STANDARD_REPR {
     const uint8_t repr;
   } items[MP_NUM_MAX_REPR_COUNT];
 };
-
-extern const struct MP_STANDARD MP_NUM_INT_STANDARDS[MP_NUM_STANDARD_COUNT];
-extern const struct MP_STANDARD MP_NUM_FLOAT_STANDARDS[MP_NUM_STANDARD_COUNT];
-
-extern const struct MP_STANDARD_REPR MP_NUM_INT_REPR_CHARS[MP_NUM_STANDARD_COUNT];
-extern const struct MP_STANDARD_REPR MP_NUM_FLOAT_REPR_CHARS[MP_NUM_STANDARD_COUNT];
 
 #endif //LMP_TYPE_H

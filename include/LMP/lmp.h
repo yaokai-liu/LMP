@@ -53,10 +53,10 @@ typedef uint128_t lmp_double_limb_t;
 typedef uint256_t lmp_quarter_limb_t;
 
 #define LMP_LIMB_SIZE (sizeof(lmp_limb_t))
-#define LMP_LIMB_BITS (LMP_LIMB_SIZE * CHAR_BIT)
+#define LMP_LIMB_BIT (LMP_LIMB_SIZE * CHAR_BIT)
 #define LMP_LIMB_MAX  (~(lmp_limb_t)0)
 #define LMP_DOUBLE_LIMB_MAX  (~(lmp_double_limb_t)0)
-#define LMP_LIMB_VAL  (((lmp_double_limb_t)1) << LMP_LIMB_BITS)
+#define LMP_LIMB_VAL  (((lmp_double_limb_t)1) << LMP_LIMB_BIT)
 
 // This struct is aligned to GMP's mpz
 typedef struct MP_INT {
