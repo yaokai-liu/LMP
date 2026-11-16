@@ -34,10 +34,10 @@
 #define LMP_PARSE_ALLOC_SCALE 4
 #endif
 #ifndef LMP_PARSE_EXP_MAX
-#define LMP_PARSE_EXP_MAX (UINT16_MAX >> 1)
+#define LMP_PARSE_EXP_MAX   UINT16_MAX
 #endif
-#ifndef LMP_LITERAL_MANT_LEN_MAX
-#define LMP_LITERAL_MANT_LEN_MAX (UINT16_MAX >> 1)
+#ifndef LMP_PARSE_PREC_MAX
+#define LMP_PARSE_PREC_MAX  UINT16_MAX
 #endif
 
 typedef struct MP_NUMBER {
@@ -67,6 +67,11 @@ enum LMP_PARSE_ADIC_TYPE : uint8_t {
   ADIC_TYPE_8 ,
   ADIC_TYPE_2 ,
 };
+
+
+typedef struct LMP_PARSE_CTX {
+
+} LMP_PARSE_CTX;
 // Fixed-capacity mode (caller-provided buffer):
 //   If (NUMBER->val.INT.alloc < 0), the parser will NOT allocate or free
 //   limbs. The caller MUST set NUMBER->val.INT.limbs to a buffer of at

@@ -82,26 +82,26 @@ typedef union {
 ## Parsing
 
 ### Accepted Literal Formats
-```BNF
-NUMBER = <sign>? <prefix> <digits> (<dot> <digits>)? <exp>? <suffix>?
-<suffix> = <repr> <size> <standard> 
-         | <size> <repr> <standard>
-         | <size> <standard>
-         | <repr> <standard>
-         | <repr> <size>
-         | <standard>
-         | <size>
-         | <repr>
+```BNF Target=Number
+Number = SIGN? PREFIX DIGITS (DOT DIGITS)? EXP? Suffix?
+Suffix = REPR SIZE STANDARD 
+         | SIZE REPR STANDARD
+         | SIZE STANDARD
+         | REPR STANDARD
+         | REPR SIZE
+         | STANDARD
+         | SIZE
+         | REPR
 ```
 In summary:
-* `<sign>`: Optional leading `+/-`.
-* Base prefixes `<prefix>`: `0x/0X` (hexadecimal), `0b/0B` (binary), `0o/0O` (octal), or none (decimal).
+* `SIGN`: Optional leading `+/-`.
+* Base prefixes `PREFIX`: `0x/0X` (hexadecimal), `0b/0B` (binary), `0o/0O` (octal), or none (decimal).
 * Optional fractional part.
-* Optional exponent `<exp>`: `p/P` for hexadecimal exponent bases; `p/P/e/E` for other adic.
-* Optional length suffix <size>: up to two `l/L`, or a number that following `<repr>`. Standard specify.
-* Optional `<repr>` tag selecting a target representation,
+* Optional exponent `EXP`: `p/P` for hexadecimal exponent bases; `p/P/e/E` for other adic.
+* Optional length suffix SIZE: up to two `l/L`, or a number that following `REPR`. Standard specify.
+* Optional `REPR` tag selecting a target representation,
   `FLOAT` or `DECIMAL`, `UNSIGNED` or `SIGNED`, or other standard specified representation by single letters.
-* Optional `<standard>` tag selecting a target numeric standard, must be in angle brackets.
+* Optional `STANDARD` tag selecting a target numeric standard, must be in angle brackets.
 
 the first representation will cover the last representation which close to the standard name,
 and them can't present in same times.

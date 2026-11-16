@@ -1,3 +1,6 @@
 [submodule "meman"]
 	path = meman
 	url = git@github.com:yaokai-liu/meman.git
+[submodule "extstd"]
+	path = extstd
+	url = git@github.com:yaokai-liu/extstd.git

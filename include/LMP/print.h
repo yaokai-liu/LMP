@@ -29,7 +29,19 @@
 #define LMP_PRINT_H
 #include "lmp.h"
 
-uint32_t LMP_printf(const char *restrict fmt, ...);
-uint32_t LMP_sprintf(char *dest, const char *restrict fmt, ...);
+typedef struct BaseCache BaseCache;
+
+// @return: integer polynomial that equals to 'mp_val' under given base, i.e.
+//          sum(limbs[i] * pow(BASE_LIMB_VAL, i))
+// Here BASE_LIMB_VAL = pow(base, BASE_LIMB_WIDTH) is the max power of base that not larger than LMP_LIMB_VAL
+// and BASE_LIMB_WIDTH is its exponent regards to base.
+// Both BASE_LIMB_VAL and BASE_LIMB_WIDTH depend on the base.
+// if 'p_BASE_LIMB_WIDTH' is not nullptr, BASE_LIMB_WIDTH will be placed in it.
+MP_POLYi *MP_INT_to_base_polynomial(uint32_t *p_BASE_LIMB_WIDTH, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
+// Print digital string in base of the 'mp_val'.
+// Always aligned to BASE_LIMB_WIDTH (by fill zero).
+uint32_t MP_INT_to_base_string(char *dest, uint32_t max_len, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
+uint32_t MP_FLOAT_to_str(char *dest, uint32_t max_len, const MP_FLOAT *mp_val, uint32_t base);
+uint32_t MP_DECIMAL_to_str(char *dest, uint32_t max_len, const MP_DECIMAL *mp_val, uint32_t base);
 
 #endif //LMP_PRINT_H

@@ -35,7 +35,9 @@ if (NOT TARGET meman)
     link_libraries(meman)
 endif ()
 
-include_directories(include include/LMP)
+add_subdirectory(extstd)
+include_directories(include extstd/include include/LMP)
+link_libraries(extstd)
 
 file(GLOB_RECURSE LMP_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.c src/*.h)
 add_library(LMP STATIC ${LMP_SRC})

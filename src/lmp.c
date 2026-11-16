@@ -26,4 +26,285 @@
  **/
 
 #include "lmp.h"
+#include "extbit.h"
 
+#define max(a, b)       ((a) > (b) ? (a) : (b))
+#define abs(a)          ((a) > (0) ? (a) : -(a))
+#define sgn(a)          ((a) > (0) ?   1 :  -1)
+#define aligned(count)  (((count) / MP_ALLOC_LEN + 1) * MP_ALLOC_LEN)
+
+
+inline void MP_INT_init(MP_INT *val, const int32_t initial_alloc, const Allocator *allocator) {
+  if (val->alloc == 0) {
+    val->alloc = aligned(initial_alloc);
+    val->limbs = allocator->calloc(val->alloc, LMP_LIMB_SIZE);
+    val->size = 0;
+  }
+}
+
+void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator) {
+  MP_INT_realloc(dest, src->size, allocator);
+  allocator->memcpy(dest->limbs, src->limbs, abs(src->size) * LMP_LIMB_SIZE);
+  dest->size = src->size;
+}
+
+inline void MP_INT_clear(MP_INT *val, const Allocator *allocator) {
+  if (val->alloc > 0 && val->limbs) {
+    allocator->free(val->limbs);
+    val->limbs = nullptr;
+    val->alloc = 0;
+  }
+  val->size = 0;
+}
+
+inline void MP_INT_realloc(MP_INT *val, const int32_t required, const Allocator *allocator) {
+  if (val->alloc < 0) { return ; }
+  if (val->alloc < required) {
+    const int32_t new_alloc = aligned(required);
+    lmp_limb_t *p = allocator->realloc(val->limbs, new_alloc * LMP_LIMB_SIZE);
+    if (!p) return;
+    allocator->memset(&p[val->alloc], 0, (new_alloc - val->alloc) * LMP_LIMB_SIZE);
+    val->limbs = p;
+    val->alloc = new_alloc;
+  }
+}
+
+inline void MP_INT_clamp(MP_INT *val) {
+  lmp_size_t size = abs(val->size);
+  while (size > 0 && val->limbs[size - 1] == 0) { size--; }
+  val->size = (val->size >= 0) ? size : -size;
+}
+
+inline void MP_INT_negative(MP_INT *val) {
+  val->size = -val->size;
+}
+
+size_t MP_INT_bitsof(const MP_INT *val) {
+  lmp_size_t size = abs(val->size);
+  while (size > 0 && val->limbs[size - 1] == 0) { size--; }
+  return (size - 1) * LMP_LIMB_BIT + extstd_bit_width(val->limbs[size - 1]);
+}
+
+inline lmp_limb_t MP_INT_left_shift_load(const MP_INT *restrict num, const int32_t index, const int32_t bit_count) {
+  const lmp_size_t size = abs(num->size);
+  if (index < 0) {
+    lmp_limb_t val1 = (-1 <= size + index && index <= 0) ? ((num->limbs[size + index - 1]) << bit_count) : 0;
+    lmp_limb_t val2 = (0 <= size + index && index <= -1 && bit_count)
+                    ? ((num->limbs[size + index]) >> (LMP_LIMB_BIT - bit_count)) : 0;
+    const lmp_limb_t res = val1 | val2;
+    return res;
+  }
+  lmp_limb_t val1 = (-1 <= index && index <= size - 2) ? ((num->limbs[size + index + 1]) << bit_count) : 0;
+  lmp_limb_t val2 = ( 0 <= index && index <= size - 1 && bit_count)
+                  ? ((num->limbs[size + index]) >> (LMP_LIMB_BIT - bit_count)) : 0;
+  const lmp_limb_t res = val1 | val2;
+  return res;
+}
+
+inline lmp_double_limb_t MP_INT_left_shift_load_double(const MP_INT *restrict num, const int32_t index, const int32_t bit_count) {
+  const lmp_size_t size = abs(num->size);
+  if (index < 0) {
+    lmp_double_limb_t val1 = ( 1 <= size + index && index <=  0)
+                           ? (((lmp_double_limb_t)num->limbs[size + index - 1]) << bit_count) : 0;
+    lmp_double_limb_t val2 = ( 0 <= size + index && index <= -1)
+                           ? (((lmp_double_limb_t)num->limbs[size + index    ]) << bit_count) : 0;
+    lmp_double_limb_t val3 = (-1 <= size + index && index <= -2)
+                           ? (((lmp_double_limb_t)num->limbs[size + index + 1]) << bit_count) : 0;
+    val1 >>= LMP_LIMB_BIT;
+    val3 <<= LMP_LIMB_BIT;
+    const lmp_double_limb_t res = val1 | val2 | val3;
+    return res;
+  }
+  lmp_double_limb_t val1 = ( 1 <= index && index <= size    ) ? (((lmp_double_limb_t)num->limbs[index - 1]) << bit_count) : 0;
+  lmp_double_limb_t val2 = ( 0 <= index && index <= size - 1) ? (((lmp_double_limb_t)num->limbs[index    ]) << bit_count) : 0;
+  lmp_double_limb_t val3 = (-1 <= index && index <= size - 2) ? (((lmp_double_limb_t)num->limbs[index + 1]) << bit_count) : 0;
+  val1 >>= LMP_LIMB_BIT;
+  val3 <<= LMP_LIMB_BIT;
+  const lmp_double_limb_t res = val1 | val2 | val3;
+  return res;
+}
+
+inline lmp_limb_t MP_INT_get_limb(const MP_INT *restrict num, const int32_t index) {
+  const lmp_size_t size = abs(num->size);
+  if (index < 0) { return -size <= index ? num->limbs[size + index] : 0; }
+  return  index < size ? num->limbs[index] : 0;
+}
+
+inline lmp_double_limb_t MP_INT_get_double_limbs(const MP_INT *restrict num, const int32_t index) {
+  const lmp_size_t size = abs(num->size);
+  if (index < 0) {
+    const lmp_double_limb_t val1 = (size + index >= 0) ? (lmp_double_limb_t)num->limbs[size + index] : 0;
+    const lmp_double_limb_t val2 = (-size - 2 <= index && index <= -2 ) ? (lmp_double_limb_t)num->limbs[size + index + 1] : 0;
+    return (val2 << LMP_LIMB_BIT) | val1;
+  }
+  const lmp_double_limb_t val1 = (index < size) ? (lmp_double_limb_t)num->limbs[index] : 0;
+  const lmp_double_limb_t val2 = (index + 1 < size) ? (lmp_double_limb_t)num->limbs[index + 1] : 0;
+  return (val2 << LMP_LIMB_BIT) | val1;
+}
+
+inline int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2) {
+  const lmp_size_t size = max(abs(op1->size), abs(op2->size));
+  for (int32_t i = size - 1; i >= 0; i --) {
+    if (MP_INT_get_limb(op1, i) > MP_INT_get_limb(op2, i)) { return  1; }
+    if (MP_INT_get_limb(op1, i) < MP_INT_get_limb(op2, i)) { return -1; }
+  }
+  return 0;
+}
+
+inline bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, const int32_t offset) {
+  const lmp_size_t size1 = abs(op1->size);
+  const lmp_size_t size2 = abs(op2->size);
+  for (int32_t i = 0; i < size2; i ++) {
+    if (MP_INT_get_limb(op1, size1 - 1 - i) < MP_INT_get_limb(op2, size1 - offset - 1 - i)) { return false; }
+    if (MP_INT_get_limb(op1, size1 - 1 - i) > MP_INT_get_limb(op2, size1 - offset - 1 - i)) { return true;  }
+  }
+  return true;
+}
+
+void MP_INT_from_int(MP_INT *mp_val, const int256_t val, const Allocator *allocator) {
+  if (val == 0) { mp_val->size = 0; return; }
+  uint256_t abs_val = abs(val);
+  const int32_t size = extstd_bit_width(abs_val) / LMP_LIMB_BIT + 1;
+  if (-size < mp_val->alloc && mp_val->alloc <= 0) { return; }
+  MP_INT_realloc(mp_val, size, allocator);
+  for (int32_t i = 0; i < size; i++){
+    mp_val->limbs[i] = (lmp_limb_t) (abs_val >> (i * LMP_LIMB_BIT));
+  }
+  mp_val->size = sgn(val) * size;
+}
+
+void MP_INT_from_uint(MP_INT *mp_val, const uint256_t val, const Allocator *allocator) {
+  if (val == 0) { mp_val->size = 0; return; }
+  const int32_t size = extstd_bit_width(val) / LMP_LIMB_BIT + 1;
+  if (-size < mp_val->alloc && mp_val->alloc <= 0) { return; }
+  MP_INT_realloc(mp_val, size, allocator);
+  for (int32_t i = 0; i < size; i++){
+    mp_val->limbs[i] = (lmp_limb_t) (val >> (i * LMP_LIMB_BIT));
+  }
+  mp_val->size = size;
+}
+
+inline void MP_FLOAT_init(MP_FLOAT *val, const int32_t initial_alloc, const Allocator *allocator) {
+  if (val->prec == 0) {
+    val->prec = aligned(initial_alloc);
+    val->limbs = allocator->calloc(val->prec, LMP_LIMB_SIZE);
+    val->exp = MP_FLOAT_ZERO;
+    val->size = 0;
+  }
+}
+
+inline void MP_FLOAT_realloc(MP_FLOAT *val, const int32_t required, const Allocator *allocator) {
+  if (val->prec < 0) { return ; }
+  if (val->prec < required) {
+    const int32_t new_alloc = aligned(required);
+    lmp_limb_t *p = allocator->realloc(val->limbs, new_alloc * LMP_LIMB_SIZE);
+    if (!p) return;
+    allocator->memset(&p[val->prec], 0, (new_alloc - val->prec) * LMP_LIMB_SIZE);
+    val->limbs = p;
+    val->prec = new_alloc;
+  }
+}
+
+void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator) {
+  MP_FLOAT_realloc(dest, src->size, allocator);
+  allocator->memcpy(dest->limbs, src->limbs, abs(src->size) * LMP_LIMB_SIZE);
+  dest->size = src->size;
+  dest->exp = src->exp;
+}
+
+void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator) {
+  if (val->prec > 0 && val->limbs) {
+    allocator->free(val->limbs);
+    val->limbs = nullptr;
+    val->prec = 0;
+  }
+  val->exp = MP_FLOAT_ZERO;
+  val->size = 0;
+}
+
+inline void MP_FLOAT_clamp(MP_FLOAT *val) {
+  if (!val->size) { return; }
+  lmp_size_t size = abs(val->size);
+
+  int32_t tail_zeros = 0;
+  for (; tail_zeros < size; tail_zeros ++) { if (val->limbs[tail_zeros] != 0) { break; } }
+  if (tail_zeros) {
+    for (int32_t i = tail_zeros; i < size; i ++) {
+      val->limbs[i - tail_zeros] = val->limbs[i];
+    }
+    for (int32_t i = size - tail_zeros; i < size; i ++) { val->limbs[i] = 0; }
+    val->exp += tail_zeros;
+  }
+
+  while (size > 0 && val->limbs[size - 1] == 0) { size--; }
+  val->size = (val->size >= 0) ? size : -size;
+
+  if (val->size == 0) { val->exp = MP_FLOAT_ZERO; }
+}
+
+inline lmp_limb_t MP_FLOAT_left_shift_load(const MP_FLOAT *restrict num, const int32_t index, const int32_t bit_count) {
+  const lmp_size_t size = abs(num->size);
+  if (index < 0) {
+    lmp_limb_t val1 = (-1 <= size + index && index <= 0) ? ((num->limbs[size + index - 1]) << bit_count) : 0;
+    lmp_limb_t val2 = (0 <= size + index && index <= -1 && bit_count)
+                    ? ((num->limbs[size + index]) >> (LMP_LIMB_BIT - bit_count)) : 0;
+    const lmp_limb_t res = val1 | val2;
+    return res;
+  }
+  lmp_limb_t val1 = (-1 <= index && index <= size - 2) ? ((num->limbs[size + index + 1]) << bit_count) : 0;
+  lmp_limb_t val2 = ( 0 <= index && index <= size - 1 && bit_count)
+                  ? ((num->limbs[size + index]) >> (LMP_LIMB_BIT - bit_count)) : 0;
+  const lmp_limb_t res = val1 | val2;
+  return res;
+}
+
+inline lmp_double_limb_t MP_FLOAT_left_shift_load_double(const MP_FLOAT *restrict num, const int32_t index, const int32_t bit_count) {
+  const lmp_size_t size = abs(num->size);
+  if (index < 0) {
+    lmp_double_limb_t val1 = ( 1 <= size + index && index <=  0)
+                           ? (((lmp_double_limb_t)num->limbs[size + index - 1]) << bit_count) : 0;
+    lmp_double_limb_t val2 = ( 0 <= size + index && index <= -1)
+                           ? (((lmp_double_limb_t)num->limbs[size + index    ]) << bit_count) : 0;
+    lmp_double_limb_t val3 = (-1 <= size + index && index <= -2)
+                           ? (((lmp_double_limb_t)num->limbs[size + index + 1]) << bit_count) : 0;
+    val1 >>= LMP_LIMB_BIT;
+    val3 <<= LMP_LIMB_BIT;
+    const lmp_double_limb_t res = val1 | val2 | val3;
+    return res;
+  }
+  lmp_double_limb_t val1 = ( 1 <= index && index <= size    ) ? (((lmp_double_limb_t)num->limbs[index - 1]) << bit_count) : 0;
+  lmp_double_limb_t val2 = ( 0 <= index && index <= size - 1) ? (((lmp_double_limb_t)num->limbs[index    ]) << bit_count) : 0;
+  lmp_double_limb_t val3 = (-1 <= index && index <= size - 2) ? (((lmp_double_limb_t)num->limbs[index + 1]) << bit_count) : 0;
+  val1 >>= LMP_LIMB_BIT;
+  val3 <<= LMP_LIMB_BIT;
+  const lmp_double_limb_t res = val1 | val2 | val3;
+  return res;
+}
+
+inline lmp_limb_t MP_FLOAT_get_limb(const MP_FLOAT *restrict num, const int32_t index) {
+  const lmp_size_t size = abs(num->size);
+  if (index < 0) { return -size <= index ? num->limbs[size + index] : 0; }
+  return  index < size ? num->limbs[index] : 0;
+}
+
+inline lmp_double_limb_t MP_FLOAT_get_double_limbs(const MP_FLOAT *restrict num, const int32_t index) {
+  const lmp_size_t size = abs(num->size);
+  if (index < 0) {
+    const lmp_double_limb_t val1 = (size + index >= 0) ? (lmp_double_limb_t)num->limbs[size + index] : 0;
+    const lmp_double_limb_t val2 = (-size - 2 <= index && index <= -2 ) ? (lmp_double_limb_t)num->limbs[size + index + 1] : 0;
+    return (val2 << LMP_LIMB_BIT) | val1;
+  }
+  const lmp_double_limb_t val1 = (index < size) ? (lmp_double_limb_t)num->limbs[index] : 0;
+  const lmp_double_limb_t val2 = (index + 1 < size) ? (lmp_double_limb_t)num->limbs[index + 1] : 0;
+  return (val2 << LMP_LIMB_BIT) | val1;
+}
+
+void MP_DECIMAL_clamp(MP_DECIMAL *val) {
+  if (!val->size) { return; }
+  lmp_size_t size = abs(val->size);
+
+  while (size > 0 && val->limbs[size - 1] == 0) { size--; }
+  val->size = (val->size >= 0) ? size : -size;
+
+  if (val->size == 0) { val->exp = MP_FLOAT_ZERO; }
+}

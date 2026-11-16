@@ -79,7 +79,7 @@ typedef struct {
 
 static void run_f32bin_case(const Ieee754F32Case *c) {
 
-  const float value = ieee754bin32(c->sign, (uint32_t) c->mantissa, (int16_t)c->exponent);
+  const float value = extstd_float32_compose(c->sign, (uint32_t) c->mantissa, (int16_t)c->exponent);
   if (isnan(c->expected_value)) {
     ck_assert_msg(isnan(value), "%s: expected NaN got %f", c->name, value);
   } else {
@@ -90,7 +90,7 @@ static void run_f32bin_case(const Ieee754F32Case *c) {
   }
 }
 static void run_f64bin_case(const Ieee754F64Case *c) {
-  const double value = ieee754bin64(c->sign, c->mantissa, (int16_t) c->exponent);
+  const double value = extstd_float64_compose(c->sign, c->mantissa, (int16_t) c->exponent);
   if (isnan(c->expected_value)) {
     ck_assert_msg(isnan(value), "%s: expected NaN got %lf", c->name, value);
   } else {

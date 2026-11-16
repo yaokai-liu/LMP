@@ -27,14 +27,16 @@
 
 #include "arith.h"
 
+#include "extbit.h"
+
 #define max(a, b)   ((a) > (b) ? (a) : (b))
 #define abs(a)      ((a) > (0) ? (a) : -(a))
-#define sgn(a)      ((a >> ((sizeof(a) - 1) * 8 + 7)) ? -1 : 1)
+#define sgn(a)      ((a) > (0) ?   1 :  -1)
 
 inline void MP_INT_abs_mul_u64(MP_INT *dest, const MP_INT *op, const uint64_t val, const Allocator *allocator) {
   if (op->size == 0 || val == 0) { dest->size = 0; return; }
 
-  const int32_t size = abs(op->size);
+  const lmp_size_t size = abs(op->size);
   MP_INT_realloc(dest, size + 1, allocator);
 
   lmp_limb_t carry = 0;
@@ -53,7 +55,7 @@ inline void MP_INT_abs_mul_u64(MP_INT *dest, const MP_INT *op, const uint64_t va
 }
 
 inline void MP_INT_abs_add_u64(MP_INT *dest, const MP_INT *op, const uint64_t val, const Allocator *allocator) {
-  const int32_t size = abs(op->size);
+  const lmp_size_t size = abs(op->size);
   if (size == 0) {
     dest->limbs[0] = val;
     dest->size = val ? 1 : 0;
@@ -76,7 +78,7 @@ inline void MP_INT_abs_add_u64(MP_INT *dest, const MP_INT *op, const uint64_t va
 }
 
 void MP_INT_abs_sub_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *) {
-  const int32_t size = abs(op->size);
+  const lmp_size_t size = abs(op->size);
   if (size == 0) {
     dest->limbs[0] = val;
     dest->size = val ? -1 : 0;
@@ -93,13 +95,13 @@ void MP_INT_abs_sub_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allo
 }
 
 inline void MP_INT_abs_mul(MP_INT *rop, const MP_INT *op1, const MP_INT * restrict op2, const Allocator *allocator) {
-  const int32_t size1 = abs(op1->size);
-  const int32_t size2 = abs(op2->size);
+  const lmp_size_t size1 = abs(op1->size);
+  const lmp_size_t size2 = abs(op2->size);
   if (size1 == 0 || size2 == 0) { rop->size = 0; return; }
 
   MP_INT_realloc(rop, size1 + size2, allocator);
 
-  if (size1 + size2 > USING_FFT_SIZE) {
+  if (size1 + size2 > USING_NTT_SIZE) {
     // TODO: using FFT
   }
 
@@ -118,8 +120,8 @@ inline void MP_INT_abs_mul(MP_INT *rop, const MP_INT *op1, const MP_INT * restri
 
 inline void MP_INT_abs_add_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *op2,
                                   const int32_t offset, const Allocator *allocator) {
-  const int32_t size1 = abs(op1->size);
-  const int32_t size2 = abs(op2->size);
+  const lmp_size_t size1 = abs(op1->size);
+  const lmp_size_t size2 = abs(op2->size);
   const int32_t max_size = max(size1, size2 + offset);
   MP_INT_realloc(rop, max_size + 1, allocator);
 
@@ -145,8 +147,8 @@ inline void MP_INT_abs_add_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *
 
 inline void MP_INT_abs_sub_offset(MP_INT *rop, const MP_INT *op1, const MP_INT * op2,
                                   const int32_t offset, const Allocator *) {
-  const int32_t size1 = abs(op1->size);
-  const int32_t size2 = abs(op2->size);
+  const lmp_size_t size1 = abs(op1->size);
+  const lmp_size_t size2 = abs(op2->size);
   if (offset + size2 > size1) { return ; }
 
   bool borrow = 0;
@@ -161,11 +163,11 @@ inline void MP_INT_abs_sub_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *
 
 inline void MP_INT_left_shift(MP_INT *op, const int32_t bit_count, const Allocator *allocator) {
   if (op->size == 0) { return; }
-  const int32_t size = abs(op->size);
+  const lmp_size_t size = abs(op->size);
   const int32_t shift_limbs = bit_count / (int32_t) LMP_LIMB_BIT;
   const int32_t shift_bits = bit_count % (int32_t) LMP_LIMB_BIT;
 
-  const int32_t leading_zeros = __builtin_clzll(op->limbs[size - 1]);
+  const int32_t leading_zeros = stdc_leading_zeros(op->limbs[size - 1]);
   const int32_t res_size = size + shift_limbs + (shift_bits > leading_zeros);
   MP_INT_realloc(op, res_size, allocator);
 
@@ -182,7 +184,7 @@ inline void MP_INT_left_shift(MP_INT *op, const int32_t bit_count, const Allocat
 
 inline void MP_INT_right_shift(MP_INT *op, const int32_t bit_count, const Allocator *) {
   if (op->size == 0) { return; }
-  const int32_t size = abs(op->size);
+  const lmp_size_t size = abs(op->size);
   const int32_t shift_limbs = bit_count / (int32_t) LMP_LIMB_BIT;
   const int32_t shift_bits = bit_count % (int32_t) LMP_LIMB_BIT;
 
@@ -217,15 +219,15 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
     quotient->size = 0;
     return;
   }
-  const int32_t size_divisor  = abs(divisor->size);
-  const int32_t size_dividend = abs(dividend->size);
+  const lmp_size_t size_divisor  = abs(divisor->size);
+  const lmp_size_t size_dividend = abs(dividend->size);
 
-  const int32_t d_leading_zeros = __builtin_clzll(divisor->limbs[abs(divisor->size) - 1]);
-  const int32_t n_leading_zeros = __builtin_clzll(dividend->limbs[size_dividend - 1]);
+  const int32_t d_leading_zeros = stdc_leading_zeros(divisor->limbs[abs(divisor->size) - 1]);
+  const int32_t n_leading_zeros = stdc_leading_zeros(dividend->limbs[size_dividend - 1]);
   const lmp_double_limb_t d = MP_INT_left_shift_load_double(divisor, -2, d_leading_zeros);
 
   const bool overflow = n_leading_zeros <= d_leading_zeros;
-  const int32_t size_quotient = size_dividend - size_divisor + overflow;
+  const lmp_size_t size_quotient = size_dividend - size_divisor + overflow;
   if (size_quotient == 0) {
     MP_INT_abs_sub_offset(dividend, dividend, divisor, 0, allocator);
     quotient->limbs[0] = 1;
@@ -365,11 +367,11 @@ void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
 
 inline void MP_FLOAT_left_shift(MP_FLOAT *op, const int32_t bit_count, const Allocator *allocator) {
   if (op->size == 0) { return; }
-  const int32_t size = abs(op->size);
+  const lmp_size_t size = abs(op->size);
   const int32_t shift_limbs = bit_count / (int32_t) LMP_LIMB_BIT;
   const int32_t shift_bits = bit_count % (int32_t) LMP_LIMB_BIT;
 
-  const int32_t leading_zeros = __builtin_clzll(op->limbs[size - 1]);
+  const int32_t leading_zeros = stdc_leading_zeros(op->limbs[size - 1]);
   const int32_t res_size = size + shift_limbs + (shift_bits > leading_zeros);
   MP_FLOAT_realloc(op, res_size, allocator);
 
@@ -386,7 +388,7 @@ inline void MP_FLOAT_left_shift(MP_FLOAT *op, const int32_t bit_count, const All
 
 inline void MP_FLOAT_right_shift(MP_FLOAT *op, const int32_t bit_count, const Allocator *) {
   if (op->size == 0) { return; }
-  const int32_t size = abs(op->size);
+  const lmp_size_t size = abs(op->size);
   const int32_t shift_limbs = bit_count / (int32_t) LMP_LIMB_BIT;
   const int32_t shift_bits = bit_count % (int32_t) LMP_LIMB_BIT;
 
