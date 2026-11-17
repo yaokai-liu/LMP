@@ -84,4 +84,10 @@ void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
 void MP_FLOAT_left_shift(MP_FLOAT *op, int32_t bit_count, const Allocator *allocator);
 void MP_FLOAT_right_shift(MP_FLOAT *op, int32_t bit_count, const Allocator *);
 
+void MP_BASE_NUMBER_mul_abs_base_exp(MP_BASE_NUMBER *mp_val, uint32_t abs_exp);
+void MP_BASE_NUMBER_div_abs_base_exp(MP_BASE_NUMBER *mp_val, uint32_t abs_exp);
+
+// Notice: exp base is limb_base instead of base_limb_val.
+void MP_BASE_NUMBER_mul_base_exp(MP_BASE_NUMBER *mp_val, lmp_exp_t exp, const Allocator *allocator);
+
 #endif //LMP_ARITH_H

@@ -32,23 +32,23 @@
 typedef struct BaseCache BaseCache;
 
 // Ignore sign of the 'mp_val'.
-void MP_INT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
-// Ignore sign of the 'mp_val'.
-void MP_FLOAT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
-// Ignore sign of the 'mp_val'.
 // Print digital string in base of the 'mp_val'.
 // Always aligned to BASE_LIMB_WIDTH (by fill zero) + 1 char for sign.
+// Notice: (1 < base < 37) is required
 uint32_t MP_BASE_NUMBER_abs_to_string(char *dest, uint32_t max_len, const MP_BASE_NUMBER *mp_val, const Allocator *allocator);
 // Ignore sign of the 'mp_val'.
 // Print digital string in base of the 'mp_val'.
 // result form: INT.FRAC
 // Both INT and FRAC parts will always align to BASE_LIMB_WIDTH (by fill zero)
 // Both INT and FRAC parts both are at least BASE_LIMB_WIDTH digits (by fill zero).
+// Notice: (1 < base < 37) is required.
 uint32_t MP_FLOAT_abs_to_base_string(char *dest, uint32_t max_len, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
 // Ignore sign of the 'mp_val'.
 // Print digital string in base of the 'mp_val'.
 // result form: INT@EXP
 // INT parts will always align to BASE_LIMB_WIDTH (by fill zero)
-// EXP part will be always signed(±) decimal integer.
+// EXP part will be always signed(±) decimal integer
+// Notice: EXP is based on limb_base instead of base_limb_val.
+// Notice: (1 < base < 37) is required.
 uint32_t MP_FLOAT_abs_to_base_exp_string(char *dest, uint32_t max_len, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
 #endif //LMP_PRINT_H

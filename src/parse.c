@@ -61,7 +61,6 @@ static void float_compose_adic16(MP_BASE_NUMBER *NUMBER, int32_t exp, const Allo
 static void float_compose_adic10(MP_BASE_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
 static void float_compose_adic8 (MP_BASE_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
 static void float_compose_adic2 (MP_BASE_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
-static void decimal_compose(MP_BASE_NUMBER *NUMBER,  int32_t exp, const Allocator * allocator);
 static uint32_t LMP_parse_num_suffix(const char *input, bool is_float, uint32_t adic_type, MP_NUM_TYPE *num_type, uint8_t *num_repr);
 
 #define isSign(pText)             ((*(pText) == '-') || (*(pText) == '+'))
@@ -292,7 +291,8 @@ inline void float_compose_adic10(MP_BASE_NUMBER *const NUMBER, const int32_t exp
       NUMBER->exp = - quotient_exp_abs;
     }
   }
-  MP_FLOAT_clamp((MP_FLOAT *)NUMBER); // TODO: round method
+  MP_FLOAT_clamp((MP_FLOAT *)NUMBER);
+  // TODO: round method
 }
 
 inline void float_compose_adic8(MP_BASE_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
@@ -339,16 +339,6 @@ inline void float_compose_adic2(MP_BASE_NUMBER *const NUMBER, const int32_t exp,
   NUMBER->size = size;
   NUMBER->limbs = limbs;
   NUMBER->exp = n_limbs;
-}
-
-inline void decimal_compose(MP_BASE_NUMBER *const NUMBER, const int32_t exp, const Allocator *const) {
-  const lmp_prec_t prec = NUMBER->prec;
-  const lmp_size_t size = NUMBER->size;
-  lmp_limb_t* limbs = NUMBER->limbs;
-  NUMBER->prec = prec;
-  NUMBER->size = size;
-  NUMBER->limbs = limbs;
-  NUMBER->exp = exp;
 }
 
 // <REPR>?([lL]{0,2}|[0-9]+)<REPR>?\<standard\>
@@ -460,7 +450,6 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
   auto const fun_check = BASE_LIMB_DATA[adic_type].digit_checker;
   auto const limb_width = BASE_LIMB_DATA[adic_type].width;
   auto const func_limb_parse = BASE_LIMB_DATA[adic_type].limb_parser;
-  auto const func_float_compose = BASE_LIMB_DATA[adic_type].float_composer;
 
   /***************************************************/
   /************** NUMBER parse ***********************/

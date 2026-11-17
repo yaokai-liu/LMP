@@ -100,8 +100,8 @@ enum MP_NUMBER_SPECIAL_VALUE_TYPE : int32_t {
 //       For exampe, mantissa of 'MP_FLOAT *p_float' is '(MP_INT *)p_float'.
 typedef struct MP_FLOAT {
   // alloc memory size for limbs
-  // (prec <  0) means it's a fixed capacity variable.
-  // abs(alloc) is how many limbs allowed to use.
+  // (prec < 0) means it's a fixed capacity variable.
+  // abs(prec) is how many limbs allowed to use.
   // max limbs with out realloc
   lmp_prec_t  prec;
   // current value size, the mantissa size
@@ -137,8 +137,8 @@ typedef struct MP_FLOAT {
 //    if limb_base is to large(large than LMP_BASE_MAX in this library), the base number should be consider 0 or ±INS;
 typedef struct MP_BASE_NUMBER {
   // alloc memory size for limbs
-  // (prec <  0) means it's a fixed capacity variable.
-  // abs(alloc) is how many limbs allowed to use.
+  // (prec < 0) means it's a fixed capacity variable.
+  // abs(prec) is how many limbs allowed to use.
   // max limbs with out realloc
   lmp_prec_t  prec;
   // current value size, the mantissa size
@@ -188,8 +188,8 @@ lmp_double_limb_t MP_FLOAT_left_shift_load_double(const MP_FLOAT *restrict num, 
 #define MP_FLOAT_negative(p_float)  do { (p_float)->size = -(p_float)->size} while(false)
 #define MP_FLOAT_trivert(p_float)   do { (p_float)->exp = -(p_float)->exp; } while(false)
 
-// Notice: exp base is limb_base instead of base_limb_val.
-void MP_BASE_NUMBER_mul_base_exp(MP_BASE_NUMBER *mp_val, lmp_exp_t exp, const Allocator *allocator);
+void MP_INT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
+void MP_FLOAT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
 void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, uint32_t base, const Allocator *allocator);
 
 #endif //LMP_H
