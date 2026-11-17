@@ -42,10 +42,13 @@
 #define MP_ALLOC_LEN 8
 #endif
 
+#ifndef _LMP_LIMB_WIDTH_
 typedef uint64_t lmp_limb_t;
 typedef uint32_t lmp_half_limb_t;
 typedef uint128_t lmp_double_limb_t;
 typedef uint256_t lmp_quarter_limb_t;
+#define _LMP_LIMB_WIDTH_  64
+#endif
 
 typedef int64_t lmp_exp_t;
 typedef int32_t lmp_prec_t;
@@ -65,30 +68,25 @@ typedef struct MP_INT {
   lmp_size_t  size;
   // little endian
   lmp_limb_t *limbs;
-} MP_INT, MP_POLYi;
+} MP_INT;
 
-enum MP_FLOAT_SPECIAL_VALUE_TYPE : int32_t {
-  MP_FLOAT_ZERO = 0,
-  MP_FLOAT_INF,
-  MP_FLOAT_INS, // infinity small
-  MP_FLOAT_NAN = INT32_MAX,
+enum MP_NUMBER_SPECIAL_VALUE_TYPE : int32_t {
+  MP_NUMBER_ZERO = 0,
+  MP_NUMBER_INF,
+  MP_NUMBER_INS, // infinity small
+  MP_NUMBER_NAN = INT32_MAX,
 
-  MP_FLOAT_NEG_INF = - MP_FLOAT_INF,
-  MP_FLOAT_NEG_INS = - MP_FLOAT_INS,
-  MP_FLOAT_NEG_NAN = - MP_FLOAT_NAN,
+  MP_NUMBER_NEG_INF = - MP_NUMBER_INF,
+  MP_NUMBER_NEG_INS = - MP_NUMBER_INS,
+  MP_NUMBER_NEG_NAN = - MP_NUMBER_NAN,
 
-  MP_FLOAT_BAD_VALUE = INT32_MIN, // this value should not be reached
+  MP_NUMBER_BAD_VALUE = INT32_MIN, // this value should not be reached
 };
 
 #define LMP_FLOAT_BASE              LMP_LIMB_VAL
 #define LMP_FLOAT_BASE_SQUARE       (LMP_LIMB_VAL << LMP_LIMB_BIT)
-// LMP_DECIMAL_BASE == pow(10, 19)
-#define LMP_DECIMAL_BASE            (0x8AC7'2304'89E8'0000ULL)
-// LMP_DECIMAL_BASE_SQUARE == pow(10, 38)
-#define LMP_DECIMAL_BASE_SQUARE     (((uint128_t)0x4B3B'4CA8'5A86'C47AULL) << 64 | 0x0x098A'2240'0000'0000ULL)
 // if (size != 0):
-//    FLOAT = limbs * pow(LMP_FLOAT_BASE, exp)
-//    DECIMAL = limbs * pow(LMP_DECIMAL_BASE, exp)
+//    FLOAT = sgn(size) * limbs * pow(LMP_FLOAT_BASE, exp)
 // else:
 //    FLOAT = MP_FLOAT_SPECIAL_VALUE_TYPE(exp)
 //    if (prec > 0) limbs will be released.
@@ -97,28 +95,64 @@ enum MP_FLOAT_SPECIAL_VALUE_TYPE : int32_t {
 //    But if this value will interactive in the library's arith part,
 //    especially as result-end, the 'limbs' field would be changed.
 // Promise:
-//    1. The mantissa of given pointer of struct MP_FLOAT 'p_float' is exactly ((MP_INT *)p_float)
-//       if is not special value.
-//    2. All none arithmetic functions except 'MP_FLOAT_clamp' of MP_FLOAT is sutiable for MP_DECIMAL.
-//       (MP_DECIMAL should use 'MP_DECIMAL_clamp' since clamping will change the 'exp' feild
-//       and depend on the base)
+//    1. The mantissa of given pointer of struct MP_FLOAT is exactly
+//       the data of casting to MP_INT if is not special value.
+//       For exampe, mantissa of 'MP_FLOAT *p_float' is '(MP_INT *)p_float'.
 typedef struct MP_FLOAT {
   // alloc memory size for limbs
   // (prec <  0) means it's a fixed capacity variable.
   // abs(alloc) is how many limbs allowed to use.
   // max limbs with out realloc
   lmp_prec_t  prec;
-  // current value size
+  // current value size, the mantissa size
   // negative if (size < 0)
   lmp_size_t  size;
-  // little endian
+  // mantissa limbs, little endian
   lmp_limb_t *limbs;
-  // With 'MP_FLOAT' interpreting, this field based 'LMP_FLOAT_BASE';
-  // with 'MP_DECIMAL' interpreting, this field based 'LMP_DECIMAL_BASE'.
-  // No matter with 'MP_FLOAT' or 'MP_DECIMAL', if (size == 0):
-  //    this field will be used to represent special value.
+  // exponent of 'LMP_FLOAT_BASE';
+  // If (size == 0), this field will be used to represent special value.
   lmp_exp_t   exp;
-} MP_FLOAT, MP_DECIMAL;
+} MP_FLOAT;
+
+#define LMP_BASE_MAX    UINT16_MAX
+// if (size != 0):
+//    NUMBER = sgn(size) * sum(limbs[i] * pow(base_limb_val, i)) { for i from 0 to (size - 1) } * pow(base_limb_val, exp)
+// else:
+//    NUMBER = MP_FLOAT_SPECIAL_VALUE_TYPE(exp)
+//    if (prec > 0) limbs will be released.
+//    In this situation, the 'limbs' will not be used by the library,
+//    users can use this field for other means.
+//    But if this value will interactive in the library's arith part,
+//    especially as result-end, the 'limbs' field would be changed.
+// if (exp == 0 && size != 0):
+//    Of course it is an integer.
+//    NUMBER = sgn(size) * sum(limbs[i] * pow(base_limb_val, i)) { for i from 0 to (size - 1) }
+// Promise:
+//    1. promise (limbs[i] < base_limb_val)
+// Notice: if log(limb_base, LMP_LIMB_VAL) is an integer that divides LMP_LIMB_BIT,
+//    the 'base_limb_val' will be 0. This is an expected behavior(floor-ties).
+// Special behaviors:
+//    if (limb_base == 0): then the base number should be consider a NaN;
+//    if (limb_base == 1): then the base number should be consider 0 or ±INF;
+//    if limb_base is to large(large than LMP_BASE_MAX in this library), the base number should be consider 0 or ±INS;
+typedef struct MP_BASE_NUMBER {
+  // alloc memory size for limbs
+  // (prec <  0) means it's a fixed capacity variable.
+  // abs(alloc) is how many limbs allowed to use.
+  // max limbs with out realloc
+  lmp_prec_t  prec;
+  // current value size, the mantissa size
+  // negative if (size < 0)
+  lmp_size_t  size;
+  // mantissa limbs, little endian
+  lmp_limb_t *limbs;
+  // exponent of 'base_limb_val';
+  // This field will be used to represent special value when (size == 0).
+  lmp_exp_t   exp;
+  lmp_half_limb_t limb_base;
+  lmp_half_limb_t base_limb_width;
+  lmp_limb_t      base_limb_val;
+} MP_BASE_NUMBER;
 
 void MP_INT_init(MP_INT *val,  int32_t initial_alloc, const Allocator *allocator);
 void MP_INT_realloc(MP_INT *val,  int32_t required, const Allocator *allocator);
@@ -154,19 +188,8 @@ lmp_double_limb_t MP_FLOAT_left_shift_load_double(const MP_FLOAT *restrict num, 
 #define MP_FLOAT_negative(p_float)  do { (p_float)->size = -(p_float)->size} while(false)
 #define MP_FLOAT_trivert(p_float)   do { (p_float)->exp = -(p_float)->exp; } while(false)
 
-#define MP_DECIMAL_init       MP_FLOAT_init
-#define MP_DECIMAL_realloc    MP_FLOAT_realloc
-#define MP_DECIMAL_copy       MP_FLOAT_copy
-#define MP_DECIMAL_clear      MP_FLOAT_clear
-void MP_DECIMAL_clamp(MP_DECIMAL *val);
-
-#define  MP_DECIMAL_get_limb                MP_FLOAT_get_limb
-#define  MP_DECIMAL_get_double_limbs        MP_FLOAT_get_double_limbs
-#define  MP_DECIMAL_left_shift_load         MP_FLOAT_left_shift_load
-#define  MP_DECIMAL_left_shift_load_double  MP_FLOAT_left_shift_load_double
-
-#define MP_DECIMAL_mantissa MP_FLOAT_mantissa
-#define MP_DECIMAL_negative MP_FLOAT_negative
-#define MP_DECIMAL_trivert  MP_FLOAT_trivert
+// Notice: exp base is limb_base instead of base_limb_val.
+void MP_BASE_NUMBER_mul_base_exp(MP_BASE_NUMBER *mp_val, lmp_exp_t exp, const Allocator *allocator);
+void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, uint32_t base, const Allocator *allocator);
 
 #endif //LMP_H

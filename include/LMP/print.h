@@ -31,17 +31,24 @@
 
 typedef struct BaseCache BaseCache;
 
-// @return: integer polynomial that equals to 'mp_val' under given base, i.e.
-//          sum(limbs[i] * pow(BASE_LIMB_VAL, i))
-// Here BASE_LIMB_VAL = pow(base, BASE_LIMB_WIDTH) is the max power of base that not larger than LMP_LIMB_VAL
-// and BASE_LIMB_WIDTH is its exponent regards to base.
-// Both BASE_LIMB_VAL and BASE_LIMB_WIDTH depend on the base.
-// if 'p_BASE_LIMB_WIDTH' is not nullptr, BASE_LIMB_WIDTH will be placed in it.
-MP_POLYi *MP_INT_to_base_polynomial(uint32_t *p_BASE_LIMB_WIDTH, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
+// Ignore sign of the 'mp_val'.
+void MP_INT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
+// Ignore sign of the 'mp_val'.
+void MP_FLOAT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
+// Ignore sign of the 'mp_val'.
 // Print digital string in base of the 'mp_val'.
-// Always aligned to BASE_LIMB_WIDTH (by fill zero).
-uint32_t MP_INT_to_base_string(char *dest, uint32_t max_len, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
-uint32_t MP_FLOAT_to_str(char *dest, uint32_t max_len, const MP_FLOAT *mp_val, uint32_t base);
-uint32_t MP_DECIMAL_to_str(char *dest, uint32_t max_len, const MP_DECIMAL *mp_val, uint32_t base);
-
+// Always aligned to BASE_LIMB_WIDTH (by fill zero) + 1 char for sign.
+uint32_t MP_BASE_NUMBER_abs_to_string(char *dest, uint32_t max_len, const MP_BASE_NUMBER *mp_val, const Allocator *allocator);
+// Ignore sign of the 'mp_val'.
+// Print digital string in base of the 'mp_val'.
+// result form: INT.FRAC
+// Both INT and FRAC parts will always align to BASE_LIMB_WIDTH (by fill zero)
+// Both INT and FRAC parts both are at least BASE_LIMB_WIDTH digits (by fill zero).
+uint32_t MP_FLOAT_abs_to_base_string(char *dest, uint32_t max_len, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
+// Ignore sign of the 'mp_val'.
+// Print digital string in base of the 'mp_val'.
+// result form: INT@EXP
+// INT parts will always align to BASE_LIMB_WIDTH (by fill zero)
+// EXP part will be always signed(±) decimal integer.
+uint32_t MP_FLOAT_abs_to_base_exp_string(char *dest, uint32_t max_len, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
 #endif //LMP_PRINT_H

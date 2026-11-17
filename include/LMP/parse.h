@@ -40,15 +40,6 @@
 #define LMP_PARSE_PREC_MAX  UINT16_MAX
 #endif
 
-typedef struct MP_NUMBER {
-  union {
-    MP_INT      INT;
-    MP_FLOAT    FLOAT;
-    MP_DECIMAL  DECIMAL;
-  }         val;
-  uint8_t   repr;
-}MP_NUMBER;
-
 enum LMP_PARSE_MODE_TYPE : uint8_t {
   LMP_PARSE_NO_SIGN     = 0b1110'1111,
   LMP_PARSE_NO_SEPA     = 0b1101'1111,
@@ -68,22 +59,18 @@ enum LMP_PARSE_ADIC_TYPE : uint8_t {
   ADIC_TYPE_2 ,
 };
 
-
-typedef struct LMP_PARSE_CTX {
-
-} LMP_PARSE_CTX;
-// Fixed-capacity mode (caller-provided buffer):
-//   If (NUMBER->val.INT.alloc < 0), the parser will NOT allocate or free
-//   limbs. The caller MUST set NUMBER->val.INT.limbs to a buffer of at
-//   least abs(NUMBER->val.INT.alloc) limbs.
+// Fixed-capacity mode (caller-provided buffer
+//   If (NUMBER->prec < 0), the parser will NOT allocate or free
+//   limbs. The caller MUST set NUMBER->limbs to a buffer of at
+//   least abs(NUMBER->prec) limbs.
 // Dynamic mode (default):
-//   If (NUMBER->val.INT.alloc >= 0), limbs is allocated by the parser
+//   If (NUMBER->prec >= 0), limbs is allocated by the parser
 //   (and must be freed by the caller via MP_INT_clear).
 // Parse patterns:
 //    [+-]?0[xX][a-fA-F0-9]+(\.[a-fA-F0-9]+([pP][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
 //    [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
 //    [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
 //    [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)[dD]?((REPR)?<standard>)?)
-uint32_t LMP_parse(const char * input, MP_NUM_TYPE *type, MP_NUMBER *NUMBER, const Allocator *allocator);
+uint32_t LMP_parse(const char * input, MP_NUM_TYPE *type, MP_BASE_NUMBER *NUMBER, const Allocator *allocator);
 
 #endif //LMP_PARSE_H

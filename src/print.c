@@ -44,29 +44,79 @@ typedef struct BaseCache {
   lmp_limb_t *limbs;
 } BaseCache;
 
-static BaseCache LMP_GLOBAL_BASE_CACHE[] = {};
+// static BaseCache LMP_GLOBAL_BASE_CACHE[] = {};
 
-MP_POLYi *MP_INT_to_base_polynomial(uint32_t *p_BASE_LIMB_WIDTH, const MP_INT *mp_val, const uint32_t base, const Allocator *allocator) {
-  if (base < 2) { return nullptr; }
+void MP_INT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const uint32_t base, const Allocator *allocator) {
+  if (base < 2 || base > LMP_BASE_MAX) {
+    dest->size = 0;
+    dest->limb_base = base;
+    dest->base_limb_width = 0;
+    dest->base_limb_val = 0;
+    if (base > LMP_BASE_MAX) {
+      dest->exp = mp_val->size == 0 ? MP_NUMBER_ZERO : sgn(mp_val->size) * MP_NUMBER_INS;
+    } else if (base == 1) {
+      dest->exp = mp_val->size == 0 ? MP_NUMBER_ZERO : sgn(mp_val->size) * MP_NUMBER_INF;
+    } else {
+      dest->exp = sgn(mp_val->size) * MP_NUMBER_NAN;
+    }
+    return;
+  }
   const lmp_size_t size = abs(mp_val->size);
   if (extstd_has_single_bit(base)) {
-    /* TODO: when base is a power of 2 */
-    return nullptr;
+    const uint32_t base_width = extstd_bit_width(base - 1);
+    if (LMP_LIMB_BIT % base_width == 0) {
+      if (dest->prec < 0) {
+        if (abs(mp_val->size) > -dest->prec) { dest->size = 0; return ; }
+      } else if (dest->prec >= 1) {
+        MP_INT_realloc((MP_INT *)dest, abs(mp_val->size), allocator);
+      } else /* (dest->alloc == 0) means not init yet. */ {
+        MP_INT_init((MP_INT *)dest, abs(mp_val->size), allocator);
+      }
+      dest->size = abs(mp_val->size);
+      allocator->memcpy(dest->limbs, mp_val->limbs, dest->size * sizeof(lmp_limb_t));
+      dest->base_limb_val = (lmp_limb_t) LMP_LIMB_VAL;
+      dest->base_limb_width = LMP_LIMB_BIT / base_width;
+      dest->limb_base = base;
+      dest->exp = 0;
+    }
+    /* TOOD: other base of power of 2 */
+    return;
   }
   const uint32_t BASE_LIMB_WIDTH = (uint32_t)((double)LMP_LIMB_BIT / log2(base));
-  uint32_t base_limb_count = ceil(LMP_LIMB_BIT * size / log2(base) / BASE_LIMB_WIDTH);
+  int32_t base_limb_size = ceil(LMP_LIMB_BIT * size / log2(base) / BASE_LIMB_WIDTH);
   lmp_double_limb_t BASE_LIMB_VAL = powl(base, BASE_LIMB_WIDTH / 2);
   BASE_LIMB_VAL *= BASE_LIMB_VAL;
   if (BASE_LIMB_WIDTH % 2 == 1) { BASE_LIMB_VAL *= base; }
-  const uint32_t level_count = (uint32_t)ceil(log2(base_limb_count));
+
+  if (base_limb_size == 1) {
+    if (dest->prec < 0) {
+      if (base_limb_size > -dest->prec) { dest->size = 0; return ; }
+      dest->limbs[0] = mp_val->limbs[0];
+    } else if (dest->prec >= 1) {
+      dest->limbs[0] = mp_val->limbs[0];
+    } else /* (dest->alloc == 0) means not init yet. */ {
+      MP_INT_init((MP_INT *)dest, 1, allocator);
+      dest->limbs[0] = mp_val->limbs[0];
+    }
+    dest->size = 1;
+    dest->base_limb_val = BASE_LIMB_VAL;
+    dest->base_limb_width = BASE_LIMB_WIDTH;
+    dest->limb_base = base;
+    dest->exp = 0;
+    return;
+  }
+
+  const uint32_t level_count = (uint32_t)ceil(log2(base_limb_size));
   bool free_cache = false;
-  BaseCache *cache = nullptr; // TODO: get global base cache
+  BaseCache *cache = nullptr; // TODO: using global base cache
   if (!cache) { cache = allocator->calloc(1, sizeof(BaseCache)); free_cache = true; }
   if (cache->count < level_count) {
+    // ReSharper disable once CppInitializedValueIsAlwaysRewritten
     void *ptr = nullptr;
     ptr = allocator->realloc(cache->mpint, level_count * sizeof(MP_INT));
     if (ptr) { cache->mpint = ptr; }
-    ptr = allocator->realloc(cache->limbs, 1 << level_count * sizeof(lmp_limb_t));
+    const uint32_t alloc_limbs = 1 << level_count;
+    ptr = allocator->realloc(cache->limbs, alloc_limbs * sizeof(lmp_limb_t));
     if (ptr) { cache->limbs = ptr; }
     if (cache->count == 0) {
       cache->limbs[0] = BASE_LIMB_VAL;
@@ -83,7 +133,8 @@ MP_POLYi *MP_INT_to_base_polynomial(uint32_t *p_BASE_LIMB_WIDTH, const MP_INT *m
     }
     cache->count = level_count;
   }
-  lmp_limb_t *result_limbs = allocator->calloc(1 << level_count, sizeof(lmp_limb_t));
+  const uint32_t result_limb_alloc = 1 << level_count;
+  lmp_limb_t *result_limbs = allocator->calloc(result_limb_alloc, sizeof(lmp_limb_t));
   MP_INT copy_val = {.alloc = -size, .size = 0, .limbs = result_limbs};
   MP_INT_copy(&copy_val, mp_val, nullptr);
 
@@ -110,56 +161,104 @@ MP_POLYi *MP_INT_to_base_polynomial(uint32_t *p_BASE_LIMB_WIDTH, const MP_INT *m
     DIVMOD_TASK_QUEUE[divmod_task_count].level = task.level - 1;
     divmod_task_count += 1;
   }
-  while (base_limb_count && !result_limbs[base_limb_count - 1]) { base_limb_count--; }
   if (free_cache) {
     allocator->free(cache->mpint);
     allocator->free(cache->limbs);
     allocator->free(cache);
   }
 
-  MP_POLYi *result = allocator->calloc(1, sizeof(MP_INT));
-  result->alloc = -base_limb_count;
-  result->size = sgn(mp_val->size) * base_limb_count;
-  result->limbs = result_limbs;
+  while (base_limb_size && !result_limbs[base_limb_size - 1]) { base_limb_size--; }
 
-  if (p_BASE_LIMB_WIDTH) { *p_BASE_LIMB_WIDTH = BASE_LIMB_WIDTH; }
-
-  return result;
+  if (dest->prec < 0) {
+    if (base_limb_size > -dest->prec) { dest->size = 0; return ; }
+    allocator->memcpy(dest->limbs, result_limbs, base_limb_size * sizeof(lmp_limb_t));
+    allocator->free(result_limbs);
+  } else {
+    if (dest->limbs) { allocator->free(dest->limbs); }
+    dest->prec = result_limb_alloc;
+    dest->limbs = result_limbs;
+  }
+  dest->size = base_limb_size;
+  dest->base_limb_val = BASE_LIMB_VAL;
+  dest->base_limb_width = BASE_LIMB_WIDTH;
+  dest->limb_base = base;
+  dest->exp = 0;
 }
 
-uint32_t MP_INT_to_base_string(char *dest, const uint32_t max_len, const MP_INT *mp_val, const uint32_t base, const Allocator *allocator) {
-  if (base < 2 || base > 36 || max_len == 0) { return 0; }
-  if (mp_val->size == 0) {  *dest = '0'; return 1; }
-  uint32_t BASE_LIMB_WIDTH = 0;
-  MP_POLYi *poly = MP_INT_to_base_polynomial(&BASE_LIMB_WIDTH, mp_val, base, allocator);
-  const uint32_t size = abs(poly->size);
+void MP_FLOAT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator * allocator) {
+  if (base < 2 || base > LMP_BASE_MAX) {
+    dest->size = 0;
+    dest->limb_base = base;
+    dest->base_limb_width = 0;
+    dest->base_limb_val = 0;
+    if (base > LMP_BASE_MAX) {
+      dest->exp = mp_val->size == 0 ? MP_NUMBER_ZERO : sgn(mp_val->size) * MP_NUMBER_INS;
+    } else if (base == 1) {
+      dest->exp = mp_val->size == 0 ? MP_NUMBER_ZERO : sgn(mp_val->size) * MP_NUMBER_INF;
+    } else {
+      dest->exp = sgn(mp_val->size) * MP_NUMBER_NAN;
+    }
+    return;
+  }
+  const lmp_size_t size = abs(mp_val->size);
+  const uint32_t BASE_LIMB_WIDTH = (uint32_t)((double)LMP_LIMB_BIT / log2(base));
+  int32_t base_limb_size = ceil(LMP_LIMB_BIT * size / log2(base) / BASE_LIMB_WIDTH);
+  lmp_double_limb_t BASE_LIMB_VAL = powl(base, BASE_LIMB_WIDTH / 2);
+  BASE_LIMB_VAL *= BASE_LIMB_VAL;
+  if (BASE_LIMB_WIDTH % 2 == 1) { BASE_LIMB_VAL *= base; }
 
-  if (max_len < (uint64_t)BASE_LIMB_WIDTH * size) {
-    allocator->free(poly->limbs);
-    allocator->free(poly);
+  if (mp_val->size == 0) {
+    dest->size = 0;
+    dest->limb_base = base;
+    dest->base_limb_width = BASE_LIMB_WIDTH;
+    dest->base_limb_val = BASE_LIMB_VAL;
+    dest->exp = mp_val->exp;
+    return;
+  }
+  if (base_limb_size == 1) {
+    if (dest->prec < 0) {
+      if (base_limb_size > -dest->prec) { dest->size = 0; return ; }
+      dest->limbs[0] = mp_val->limbs[0];
+    } else if (dest->prec >= 1) {
+      dest->limbs[0] = mp_val->limbs[0];
+    } else /* (dest->alloc == 0) means not init yet. */ {
+      MP_INT_init((MP_INT *)dest, 1, allocator);
+      dest->limbs[0] = mp_val->limbs[0];
+    }
+    dest->size = 1;
+    dest->base_limb_val = BASE_LIMB_VAL;
+    dest->base_limb_width = BASE_LIMB_WIDTH;
+    dest->limb_base = base;
+    dest->exp = 0;
+    return;
+  }
+}
+
+uint32_t MP_BASE_NUMBER_abs_to_string(char *dest, const uint32_t max_len, const MP_BASE_NUMBER *mp_val, const Allocator *allocator) {
+  if (mp_val->limb_base < 2 || mp_val->limb_base > 36 || max_len == 0) { return 0; }
+  if (mp_val->size == 0) {  *dest = '0'; return 1; }
+  const uint32_t size = mp_val->size;
+
+  if (max_len < mp_val->base_limb_width * size + 1) {
+    MP_INT_clear((MP_INT *)&mp_val, allocator);
     return 0;
   }
 
   char *ptr = dest;
   for (uint32_t i = size - 1; i < size; i--) {
-    lmp_limb_t limb = poly->limbs[i];
-    for (uint32_t j = BASE_LIMB_WIDTH - 1; j < BASE_LIMB_WIDTH; j--) {
-      const uint8_t n = limb % base;
+    lmp_limb_t limb = mp_val->limbs[i];
+    for (uint32_t j = mp_val->base_limb_width - 1; j < mp_val->base_limb_width; j--) {
+      const uint8_t n = limb % mp_val->limb_base;
       ptr[j] = digit(n, UPPER);
-      limb /= base;
+      limb /= mp_val->limb_base;
     }
-    ptr += BASE_LIMB_WIDTH;
+    ptr += mp_val->base_limb_width;
   }
 
-  allocator->free(poly->limbs);
-  allocator->free(poly);
+  MP_INT_clear((MP_INT *)&mp_val, allocator);
   return ptr - dest;
 }
 
-uint32_t MP_FLOAT_to_str(char *dest, uint32_t max_len, const MP_DECIMAL *mp_val, uint32_t base) {
-  return 0;
-}
-
-uint32_t MP_DECIMAL_to_str(char *dest, uint32_t max_len, const MP_DECIMAL *mp_val, uint32_t base) {
+uint32_t MP_FLOAT_abs_to_base_string(char *, const uint32_t , const MP_FLOAT *, const uint32_t , const Allocator *) {
   return 0;
 }

@@ -43,13 +43,13 @@ static_assert(((lmp_limb_t)-1) > ((lmp_limb_t) 0), "'lmp_limb_t' is required an 
 uint32_t MP_FLOAT_to_ieee754_f##_w(FLOAT(_w) *restrict dest, const MP_FLOAT *restrict mp_val) {               \
   if (mp_val->size == 0) {                                                                                    \
     switch (mp_val->exp) {                                                                                    \
-      case  MP_FLOAT_ZERO: { *dest =  0;                return 0; }                                           \
-      case  MP_FLOAT_NAN : { *dest =  NAN;              return 0; }                                           \
-      case -MP_FLOAT_NAN : { *dest = -NAN;              return 0; }                                           \
-      case  MP_FLOAT_INF : { *dest =  INFINITY;         return 0; }                                           \
-      case -MP_FLOAT_INF : { *dest = -INFINITY;         return 0; }                                           \
-      case  MP_FLOAT_INS : { *dest =  FLOAT##_w##_INS;  return 0; }                                           \
-      case -MP_FLOAT_INS : { *dest = -FLOAT##_w##_INS;  return 0; }                                           \
+      case  MP_NUMBER_ZERO: { *dest =  0;                return 0; }                                          \
+      case  MP_NUMBER_NAN : { *dest =  NAN;              return 0; }                                          \
+      case -MP_NUMBER_NAN : { *dest = -NAN;              return 0; }                                          \
+      case  MP_NUMBER_INF : { *dest =  INFINITY;         return 0; }                                          \
+      case -MP_NUMBER_INF : { *dest = -INFINITY;         return 0; }                                          \
+      case  MP_NUMBER_INS : { *dest =  FLOAT##_w##_INS;  return 0; }                                          \
+      case -MP_NUMBER_INS : { *dest = -FLOAT##_w##_INS;  return 0; }                                          \
       default:{ /*TODO: error report */ return 0; }                                                           \
     }                                                                                                         \
   }                                                                                                           \

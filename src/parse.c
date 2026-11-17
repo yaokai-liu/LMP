@@ -57,11 +57,11 @@ static void scale_adic16(MP_INT *op, uint32_t n_digits, const Allocator *allocat
 static void scale_adic10(MP_INT *op, uint32_t n_digits, const Allocator *allocator);
 static void scale_adic8 (MP_INT *op, uint32_t n_digits, const Allocator *allocator);
 static void scale_adic2 (MP_INT *op, uint32_t n_digits, const Allocator *allocator);
-static void float_compose_adic16(MP_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
-static void float_compose_adic10(MP_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
-static void float_compose_adic8 (MP_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
-static void float_compose_adic2 (MP_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
-static void decimal_compose(MP_NUMBER *NUMBER,  int32_t exp, const Allocator * allocator);
+static void float_compose_adic16(MP_BASE_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
+static void float_compose_adic10(MP_BASE_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
+static void float_compose_adic8 (MP_BASE_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
+static void float_compose_adic2 (MP_BASE_NUMBER *NUMBER, int32_t exp, const Allocator *allocator);
+static void decimal_compose(MP_BASE_NUMBER *NUMBER,  int32_t exp, const Allocator * allocator);
 static uint32_t LMP_parse_num_suffix(const char *input, bool is_float, uint32_t adic_type, MP_NUM_TYPE *num_type, uint8_t *num_repr);
 
 #define isSign(pText)             ((*(pText) == '-') || (*(pText) == '+'))
@@ -91,45 +91,32 @@ static bool isHexDigital(const char *pText) { return isDecDigital(pText) || isHe
 
 uint32_t stridx_o(char chr, const char * str);
 static uint32_t strcmp_o(const char * str1, const char * str2);
-static uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_NUMBER *NUMBER, bool negative);
+static uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_BASE_NUMBER *NUMBER, bool negative);
 
-static uint32_t LMP_parse_adic_number(const char *input, MP_NUM_TYPE *num_type, MP_NUMBER *NUMBER,
+static uint32_t LMP_parse_adic_number(const char *input, MP_NUM_TYPE *num_type, MP_BASE_NUMBER *NUMBER,
                                       bool negative, uint32_t adic_type, const Allocator *allocator);
 
 extern const struct MP_STANDARD MP_NUM_INT_STANDARD_LIST[MP_NUM_INT_STANDARD_COUNT];
 extern const struct MP_STANDARD MP_NUM_FLOAT_STANDARD_LIST[MP_NUM_FLOAT_STANDARD_COUNT];
 extern const struct MP_STANDARD_REPR MP_NUM_INT_STD_REPR__LIST[MP_NUM_INT_STANDARD_COUNT];
 extern const struct MP_STANDARD_REPR MP_NUM_FLOAT_STD_REPR__LIST[MP_NUM_FLOAT_STANDARD_COUNT];
-
-static constexpr uint32_t MAX_DIGIT_PER_LIMB[] = {
-  [ADIC_TYPE_16] = (LMP_LIMB_BIT / 4),
-  [ADIC_TYPE_10] = ((19 * 64) / LMP_LIMB_BIT),
-  [ADIC_TYPE_8 ] = (LMP_LIMB_BIT / 3),
-  [ADIC_TYPE_2 ] = LMP_LIMB_BIT,
-};
-static void (*const DIGITAL_FUNC_TOOLS[])(const struct limb_pos *, lmp_limb_t *) = {
-  [ADIC_TYPE_16] = limb_digit_parse_adic16,
-  [ADIC_TYPE_10] = limb_digit_parse_adic10,
-  [ADIC_TYPE_8 ] = limb_digit_parse_adic8 ,
-  [ADIC_TYPE_2 ] = limb_digit_parse_adic2 ,
-};
-static void (*const SCALE_LIMB_FUNCS[])(MP_INT *, uint32_t, const Allocator *) = {
-  [ADIC_TYPE_16] = scale_adic16,
-  [ADIC_TYPE_10] = scale_adic10,
-  [ADIC_TYPE_8 ] = scale_adic8 ,
-  [ADIC_TYPE_2 ] = scale_adic2 ,
-};
-static bool (*const ADIC_DIGIT_CHECK_FUNCS[])(const char *) = {
-  [ADIC_TYPE_16] = isHexDigital,
-  [ADIC_TYPE_10] = isDecDigital,
-  [ADIC_TYPE_8 ] = isOctDigital,
-  [ADIC_TYPE_2 ] = isBinDigital,
-};
-static void (*const ADIC_FLOAT_COMPOSE_FUNCS[])(MP_NUMBER *, int32_t, const Allocator *) = {
-  [ADIC_TYPE_16] = float_compose_adic16,
-  [ADIC_TYPE_10] = float_compose_adic10,
-  [ADIC_TYPE_8 ] = float_compose_adic8 ,
-  [ADIC_TYPE_2 ] = float_compose_adic2 ,
+static const struct {
+  lmp_half_limb_t base;
+  lmp_half_limb_t width;
+  lmp_limb_t limb_val;
+  void (*const limb_parser)(const struct limb_pos *, lmp_limb_t *);
+  void (*const limb_scaler)(MP_INT *, uint32_t, const Allocator *);
+  bool (*const digit_checker)(const char *);
+  void (*const float_composer)(MP_BASE_NUMBER *, int32_t, const Allocator *);
+} BASE_LIMB_DATA[] = {
+#if (_LMP_LIMB_WIDTH_ == 64)
+#define DEC_LIMB_WIDTH          19
+#define DEC_LIMB_VAL            (0x8AC7'2304'89E8'0000ULL)
+  [ADIC_TYPE_16] = { .base = 16, .width = LMP_LIMB_BIT / 4, .limb_val = (lmp_limb_t)LMP_LIMB_VAL, .limb_parser = limb_digit_parse_adic16, .limb_scaler = scale_adic16, .digit_checker = isHexDigital, .float_composer = float_compose_adic16 },
+  [ADIC_TYPE_10] = { .base = 10, .width = DEC_LIMB_WIDTH,   .limb_val = (lmp_limb_t)DEC_LIMB_VAL, .limb_parser = limb_digit_parse_adic10, .limb_scaler = scale_adic10, .digit_checker = isDecDigital, .float_composer = float_compose_adic10 },
+  [ADIC_TYPE_8 ] = { .base =  8, .width = LMP_LIMB_BIT / 3, .limb_val = (lmp_limb_t)LMP_LIMB_VAL, .limb_parser = limb_digit_parse_adic8 , .limb_scaler = scale_adic8 , .digit_checker = isOctDigital, .float_composer = float_compose_adic8  },
+  [ADIC_TYPE_2 ] = { .base =  2, .width = LMP_LIMB_BIT / 1, .limb_val = (lmp_limb_t)LMP_LIMB_VAL, .limb_parser = limb_digit_parse_adic2 , .limb_scaler = scale_adic2 , .digit_checker = isBinDigital, .float_composer = float_compose_adic2  },
+#endif
 };
 
 // [a-fA-F0-9'_]+
@@ -203,7 +190,7 @@ inline void scale_adic2(MP_INT *op, const uint32_t n_digits, const Allocator *al
   return MP_INT_left_shift(op, (int32_t) n_digits, allocator);
 }
 
-inline void float_compose_adic16(MP_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
+inline void float_compose_adic16(MP_BASE_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
   int32_t n_limbs = 0, remains = 0;
   if (exp >= 0) {
     const int32_t n_bits = exp * 4;
@@ -214,54 +201,54 @@ inline void float_compose_adic16(MP_NUMBER *const NUMBER, const int32_t exp, con
     n_limbs = n_bits / (int32_t) LMP_LIMB_BIT - 1;
     remains = LMP_LIMB_BIT + (n_bits % (int32_t) LMP_LIMB_BIT);
   }
-  MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
-  MP_INT_clamp(&NUMBER->val.INT);
-  const lmp_prec_t prec = NUMBER->val.INT.alloc;
-  const lmp_size_t size = NUMBER->val.INT.size;
-  lmp_limb_t* limbs = NUMBER->val.INT.limbs;
-  NUMBER->val.FLOAT.prec = prec;
-  NUMBER->val.FLOAT.size = size;
-  NUMBER->val.FLOAT.limbs = limbs;
-  NUMBER->val.FLOAT.exp = n_limbs;
+  MP_INT_left_shift((MP_INT *)NUMBER, remains, allocator);
+  MP_INT_clamp((MP_INT *)NUMBER);
+  const lmp_prec_t prec = NUMBER->prec;
+  const lmp_size_t size = NUMBER->size;
+  lmp_limb_t* limbs = NUMBER->limbs;
+  NUMBER->prec = prec;
+  NUMBER->size = size;
+  NUMBER->limbs = limbs;
+  NUMBER->exp = n_limbs;
 }
 
-inline void float_compose_adic10(MP_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
-  const int32_t limb_max_digit = (int32_t) MAX_DIGIT_PER_LIMB[ADIC_TYPE_10];
-  lmp_prec_t prec = abs(NUMBER->val.INT.alloc);
+inline void float_compose_adic10(MP_BASE_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
+  const int32_t limb_width = (int32_t) BASE_LIMB_DATA[ADIC_TYPE_10].width;
+  lmp_prec_t prec = abs(NUMBER->prec);
   if (exp >= 0) {
     int32_t limb_exp = 0;
-    const int32_t n_limbs = exp / limb_max_digit;
-    const int32_t remains = exp % limb_max_digit;
+    const int32_t n_limbs = exp / limb_width;
+    const int32_t remains = exp % limb_width;
     for (int32_t i = 0; i < n_limbs; i++) {
-      scale_adic10(&NUMBER->val.INT, MAX_DIGIT_PER_LIMB[ADIC_TYPE_10], allocator);
-      if (abs(NUMBER->val.INT.size) >= prec && i < n_limbs - 1) {
-        MP_INT_right_shift(&NUMBER->val.INT, LMP_LIMB_BIT, allocator);
+      scale_adic10((MP_INT *)NUMBER, limb_width, allocator);
+      if (abs(NUMBER->size) >= prec && i < n_limbs - 1) {
+        MP_INT_right_shift((MP_INT *)NUMBER, LMP_LIMB_BIT, allocator);
         limb_exp ++;
       }
     }
     if (remains > 0) {
-      if (abs(NUMBER->val.INT.size) >= prec) {
-        MP_INT_right_shift(&NUMBER->val.INT, LMP_LIMB_BIT, allocator);
+      if (abs(NUMBER->size) >= prec) {
+        MP_INT_right_shift((MP_INT *)NUMBER, LMP_LIMB_BIT, allocator);
       }
-      scale_adic10(&NUMBER->val.INT, remains, allocator);
+      scale_adic10((MP_INT *)NUMBER, remains, allocator);
     }
-    MP_INT_clamp(&NUMBER->val.INT);
-    prec = NUMBER->val.INT.alloc;
-    const lmp_size_t size = NUMBER->val.INT.size;
-    lmp_limb_t* limbs = NUMBER->val.INT.limbs;
-    NUMBER->val.FLOAT.prec = prec;
-    NUMBER->val.FLOAT.size = size;
-    NUMBER->val.FLOAT.limbs = limbs;
-    NUMBER->val.FLOAT.exp = limb_exp;
+    MP_INT_clamp((MP_INT *)NUMBER);
+    prec = NUMBER->prec;
+    const lmp_size_t size = NUMBER->size;
+    lmp_limb_t* limbs = NUMBER->limbs;
+    NUMBER->prec = prec;
+    NUMBER->size = size;
+    NUMBER->limbs = limbs;
+    NUMBER->exp = limb_exp;
   } else {
-    const int32_t n_limbs = exp / limb_max_digit;
-    const int32_t remains = exp % limb_max_digit;
+    const int32_t n_limbs = exp / limb_width;
+    const int32_t remains = exp % limb_width;
 
     MP_INT DIVISOR = {};
     MP_INT_init(&DIVISOR, (int32_t) n_limbs + 1, allocator);
     DIVISOR.size = 1; DIVISOR.limbs[0] = 1;
     for (int32_t i = 0; i < abs(n_limbs); i++) {
-      scale_adic10(&DIVISOR, limb_max_digit, allocator);
+      scale_adic10(&DIVISOR, limb_width, allocator);
     }
     if (remains != 0) {
       scale_adic10(&DIVISOR, abs(remains), allocator);
@@ -269,99 +256,99 @@ inline void float_compose_adic10(MP_NUMBER *const NUMBER, const int32_t exp, con
     MP_INT_clamp(&DIVISOR);
 
     const int32_t quotient_exp_abs = abs(DIVISOR.size);
-    MP_INT_left_shift(&NUMBER->val.INT, (int32_t) (quotient_exp_abs * LMP_LIMB_BIT), allocator);
-    int32_t quotient_size = abs(NUMBER->val.INT.size) - abs(DIVISOR.size);
+    MP_INT_left_shift((MP_INT *)NUMBER, (int32_t) (quotient_exp_abs * LMP_LIMB_BIT), allocator);
+    int32_t quotient_size = abs(NUMBER->size) - abs(DIVISOR.size);
     MP_INT QUOTIENT = {};
     MP_INT_init(&QUOTIENT, quotient_size, allocator);
-    MP_INT_divmod(&NUMBER->val.INT, &DIVISOR, &QUOTIENT, allocator);
+    MP_INT_divmod((MP_INT *)NUMBER, &DIVISOR, &QUOTIENT, allocator);
     quotient_size = abs(QUOTIENT.size);
     MP_INT_clear(&DIVISOR, allocator);
-    MP_INT_clear(&NUMBER->val.INT, allocator);
+    MP_INT_clear((MP_INT *)NUMBER, allocator);
     if (QUOTIENT.size == 0) {
       MP_INT_clear(&QUOTIENT, allocator);
-      NUMBER->val.FLOAT.exp = MP_FLOAT_ZERO;
-      NUMBER->val.FLOAT.size = 0;
+      NUMBER->exp = MP_NUMBER_ZERO;
+      NUMBER->size = 0;
       return ;
     }
-    if (NUMBER->val.INT.alloc < 0) {
+    if (NUMBER->prec < 0) {
       quotient_size = abs(QUOTIENT.size);
-      if (quotient_size > abs(NUMBER->val.INT.alloc)) {
-        const int32_t rounded_limbs = quotient_size - abs(NUMBER->val.INT.alloc);
+      if (quotient_size > abs(NUMBER->prec)) {
+        const int32_t rounded_limbs = quotient_size - abs(NUMBER->prec);
         MP_INT_right_shift(&QUOTIENT, rounded_limbs * (int32_t)LMP_LIMB_BIT, allocator);
         MP_INT_clamp(&QUOTIENT);
-        quotient_size = abs(NUMBER->val.INT.alloc);
+        quotient_size = abs(NUMBER->prec);
       }
-      lmp_limb_t *const limbs = NUMBER->val.INT.limbs;
+      lmp_limb_t *const limbs = NUMBER->limbs;
       allocator->memcpy(limbs, QUOTIENT.limbs, quotient_size * LMP_LIMB_SIZE);
-      NUMBER->val.FLOAT.limbs = limbs;
-      NUMBER->val.FLOAT.prec = prec;
-      NUMBER->val.FLOAT.size = QUOTIENT.size;
-      NUMBER->val.FLOAT.exp = - quotient_exp_abs;
+      NUMBER->limbs = limbs;
+      NUMBER->prec = prec;
+      NUMBER->size = QUOTIENT.size;
+      NUMBER->exp = - quotient_exp_abs;
       MP_INT_clear(&QUOTIENT, allocator);
     } else {
-      NUMBER->val.FLOAT.limbs = QUOTIENT.limbs;
-      NUMBER->val.FLOAT.prec = QUOTIENT.alloc;
-      NUMBER->val.FLOAT.size = QUOTIENT.size;
-      NUMBER->val.FLOAT.exp = - quotient_exp_abs;
+      NUMBER->limbs = QUOTIENT.limbs;
+      NUMBER->prec = QUOTIENT.alloc;
+      NUMBER->size = QUOTIENT.size;
+      NUMBER->exp = - quotient_exp_abs;
     }
   }
-  MP_FLOAT_clamp(&NUMBER->val.FLOAT); // TODO: round method
+  MP_FLOAT_clamp((MP_FLOAT *)NUMBER); // TODO: round method
 }
 
-inline void float_compose_adic8(MP_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
+inline void float_compose_adic8(MP_BASE_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
   int32_t n_limbs = 0, remains = 0;
   if (exp >= 0) {
     const int32_t n_bits = exp * 3;
     n_limbs = n_bits / (int32_t) LMP_LIMB_BIT;
     remains = n_bits % (int32_t) LMP_LIMB_BIT;
-    MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
+    MP_INT_left_shift((MP_INT *)NUMBER, remains, allocator);
   } else {
     const int32_t n_bits = exp * 3;
     n_limbs = n_bits / (int32_t) LMP_LIMB_BIT - 1;
     remains = LMP_LIMB_BIT + (n_bits % (int32_t) LMP_LIMB_BIT);
   }
-  MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
-  MP_INT_clamp(&NUMBER->val.INT);
-  const lmp_prec_t prec = NUMBER->val.INT.alloc;
-  const lmp_size_t size = NUMBER->val.INT.size;
-  lmp_limb_t* limbs = NUMBER->val.INT.limbs;
-  NUMBER->val.FLOAT.prec = prec;
-  NUMBER->val.FLOAT.size = size;
-  NUMBER->val.FLOAT.limbs = limbs;
-  NUMBER->val.FLOAT.exp = n_limbs;
+  MP_INT_left_shift((MP_INT *)NUMBER, remains, allocator);
+  MP_INT_clamp((MP_INT *)NUMBER);
+  const lmp_prec_t prec = NUMBER->prec;
+  const lmp_size_t size = NUMBER->size;
+  lmp_limb_t* limbs = NUMBER->limbs;
+  NUMBER->prec = prec;
+  NUMBER->size = size;
+  NUMBER->limbs = limbs;
+  NUMBER->exp = n_limbs;
 }
 
-inline void float_compose_adic2(MP_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
+inline void float_compose_adic2(MP_BASE_NUMBER *const NUMBER, const int32_t exp, const Allocator *const allocator) {
   int32_t n_limbs = 0, remains = 0;
   if (exp >= 0) {
     const int32_t n_bits = exp;
     n_limbs = n_bits / (int32_t) LMP_LIMB_BIT;
     remains = n_bits % (int32_t) LMP_LIMB_BIT;
-    MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
+    MP_INT_left_shift((MP_INT *)NUMBER, remains, allocator);
   } else {
     const int32_t n_bits = exp;
     n_limbs = n_bits / (int32_t) LMP_LIMB_BIT - 1;
     remains = LMP_LIMB_BIT + (n_bits % (int32_t) LMP_LIMB_BIT);
   }
-  MP_INT_left_shift(&NUMBER->val.INT, remains, allocator);
-  MP_INT_clamp(&NUMBER->val.INT);
-  const lmp_prec_t prec = NUMBER->val.INT.alloc;
-  const lmp_size_t size = NUMBER->val.INT.size;
-  lmp_limb_t* limbs = NUMBER->val.INT.limbs;
-  NUMBER->val.FLOAT.prec = prec;
-  NUMBER->val.FLOAT.size = size;
-  NUMBER->val.FLOAT.limbs = limbs;
-  NUMBER->val.FLOAT.exp = n_limbs;
+  MP_INT_left_shift((MP_INT *)NUMBER, remains, allocator);
+  MP_INT_clamp((MP_INT *)NUMBER);
+  const lmp_prec_t prec = NUMBER->prec;
+  const lmp_size_t size = NUMBER->size;
+  lmp_limb_t* limbs = NUMBER->limbs;
+  NUMBER->prec = prec;
+  NUMBER->size = size;
+  NUMBER->limbs = limbs;
+  NUMBER->exp = n_limbs;
 }
 
-inline void decimal_compose(MP_NUMBER *const NUMBER, const int32_t exp, const Allocator *const) {
-  const lmp_prec_t prec = NUMBER->val.INT.alloc;
-  const lmp_size_t size = NUMBER->val.INT.size;
-  lmp_limb_t* limbs = NUMBER->val.INT.limbs;
-  NUMBER->val.FLOAT.prec = prec;
-  NUMBER->val.FLOAT.size = size;
-  NUMBER->val.FLOAT.limbs = limbs;
-  NUMBER->val.FLOAT.exp = exp;
+inline void decimal_compose(MP_BASE_NUMBER *const NUMBER, const int32_t exp, const Allocator *const) {
+  const lmp_prec_t prec = NUMBER->prec;
+  const lmp_size_t size = NUMBER->size;
+  lmp_limb_t* limbs = NUMBER->limbs;
+  NUMBER->prec = prec;
+  NUMBER->size = size;
+  NUMBER->limbs = limbs;
+  NUMBER->exp = exp;
 }
 
 // <REPR>?([lL]{0,2}|[0-9]+)<REPR>?\<standard\>
@@ -467,25 +454,25 @@ inline uint32_t LMP_parse_num_suffix(const char *const input, const bool is_floa
 //        [0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
 //    case ADIC_TYPE_10:
 //        [0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
-inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_type, MP_NUMBER *const NUMBER,
+inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_type, MP_BASE_NUMBER *const NUMBER,
                                       const bool negative, const uint32_t adic_type, const Allocator *const allocator) {
   if (!*input) { return 0; }
-  auto const fun_check = ADIC_DIGIT_CHECK_FUNCS[adic_type];
-  auto const limb_effective_len = MAX_DIGIT_PER_LIMB[adic_type];
-  auto const func_scale_limb = SCALE_LIMB_FUNCS[adic_type];
-  auto const func_int_limb_parse = DIGITAL_FUNC_TOOLS[adic_type];
-  auto const func_float_compose = ADIC_FLOAT_COMPOSE_FUNCS[adic_type];
+  auto const fun_check = BASE_LIMB_DATA[adic_type].digit_checker;
+  auto const limb_width = BASE_LIMB_DATA[adic_type].width;
+  auto const func_limb_parse = BASE_LIMB_DATA[adic_type].limb_parser;
+  auto const func_float_compose = BASE_LIMB_DATA[adic_type].float_composer;
 
   /***************************************************/
   /************** NUMBER parse ***********************/
   /***************************************************/
+
   const char *pText = input;
   bool is_float = false;
   uint32_t mantissa_len = 0;
   uint32_t int_part_len = 0;
  struct limb_pos curr_limb = { .start = pText, .end = nullptr };
-  MP_INT_init(&NUMBER->val.INT, LMP_PARSE_ALLOC_SCALE * MP_ALLOC_LEN, allocator);
-  while (*pText && NUMBER->val.INT.size <= LMP_PARSE_PREC_MAX) {
+  MP_INT_init((MP_INT *)NUMBER, LMP_PARSE_ALLOC_SCALE * MP_ALLOC_LEN, allocator);
+  while (*pText && NUMBER->size <= LMP_PARSE_PREC_MAX) {
     if (isSeparator(pText)) {
       if (!fun_check(pText + 1)) { break; }
       pText ++; continue;
@@ -500,29 +487,39 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
     mantissa_len ++;
     pText++;
 
-    if (mantissa_len % limb_effective_len == 0) {
+    if (mantissa_len % limb_width == 0) {
       curr_limb.end = pText;
       lmp_limb_t limb_val = 0;
-      func_int_limb_parse(&curr_limb, &limb_val);
-      func_scale_limb(&NUMBER->val.INT, limb_effective_len, allocator);
-      MP_INT_abs_add_u64(&NUMBER->val.INT, &NUMBER->val.INT, limb_val, allocator);
+      func_limb_parse(&curr_limb, &limb_val);
+      if (NUMBER->prec < NUMBER->size + 1) {
+        MP_INT_realloc((MP_INT *)NUMBER, NUMBER->size + 1, allocator);
+      }
+      NUMBER->limbs[NUMBER->size] = limb_val;
+      NUMBER->size++;
       curr_limb.start = pText;
     }
   }
   if (pText == input) {
-    MP_INT_clear(&NUMBER->val.INT, allocator);
+    MP_INT_clear((MP_INT *)NUMBER, allocator);
     return 0;
   }
   if (!int_part_len) { int_part_len = mantissa_len; }
   curr_limb.end = pText;
   if (curr_limb.end > curr_limb.start) {
     lmp_limb_t limb_val = 0;
-    func_int_limb_parse(&curr_limb, &limb_val);
-    func_scale_limb(&NUMBER->val.INT, curr_limb.end - curr_limb.start, allocator);
-    MP_INT_abs_add_u64(&NUMBER->val.INT, &NUMBER->val.INT, limb_val, allocator);
+    func_limb_parse(&curr_limb, &limb_val);
+    if (NUMBER->prec < NUMBER->size + 1) {
+      MP_INT_realloc((MP_INT *)NUMBER, NUMBER->size + 1, allocator);
+    }
+    NUMBER->limbs[NUMBER->size] = limb_val;
+    NUMBER->size++;
   }
-  MP_INT_clamp(&NUMBER->val.INT);
-  NUMBER->val.INT.size = negative ? - NUMBER->val.INT.size : NUMBER->val.INT.size;
+  NUMBER->limb_base = BASE_LIMB_DATA[adic_type].base;
+  NUMBER->base_limb_width = BASE_LIMB_DATA[adic_type].width;
+  NUMBER->base_limb_val = BASE_LIMB_DATA[adic_type].limb_val;
+  NUMBER->size = negative ? - NUMBER->size : NUMBER->size;
+  MP_INT_clamp((MP_INT *)NUMBER);
+
   int64_t literal_exp = 0;
   if (isExponer(pText)) {
     const char *pText_back = pText;
@@ -546,41 +543,46 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
       pText = pText_back;
     }
   }
+
+  uint8_t repr = 0;
   if ((startswithLetter(pText) && !isExponer(pText)) || isLAngleBracket(pText)) {
-    pText += LMP_parse_num_suffix(pText, is_float, adic_type, num_type, &NUMBER->repr);
+    pText += LMP_parse_num_suffix(pText, is_float, adic_type, num_type, &repr);
   } else if (is_float) {
     num_type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_FLOAT, 0);
-    NUMBER->repr = MP_NUM_REPR_MP_FLOAT;
+    repr = MP_NUM_REPR_MP_FLOAT;
   } else {
     num_type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_INT, 0);
-    NUMBER->repr = MP_NUM_REPR_MP_INT;
+    repr = MP_NUM_REPR_MP_INT;
   }
 
   /***************************************************/
   /************** NUMBER compose *********************/
   /***************************************************/
-  if (NUMBER->repr == MP_NUM_REPR_MP_INT) { return pText - input; }
-  literal_exp -= (int64_t) (mantissa_len - int_part_len);
+
+  if (repr == MP_NUM_REPR_MP_INT) { return pText - input; }
+  literal_exp -= (lmp_exp_t) (mantissa_len - int_part_len);
   if (literal_exp < - LMP_PARSE_EXP_MAX) {
-    MP_INT_clear(&NUMBER->val.INT, allocator);
-    const lmp_prec_t prec = NUMBER->val.INT.alloc;
-    lmp_limb_t * limbs = NUMBER->val.INT.limbs;
-    NUMBER->val.FLOAT.prec = prec;
-    NUMBER->val.FLOAT.size = 0;
-    NUMBER->val.FLOAT.exp = negative ? MP_FLOAT_NEG_INS : MP_FLOAT_INS;
-    NUMBER->val.FLOAT.limbs = limbs;
+    MP_INT_clear((MP_INT *)NUMBER, allocator);
+    const lmp_prec_t prec = NUMBER->prec;
+    lmp_limb_t * limbs = NUMBER->limbs;
+    NUMBER->prec = prec;
+    NUMBER->size = 0;
+    NUMBER->exp = negative ? MP_NUMBER_NEG_INS : MP_NUMBER_INS;
+    NUMBER->limbs = limbs;
   } else if (literal_exp > LMP_PARSE_EXP_MAX) {
-    MP_INT_clear(&NUMBER->val.INT, allocator);
-    const lmp_prec_t prec = NUMBER->val.INT.alloc;
-    lmp_limb_t * limbs = NUMBER->val.INT.limbs;
-    NUMBER->val.FLOAT.prec = prec;
-    NUMBER->val.FLOAT.size = 0;
-    NUMBER->val.FLOAT.exp = negative ? MP_FLOAT_NEG_INF : MP_FLOAT_INF;
-    NUMBER->val.FLOAT.limbs = limbs;
-  } else if (NUMBER->repr == MP_NUM_REPR_MP_DECIMAL) {
-    decimal_compose(NUMBER, (int32_t)literal_exp, allocator);
+    MP_INT_clear((MP_INT *)NUMBER, allocator);
+    const lmp_prec_t prec = NUMBER->prec;
+    lmp_limb_t * limbs = NUMBER->limbs;
+    NUMBER->prec = prec;
+    NUMBER->size = 0;
+    NUMBER->exp = negative ? MP_NUMBER_NEG_INF : MP_NUMBER_INF;
+    NUMBER->limbs = limbs;
+  } else if (repr == MP_NUM_REPR_MP_DECIMAL) {
+    MP_BASE_NUMBER_mul_base_exp(NUMBER, (int32_t)literal_exp, allocator);
+    MP_BASE_NUMBER_change_base(NUMBER, 10, allocator);
   } else {
-    func_float_compose(NUMBER, (int32_t)literal_exp, allocator);
+    MP_BASE_NUMBER_mul_base_exp(NUMBER, (int32_t)literal_exp, allocator);
+    MP_BASE_NUMBER_change_base(NUMBER, 2, allocator);
   }
   return pText - input;
 }
@@ -590,21 +592,24 @@ static struct {
   uint32_t pattern_len;
   int32_t        value;
 } SPECIAL_NUMBER_PATTERNS[] = {
-  { "inf", lenof("inf"), MP_FLOAT_INF },
-  { "INF", lenof("INF"), MP_FLOAT_INF },
-  { "ins", lenof("ins"), MP_FLOAT_INS },
-  { "INS", lenof("INS"), MP_FLOAT_INS },
-  { "nan", lenof("nan"), MP_FLOAT_NAN },
-  { "NAN", lenof("NAN"), MP_FLOAT_NAN },
+  { "inf", lenof("inf"), MP_NUMBER_INF },
+  { "INF", lenof("INF"), MP_NUMBER_INF },
+  { "ins", lenof("ins"), MP_NUMBER_INS },
+  { "INS", lenof("INS"), MP_NUMBER_INS },
+  { "nan", lenof("nan"), MP_NUMBER_NAN },
+  { "NAN", lenof("NAN"), MP_NUMBER_NAN },
 };
 
-inline uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_NUMBER *NUMBER, const bool negative) {
+inline uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_BASE_NUMBER *NUMBER, const bool negative) {
   constexpr int32_t n_special_val = sizeof(SPECIAL_NUMBER_PATTERNS) / sizeof(SPECIAL_NUMBER_PATTERNS[0]);
   for (int32_t i = 0; i < n_special_val; i++) {
     auto const triple = SPECIAL_NUMBER_PATTERNS[i];
     if (strcmp_o(input, triple.pattern) == triple.pattern_len && !isIdentChar(&input[triple.pattern_len])) {
-      NUMBER->val.FLOAT.size = 0;
-      NUMBER->val.FLOAT.exp = negative ? - triple.value : triple.value;
+      NUMBER->size = 0;
+      NUMBER->exp = negative ? - triple.value : triple.value;
+      NUMBER->limb_base = 2;
+      NUMBER->base_limb_width = LMP_LIMB_BIT;
+      NUMBER->base_limb_val = (lmp_limb_t)LMP_LIMB_VAL;
       type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_FLOAT, 0);
       return triple.pattern_len;
     }
@@ -628,7 +633,7 @@ inline uint32_t strcmp_o(const char *const str1, const char * const str2) {
 // [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?) |
 // [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?) |
 // [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
-uint32_t LMP_parse(const char * const input, MP_NUM_TYPE *type, MP_NUMBER *NUMBER, const Allocator * const allocator) {
+uint32_t LMP_parse(const char * const input, MP_NUM_TYPE *type, MP_BASE_NUMBER *NUMBER, const Allocator * const allocator) {
   const char *pText = input;
   const bool negative = ('-' == *pText);
   if (isSign(pText)) {

@@ -15,9 +15,7 @@ endif ()
 
 add_compile_options("-flto")
 #add_compile_options("-O3" "-Os")
-add_compile_options("-funsigned-char")
 add_compile_options("-Wall" "-Wextra" "-Werror")
-add_compile_options("-Wno-format")
 
 if (ENABLE_TEST_COV)
     add_compile_options("-fprofile-arcs" "-ftest-coverage" "--coverage")
@@ -28,11 +26,9 @@ if (ENABLE_GPROF)
     add_link_options("-pg")
 endif ()
 
-if (NOT TARGET extstd)
-    add_subdirectory(extstd)
-    include_directories(extstd/include)
-    link_libraries(extstd)
-endif ()
+add_subdirectory(extstd)
+include_directories(extstd/include)
+link_libraries(extstd)
 
 include_directories(include/LMP)
 

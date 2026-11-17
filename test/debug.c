@@ -35,7 +35,7 @@
 int main () {
   MP_NUM_TYPE num_type = {};
   lmp_limb_t limbs[8] = {};
-  MP_NUMBER number = {.val.INT = {.alloc = -8, .limbs = limbs}, .repr = MP_NUM_REPR_NONE};
+  MP_BASE_NUMBER number = {.val.INT = {.alloc = -8, .limbs = limbs}, .repr = MP_NUM_REPR_NONE};
   const char *num_str = "-123.12345678999991234'56789123456789_123456789LL<IEEE754>";
   constexpr uint32_t str_len = lenof("-123.12345678999991234'56789123456789_123456789LL<IEEE754>");
   const uint32_t parse_len = LMP_parse(num_str, &num_type, &number, &STDAllocator);

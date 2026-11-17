@@ -188,7 +188,7 @@ inline void MP_FLOAT_init(MP_FLOAT *val, const int32_t initial_alloc, const Allo
   if (val->prec == 0) {
     val->prec = aligned(initial_alloc);
     val->limbs = allocator->calloc(val->prec, LMP_LIMB_SIZE);
-    val->exp = MP_FLOAT_ZERO;
+    val->exp = MP_NUMBER_ZERO;
     val->size = 0;
   }
 }
@@ -218,7 +218,7 @@ void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator) {
     val->limbs = nullptr;
     val->prec = 0;
   }
-  val->exp = MP_FLOAT_ZERO;
+  val->exp = MP_NUMBER_ZERO;
   val->size = 0;
 }
 
@@ -239,7 +239,7 @@ inline void MP_FLOAT_clamp(MP_FLOAT *val) {
   while (size > 0 && val->limbs[size - 1] == 0) { size--; }
   val->size = (val->size >= 0) ? size : -size;
 
-  if (val->size == 0) { val->exp = MP_FLOAT_ZERO; }
+  if (val->size == 0) { val->exp = MP_NUMBER_ZERO; }
 }
 
 inline lmp_limb_t MP_FLOAT_left_shift_load(const MP_FLOAT *restrict num, const int32_t index, const int32_t bit_count) {
@@ -299,12 +299,11 @@ inline lmp_double_limb_t MP_FLOAT_get_double_limbs(const MP_FLOAT *restrict num,
   return (val2 << LMP_LIMB_BIT) | val1;
 }
 
-void MP_DECIMAL_clamp(MP_DECIMAL *val) {
-  if (!val->size) { return; }
-  lmp_size_t size = abs(val->size);
 
-  while (size > 0 && val->limbs[size - 1] == 0) { size--; }
-  val->size = (val->size >= 0) ? size : -size;
+void MP_BASE_NUMBER_mul_base_exp(MP_BASE_NUMBER *mp_val, lmp_exp_t exp, const Allocator * allocator) {
 
-  if (val->size == 0) { val->exp = MP_FLOAT_ZERO; }
+}
+
+void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *, uint32_t , const Allocator *) {
+
 }

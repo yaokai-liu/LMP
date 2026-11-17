@@ -51,6 +51,7 @@ Suite *abs_3limbs_inv_suite();
 Suite *abs_divmod_suite();
 
 Suite *parse_suite();
+Suite *print_suite();
 
 Suite *ieee754_suite();
 Suite *c_int_suite();

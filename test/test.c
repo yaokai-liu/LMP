@@ -48,6 +48,7 @@ int main()
   srunner_add_suite(sr, abs_divmod_suite());
 
   srunner_add_suite(sr, parse_suite());
+  srunner_add_suite(sr, print_suite());
 
   srunner_add_suite(sr, ieee754_suite());
   srunner_add_suite(sr, c_int_suite());
