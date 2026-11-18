@@ -28,15 +28,16 @@
 #include "test.h"
 #include "allocator.h"
 
+#define MP_INT_negative(val)                do { (val)->size = -(val)->size; } while(0)
 
 START_TEST(test_MP_INT_1) {
   MP_INT num = {};
   MP_INT_init(&num, 0, &STDAllocator);
-  ck_assert_uint_eq(num.alloc, MP_ALLOC_LEN);
+  ck_assert_uint_eq(num.prec, MP_ALLOC_LEN);
   ck_assert_uint_eq(num.size, 0);
   ck_assert_ptr_ne(num.limbs, nullptr);
   MP_INT_realloc(&num, 131, &STDAllocator);
-  ck_assert_uint_eq(num.alloc, 136);
+  ck_assert_uint_eq(num.prec, 136);
   ck_assert_uint_eq(num.size, 0);
   ck_assert_ptr_ne(num.limbs, nullptr);
   MP_INT_clear(&num, &STDAllocator);
@@ -46,7 +47,7 @@ END_TEST
 START_TEST(test_MP_INT_2) {
   MP_INT num = {};
   MP_INT_init(&num, 1, &STDAllocator);
-  ck_assert_uint_eq(num.alloc, MP_ALLOC_LEN);
+  ck_assert_uint_eq(num.prec, MP_ALLOC_LEN);
   ck_assert_uint_eq(num.size, 0);
   ck_assert_ptr_ne(num.limbs, nullptr);
   MP_INT_clear(&num, &STDAllocator);
@@ -56,7 +57,7 @@ END_TEST
 START_TEST(test_MP_INT_3) {
   MP_INT num = {};
   MP_INT_init(&num, MP_ALLOC_LEN, &STDAllocator);
-  ck_assert_uint_eq(num.alloc, MP_ALLOC_LEN + MP_ALLOC_LEN);
+  ck_assert_uint_eq(num.prec, MP_ALLOC_LEN + MP_ALLOC_LEN);
   ck_assert_uint_eq(num.size, 0);
   ck_assert_ptr_ne(num.limbs, nullptr);
   MP_INT_clear(&num, &STDAllocator);
@@ -65,8 +66,8 @@ END_TEST
 
 START_TEST(test_MP_INT_4) {
   lmp_limb_t limbs[2][2] = {{1, 2}, {3, 4}};
-  MP_INT num1 = {.alloc = 2, .size = 2, .limbs = limbs[0]};
-  MP_INT num2 = {.alloc = 2, .size = 2, .limbs = limbs[1]};
+  MP_INT num1 = {.prec = 2, .size = 2, .limbs = limbs[0]};
+  MP_INT num2 = {.prec = 2, .size = 2, .limbs = limbs[1]};
   MP_INT_copy(&num2, &num1, &STDAllocator);
   ck_assert_uint_eq(num2.size, num1.size);
   ck_assert_uint_eq(limbs[1][0], limbs[0][0]);
@@ -76,7 +77,7 @@ END_TEST
 
 START_TEST(test_MP_INT_5) {
   lmp_limb_t limbs[2][2] = {{1, 2}, {1, 2}};
-  MP_INT num = {.alloc = 2, .size = 2, .limbs = limbs[0]};
+  MP_INT num = {.prec = 2, .size = 2, .limbs = limbs[0]};
   MP_INT_negative(&num);
   ck_assert_int_eq(num.size, -2);
   ck_assert_uint_eq(limbs[1][0], limbs[0][0]);
@@ -86,7 +87,7 @@ END_TEST
 
 START_TEST(test_MP_INT_6) {
   lmp_limb_t limbs[2][2] = {{1, 2}, {1, 2}};
-  MP_INT num = {.alloc = 2, .size = 2, .limbs = limbs[0]};
+  MP_INT num = {.prec = 2, .size = 2, .limbs = limbs[0]};
   MP_INT_negative(&num);
   ck_assert_int_eq(num.size, -2);
   ck_assert_uint_eq(limbs[1][0], limbs[0][0]);

@@ -44,9 +44,9 @@ static void run_sub_case(const SubCase *c)
 {
   lmp_limb_t RES_limbs[(c->a_len > c->b_len ? c->a_len : c->b_len) + c->offset + 1] = {};
 
-  MP_INT A   = { .alloc = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
-  MP_INT B   = { .alloc = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
-  MP_INT RES = { .alloc = -(int32_t)(sizeof(RES_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = RES_limbs };
+  MP_INT A   = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
+  MP_INT B   = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
+  MP_INT RES = { .prec = -(int32_t)(sizeof(RES_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = RES_limbs };
 
   MP_INT_abs_sub_offset(&RES, &A, &B, c->offset, &STDAllocator);
   MP_INT_clamp(&RES);

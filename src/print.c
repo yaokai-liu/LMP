@@ -57,5 +57,10 @@ uint32_t MP_BASE_NUMBER_abs_to_string(char *dest, const uint32_t max_len, const 
 }
 
 uint32_t MP_FLOAT_abs_to_base_string(char *, const uint32_t , const MP_FLOAT *, const uint32_t , const Allocator *) {
+  // TODO
+  return 0;
+}
+uint32_t MP_FLOAT_abs_to_base_exp_string(char *, const uint32_t, const MP_FLOAT *, const uint32_t, const Allocator *) {
+  // TODO
   return 0;
 }

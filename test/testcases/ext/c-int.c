@@ -74,7 +74,7 @@ typedef struct {
 
 static void run_i32_case(const I32Case *c)
 {
-  const MP_INT mp_val = { .alloc = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
+  const MP_INT mp_val = { .prec = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
 
   int32_t value = 0;
   const uint32_t result = MP_INT_to_stdc_i32(&value, &mp_val);
@@ -86,7 +86,7 @@ static void run_i32_case(const I32Case *c)
 }
 static void run_i64_case(const I64Case *c)
 {
-  const MP_INT mp_val = { .alloc = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
+  const MP_INT mp_val = { .prec = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
 
   int64_t value = 0;
   const uint32_t result = MP_INT_to_stdc_i64(&value, &mp_val);
@@ -98,7 +98,7 @@ static void run_i64_case(const I64Case *c)
 }
 static void run_i128_case(const I128Case *c)
 {
-  const MP_INT mp_val = { .alloc = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
+  const MP_INT mp_val = { .prec = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
 
   int128_t value = 0;
   const uint32_t result = MP_INT_to_stdc_i128(&value, &mp_val);
@@ -112,7 +112,7 @@ static void run_i128_case(const I128Case *c)
 
 static void run_u32_case(const U32Case *c)
 {
-  const MP_INT mp_val = { .alloc = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
+  const MP_INT mp_val = { .prec = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
 
   uint32_t value = 0;
   const uint32_t result = MP_INT_to_stdc_u32(&value, &mp_val);
@@ -124,7 +124,7 @@ static void run_u32_case(const U32Case *c)
 }
 static void run_u64_case(const U64Case *c)
 {
-  const MP_INT mp_val = { .alloc = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
+  const MP_INT mp_val = { .prec = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
 
   uint64_t value = 0;
   const uint32_t result = MP_INT_to_stdc_u64(&value, &mp_val);
@@ -136,7 +136,7 @@ static void run_u64_case(const U64Case *c)
 }
 static void run_u128_case(const U128Case *c)
 {
-  const MP_INT mp_val = { .alloc = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
+  const MP_INT mp_val = { .prec = -c->mp_size, .size = c->mp_size, .limbs = (lmp_limb_t *)c->mp_limbs };
 
   uint128_t value = 0;
   const uint32_t result = MP_INT_to_stdc_u128(&value, &mp_val);

@@ -57,19 +57,10 @@ typedef int32_t lmp_size_t;
 #define LMP_LIMB_SIZE         (sizeof(lmp_limb_t))
 #define LMP_LIMB_BIT          (LMP_LIMB_SIZE * CHAR_BIT)
 #define LMP_LIMB_MAX          (~(lmp_limb_t)0)
+#define LMP_HALF_LIMB_MAX     (~(lmp_half_limb_t)0)
 #define LMP_DOUBLE_LIMB_MAX   (~(lmp_double_limb_t)0)
 #define LMP_LIMB_VAL          (((lmp_double_limb_t)1) << LMP_LIMB_BIT)
-
-typedef struct MP_INT {
-  // (alloc < 0) means it's a fixed capacity variable.
-  // abs(alloc) is how many limbs allowed to use.
-  lmp_prec_t  alloc;
-  // negative if size < 0
-  lmp_size_t  size;
-  // little endian
-  lmp_limb_t *limbs;
-} MP_INT;
-
+#define LMP_BASE_POLYNOMIAL   LMP_HALF_LIMB_MAX
 enum MP_NUMBER_SPECIAL_VALUE_TYPE : int32_t {
   MP_NUMBER_ZERO = 0,
   MP_NUMBER_INF,
@@ -83,10 +74,21 @@ enum MP_NUMBER_SPECIAL_VALUE_TYPE : int32_t {
   MP_NUMBER_BAD_VALUE = INT32_MIN, // this value should not be reached
 };
 
-#define LMP_FLOAT_BASE              LMP_LIMB_VAL
-#define LMP_FLOAT_BASE_SQUARE       (LMP_LIMB_VAL << LMP_LIMB_BIT)
+// INT = sgn(size) * sum(limbs[i] * pow(LMP_LIMB_VAL, i)),
+// here i from 0 to (abs(size) - 1).
+typedef struct MP_INT {
+  // (prec < 0) means it's a fixed capacity variable.
+  // abs(prec) is how many limbs allowed to use.
+  lmp_prec_t  prec;
+  // negative if size < 0
+  lmp_size_t  size;
+  // little endian
+  lmp_limb_t *limbs;
+} MP_INT;
+
 // if (size != 0):
-//    FLOAT = sgn(size) * limbs * pow(LMP_FLOAT_BASE, exp)
+//    FLOAT = sgn(size) * sum(limbs[i] * pow(LMP_LIMB_VAL, i)) * pow(LMP_LIMB_VAL, exp),
+//    i from 0 to (abs(size) - 1).
 // else:
 //    FLOAT = MP_FLOAT_SPECIAL_VALUE_TYPE(exp)
 //    if (prec > 0) limbs will be released.
@@ -114,9 +116,13 @@ typedef struct MP_FLOAT {
   lmp_exp_t   exp;
 } MP_FLOAT;
 
-#define LMP_BASE_MAX    UINT16_MAX
 // if (size != 0):
-//    NUMBER = sgn(size) * sum(limbs[i] * pow(base_limb_val, i)) { for i from 0 to (size - 1) } * pow(base_limb_val, exp)
+//    NUMBER = sgn(size) * sum(limbs[i] * pow(base_limb_val, i)) * pow(base_limb_val, exp),
+//    i from 0 to (abs(size) - 1).
+// else if (limb_base == LMP_BASE_POLYNOMIAL):
+//    NUMBER is a polynomial.
+//    NUMBER = sgn(exp) * sum(limbs[i] * pow(X,i)),
+//    i from 0 to (abs(exp) - 1), i.e. abs(exp) = degree(NUMBER) + 1
 // else:
 //    NUMBER = MP_FLOAT_SPECIAL_VALUE_TYPE(exp)
 //    if (prec > 0) limbs will be released.
@@ -126,15 +132,23 @@ typedef struct MP_FLOAT {
 //    especially as result-end, the 'limbs' field would be changed.
 // if (exp == 0 && size != 0):
 //    Of course it is an integer.
-//    NUMBER = sgn(size) * sum(limbs[i] * pow(base_limb_val, i)) { for i from 0 to (size - 1) }
+//    NUMBER = sgn(size) * sum(limbs[i] * pow(base_limb_val, i)),
+//    i from 0 to (abs(size) - 1).
 // Promise:
-//    1. promise (limbs[i] < base_limb_val)
-// Notice: if log(limb_base, LMP_LIMB_VAL) is an integer that divides LMP_LIMB_BIT,
-//    the 'base_limb_val' will be 0. This is an expected behavior(floor-ties).
+//    1. limbs[i] < base_limb_val (no unsigned int overflow case) < LMP_LIMB_VAL.
+//    2. If and only if (limb_base == 2), the value of given pointer of
+//       struct MP_BASE_NUMBER is exactly the data of casting to MP_FLOAT.
+//       For exampe, for 'MP_BASE_NUMBER *p_number', if (p_number->limb_base == 2),
+//       then 'MP_BASE_NUMBER_to_MP_FLOAT(p_number)' is exactly '(MP_FLOAT *)p_number'.
+//       However, for those limb_base != 2 but base_limb_width divides LMP_LIMB_BIT,
+//       the 'base_limb_val' will be 0, which are expected behaviors(unsigned int overflow).
+//       Here the mantissa of number is exactly '(MP_INT *)p_number'.
+//       Users may use these behaviors to decide if do some optimizations.
 // Special behaviors:
-//    if (limb_base == 0): then the base number should be consider a NaN;
-//    if (limb_base == 1): then the base number should be consider 0 or ±INF;
-//    if limb_base is to large(large than LMP_BASE_MAX in this library), the base number should be consider 0 or ±INS;
+//    1. If (limb_base == 0): then the base number should be consider a NaN.
+//    2. If (limb_base == 1): then the base number should be consider 0 or ±INF.
+//    3. If limb_base is LMP_BASE_POLYNOMIAL, the base number should be considered
+//       a polynomial that all coeffidents less than LMP_LIMB_VAL.
 typedef struct MP_BASE_NUMBER {
   // alloc memory size for limbs
   // (prec < 0) means it's a fixed capacity variable.
@@ -150,7 +164,9 @@ typedef struct MP_BASE_NUMBER {
   // This field will be used to represent special value when (size == 0).
   lmp_exp_t   exp;
   lmp_half_limb_t limb_base;
+  // max{i: pow(limb_base, i) <= LMP_LIMB_VAL}
   lmp_half_limb_t base_limb_width;
+  // pow(limb_base, base_limb_width)
   lmp_limb_t      base_limb_val;
 } MP_BASE_NUMBER;
 
@@ -162,8 +178,6 @@ void MP_INT_from_int(MP_INT *mp_val, int256_t val, const Allocator *allocator);
 void MP_INT_from_uint(MP_INT *mp_val, uint256_t val, const Allocator *allocator);
 void MP_INT_clear(MP_INT *val, const Allocator *allocator);
 void MP_INT_clamp(MP_INT *val);
-
-void MP_INT_negative(MP_INT *val);
 size_t MP_INT_bitsof(const MP_INT *val);
 int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2);
 bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, int32_t offset);
@@ -173,23 +187,35 @@ lmp_limb_t MP_INT_left_shift_load(const MP_INT *restrict num, int32_t index, int
 lmp_double_limb_t MP_INT_left_shift_load_double(const MP_INT *restrict num, int32_t index, int32_t bit_count);
 
 void MP_FLOAT_init(MP_FLOAT *val, int32_t initial_alloc, const Allocator *allocator);
-void MP_FLOAT_realloc(MP_FLOAT *val, int32_t required, const Allocator *allocator);
 void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator);
 void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator);
-// Not sutiable for MP_DECIMAL
 void MP_FLOAT_clamp(MP_FLOAT *val);
+#define MP_FLOAT_mantissa(p_float)                                ((MP_INT *)(p_float))
+#define MP_FLOAT_realloc(val, required, allocator)                MP_INT_realloc((MP_INT *)(val), (required), (allocator))
+#define MP_FLOAT_get_limb(num, index)                             MP_INT_get_limb((MP_INT *)(num), (index))
+#define MP_FLOAT_get_double_limbs(num, index)                     MP_INT_get_double_limbs((MP_INT *)(num), (index))
+#define MP_FLOAT_left_shift_load(num, index, bit_count)           MP_INT_left_shift_load((MP_INT *)(num), (index), (bit_count))
+#define MP_FLOAT_left_shift_load_double(num, index, bit_count)    MP_INT_left_shift_load_double((MP_INT *)(num), (index), (bit_count))
 
-lmp_limb_t MP_FLOAT_get_limb(const MP_FLOAT *restrict num, int32_t index);
-lmp_double_limb_t MP_FLOAT_get_double_limbs(const MP_FLOAT *restrict num, int32_t index);
-lmp_limb_t MP_FLOAT_left_shift_load(const MP_FLOAT *restrict num, int32_t index, int32_t bit_count);
-lmp_double_limb_t MP_FLOAT_left_shift_load_double(const MP_FLOAT *restrict num, int32_t index, int32_t bit_count);
 
-#define MP_FLOAT_mantissa(p_float)  ((MP_INT *)(p_float))
-#define MP_FLOAT_negative(p_float)  do { (p_float)->size = -(p_float)->size} while(false)
-#define MP_FLOAT_trivert(p_float)   do { (p_float)->exp = -(p_float)->exp; } while(false)
+void MP_BASE_NUMBER_clear(MP_BASE_NUMBER *val, const Allocator *allocator);
+#define MP_BASE_NUMBER_realloc(val, required, allocator)          MP_INT_realloc((MP_INT *)(val), (required), (allocator))
+#define MP_BASE_INT_init(val,  initial_alloc, allocator)          MP_INT_init((MP_INT *)(val), (initial_alloc), (allocator))
+#define MP_BASE_INT_negative(val)                                 MP_INT_negative((MP_INT *)(val))
+#define MP_BASE_INT_get_limb(num, index)                          MP_INT_get_limb((const MP_INT *)(num), (index))
+lmp_double_limb_t MP_BASE_INT_get_double_limbs(const MP_BASE_NUMBER *restrict num, int32_t index);
+#define MP_BASE_INT_clamp(val)                                    MP_INT_clamp((MP_INT *)(val))
+#define MP_BASE_INT_abs_cmp(op1, op2)                             MP_INT_abs_cmp((const MP_INT *)(op1), (const MP_INT *)(op2))
+#define MP_BASE_INT_abs_offset_ge(op1, op2, offset)               MP_INT_abs_offset_ge((const MP_INT *)(op1), (const MP_INT *)(op2), (offset))
+
+#define MP_BASE_FLOAT_init(val,  initial_alloc, allocator)        MP_FLOAT_init((MP_FLOAT *)(val), (initial_alloc), (allocator))
+#define MP_BASE_FLOAT_negative(val)                               MP_FLOAT_negative((MP_FLOAT *)(val))
+#define MP_BASE_FLOAT_get_limb(num, index)                        MP_FLOAT_get_limb((const MP_INT *)(num), (index))
+#define MP_BASE_FLOAT_get_double_limbs(num, index)                MP_BASE_INT_get_double_limbs((num), (index))
+#define MP_BASE_FLOAT_clamp(val)                                  MP_FLOAT_clamp((MP_FLOAT *)(val))
 
 void MP_INT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
 void MP_FLOAT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
-void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, uint32_t base, const Allocator *allocator);
+void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, lmp_half_limb_t base, const Allocator *allocator);
 
 #endif //LMP_H

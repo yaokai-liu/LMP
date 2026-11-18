@@ -18,15 +18,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: 
- * Filename: arith.c
+ * Module Name: arith
+ * Filename: int.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-14
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
 #include "arith.h"
-
 #include "extbit.h"
 
 #define max(a, b)   ((a) > (b) ? (a) : (b))
@@ -37,7 +36,6 @@ inline void MP_INT_abs_mul_u64(MP_INT *dest, const MP_INT *op, const uint64_t va
   if (op->size == 0 || val == 0) { dest->size = 0; return; }
 
   const lmp_size_t size = abs(op->size);
-  MP_INT_realloc(dest, size + 1, allocator);
 
   lmp_limb_t carry = 0;
   for (int32_t i = 0; i < size; i++) {
@@ -46,6 +44,7 @@ inline void MP_INT_abs_mul_u64(MP_INT *dest, const MP_INT *op, const uint64_t va
     dest->limbs[i] = (lmp_limb_t) prod;
   }
   if (carry) {
+    MP_INT_realloc(dest, size + 1, allocator);
     dest->limbs[size] = carry;
     dest->size = sgn(dest->size) * (size + 1);
   } else {
@@ -61,7 +60,6 @@ inline void MP_INT_abs_add_u64(MP_INT *dest, const MP_INT *op, const uint64_t va
     dest->size = val ? 1 : 0;
     return;
   }
-  MP_INT_realloc(dest, size + 1, allocator);
   lmp_limb_t carry = val;
   for (int32_t i = 0; i < size; i++) {
     const lmp_limb_t sum = op->limbs[i] + carry;
@@ -69,6 +67,7 @@ inline void MP_INT_abs_add_u64(MP_INT *dest, const MP_INT *op, const uint64_t va
     dest->limbs[i] = sum;
   }
   if (carry) {
+    MP_INT_realloc(dest, size + 1, allocator);
     dest->limbs[size] = 1;
     dest->size = sgn(dest->size) * (size + 1);
   } else {
@@ -84,6 +83,20 @@ void MP_INT_abs_sub_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allo
     dest->size = val ? -1 : 0;
     return;
   }
+  if (size == 1) {
+    if (op->limbs[0] < val) {
+      dest->limbs[0] = val - op->limbs[0];
+      dest->size = -1;
+      return;
+    }
+    if (op->limbs[0] > val) {
+      dest->limbs[0] = op->limbs[0] - val;
+      dest->size =  1;
+      return;
+    }
+    dest->size = 0;
+    return;
+  }
   bool borrow = op->limbs[0] < val;
   dest->limbs[0] = op->limbs[0] - val;
   for (int32_t i = 1; i < size; i++) {
@@ -91,7 +104,7 @@ void MP_INT_abs_sub_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allo
     dest->limbs[i] = op->limbs[i] - borrow;
     borrow = new_borrow;
   }
-  dest->size = size;
+  dest->size = dest->limbs[size - 1] ? size : size - 1;
 }
 
 inline void MP_INT_abs_mul(MP_INT *rop, const MP_INT *op1, const MP_INT * restrict op2, const Allocator *allocator) {
@@ -102,7 +115,7 @@ inline void MP_INT_abs_mul(MP_INT *rop, const MP_INT *op1, const MP_INT * restri
   MP_INT_realloc(rop, size1 + size2, allocator);
 
   if (size1 + size2 > USING_NTT_SIZE) {
-    // TODO: using FFT
+    // TODO: using NTT
   }
 
   lmp_limb_t *const res_limbs = rop->limbs;
@@ -123,7 +136,7 @@ inline void MP_INT_abs_add_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *
   const lmp_size_t size1 = abs(op1->size);
   const lmp_size_t size2 = abs(op2->size);
   const int32_t max_size = max(size1, size2 + offset);
-  MP_INT_realloc(rop, max_size + 1, allocator);
+  MP_INT_realloc(rop, max_size, allocator);
 
   lmp_limb_t carry = 0;
   for (int32_t i = 0; i < max_size; i++) {
@@ -137,6 +150,7 @@ inline void MP_INT_abs_add_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *
     carry = c1 | c2;
   }
   if (carry) {
+    MP_INT_realloc(rop, max_size + 1, allocator);
     rop->limbs[max_size] = 1;
     rop->size = (max_size + 1);
   } else {
@@ -289,6 +303,7 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
   }
   MP_INT_clear(&interval, allocator);
 }
+#undef d_high
 
 void MP_INT_mul_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator) {
   MP_INT_abs_mul_u64(dest, op, val, allocator);
@@ -362,150 +377,4 @@ void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
     MP_INT_abs_sub_offset(dividend, divisor, dividend, 0, allocator);
   }
   quotient->size = sgn(divisor->size) * sgn_dividend * abs(quotient->size);
-}
-
-
-inline void MP_FLOAT_left_shift(MP_FLOAT *op, const int32_t bit_count, const Allocator *allocator) {
-  if (op->size == 0) { return; }
-  const lmp_size_t size = abs(op->size);
-  const int32_t shift_limbs = bit_count / (int32_t) LMP_LIMB_BIT;
-  const int32_t shift_bits = bit_count % (int32_t) LMP_LIMB_BIT;
-
-  const int32_t leading_zeros = stdc_leading_zeros(op->limbs[size - 1]);
-  const int32_t res_size = size + shift_limbs + (shift_bits > leading_zeros);
-  MP_FLOAT_realloc(op, res_size, allocator);
-
-  for (int32_t i = res_size - 1; i >= 0; i--) {
-    const lmp_limb_t current = (i >= shift_limbs && i - shift_limbs <= size - 1)
-                             ? op->limbs[i - shift_limbs] : 0;
-    op->limbs[i] = shift_bits ? current << shift_bits : current;
-    if (i + 1 <= res_size - 1) {
-      op->limbs[i + 1] |= shift_bits ? current >> (LMP_LIMB_BIT - shift_bits) : 0;
-    }
-  }
-  op->size = sgn(op->size) * res_size;
-}
-
-inline void MP_FLOAT_right_shift(MP_FLOAT *op, const int32_t bit_count, const Allocator *) {
-  if (op->size == 0) { return; }
-  const lmp_size_t size = abs(op->size);
-  const int32_t shift_limbs = bit_count / (int32_t) LMP_LIMB_BIT;
-  const int32_t shift_bits = bit_count % (int32_t) LMP_LIMB_BIT;
-
-  if (shift_limbs >= size) {
-    for (int32_t i = 0; i < size; i ++) { op->limbs[i] = 0; }
-    return ;
-  }
-
-  for (int32_t i = shift_limbs; i < size-1; i++) {
-    const lmp_double_limb_t res = op->limbs[i] | (((lmp_double_limb_t)op->limbs[i + 1]) << LMP_LIMB_BIT);
-    op->limbs[i - shift_limbs] = (lmp_limb_t) (res >> shift_bits);
-  }
-  op->limbs[size - 1 - shift_limbs] = op->limbs[size - 1] >> shift_bits;
-
-  op->size = sgn(op->size) * (size - shift_limbs);
-}
-static lmp_limb_t fast_pow [[gnu::always_inline]] (lmp_limb_t base, lmp_exp_t exp);
-inline lmp_limb_t fast_pow [[gnu::always_inline]] (lmp_limb_t base, lmp_exp_t exp) {
-  lmp_limb_t result = 1;
-  while (exp > 0) {
-    if (exp & 1) { result *= base; }
-    base *= base; exp >>= 1;
-  }
-  return result;
-}
-
-inline void MP_BASE_NUMBER_mul_abs_base_exp(MP_BASE_NUMBER *mp_val, const uint32_t abs_exp) {
-  if (mp_val->size == 0) { return; }
-  const uint32_t offset = abs_exp / mp_val->base_limb_width;
-  const uint32_t shift = abs_exp % mp_val->base_limb_width;
-  const lmp_limb_t multiplier = fast_pow(mp_val->limb_base, shift);
-  for (uint32_t i = abs(mp_val->size) - 1; i < (uint32_t)abs(mp_val->size); i--) {
-    lmp_double_limb_t low2_limbs = MP_INT_get_double_limbs((MP_INT *)mp_val, i);
-    low2_limbs = (low2_limbs >> LMP_LIMB_BIT) * mp_val->base_limb_val + (lmp_limb_t)low2_limbs;
-    mp_val->limbs[i + offset + 1] = (lmp_limb_t)((lmp_quarter_limb_t)low2_limbs * multiplier / mp_val->base_limb_val);
-  }
-  lmp_double_limb_t low2_limbs = MP_INT_get_double_limbs((MP_INT *)mp_val, 0);
-  low2_limbs = (low2_limbs >> LMP_LIMB_BIT)* mp_val->base_limb_val + (lmp_limb_t)low2_limbs;
-  mp_val->limbs[offset] = (lmp_limb_t)((lmp_quarter_limb_t)low2_limbs * multiplier % mp_val->base_limb_val);
-  for (uint32_t i = 0; i < offset; i++) { mp_val->limbs[i] = 0; }
-
-  MP_INT_clamp((MP_INT*)mp_val);
-}
-
-inline void MP_BASE_NUMBER_div_abs_base_exp(MP_BASE_NUMBER *mp_val, const uint32_t abs_exp) {
-  if (mp_val->size == 0) { return; }
-  const uint32_t offset = abs_exp / mp_val->base_limb_width;
-  const uint32_t shift = abs_exp % mp_val->base_limb_width;
-  const lmp_limb_t divisor = fast_pow(mp_val->limb_base, shift);
-  for (int32_t i = 0; i < abs(mp_val->size); i++) {
-    lmp_double_limb_t low2_limbs = MP_INT_get_double_limbs((MP_INT *)mp_val, i + offset);
-    low2_limbs = (low2_limbs >> LMP_LIMB_BIT) * mp_val->base_limb_val + (lmp_limb_t)low2_limbs;
-    mp_val->limbs[i] = (lmp_limb_t)(low2_limbs / divisor % mp_val->base_limb_val);
-  }
-  MP_INT_clamp((MP_INT*)mp_val);
-}
-
-void MP_BASE_NUMBER_mul_base_exp(MP_BASE_NUMBER *mp_val, lmp_exp_t exp, const Allocator * allocator) {
-  if (mp_val->size == 0) { return; }
-  mp_val->exp += exp / (lmp_exp_t)mp_val->base_limb_width;
-  exp %= mp_val->base_limb_width;
-  if (mp_val->base_limb_val == 0) {
-    const uint32_t scale = extstd_bit_width(mp_val->limb_base - 1);
-    if (exp > 0) {
-      lmp_limb_t low1_limb = MP_INT_get_limb((MP_INT *)mp_val, 0);
-      const lmp_exp_t log_base = extstd_trailing_zeros(low1_limb);
-      if (log_base + exp * scale >= (lmp_exp_t)LMP_LIMB_BIT) {
-        mp_val->exp += 1;
-        const uint32_t shift_width = LMP_LIMB_BIT - exp * scale;
-        MP_INT_right_shift((MP_INT *)mp_val, shift_width, allocator);
-      } else {
-        const lmp_exp_t shift_width = exp * scale;
-        MP_INT_realloc((MP_INT *)mp_val, abs(mp_val->size) + 1, allocator);
-        MP_INT_left_shift((MP_INT *)mp_val, shift_width, allocator);
-      }
-    } else if (exp < 0) {
-      lmp_limb_t low1_limb = MP_INT_get_limb((MP_INT *)mp_val, 0);
-      const lmp_exp_t log_base = extstd_trailing_zeros(low1_limb);
-      if (log_base + exp * scale < 0) {
-        mp_val->exp -= 1;
-        const uint32_t shift_width = LMP_LIMB_BIT + exp * scale;
-        MP_INT_realloc((MP_INT *)mp_val, abs(mp_val->size) + 1, allocator);
-        MP_INT_left_shift((MP_INT *)mp_val, shift_width, allocator);
-      } else {
-        const lmp_exp_t shift_width = -exp * scale;
-        MP_INT_right_shift((MP_INT *)mp_val, shift_width, allocator);
-      }
-    }
-  } else {
-    if (exp > 0) {
-      lmp_exp_t log_base = 0;
-      lmp_limb_t low1_limb = MP_INT_get_limb((MP_INT *)mp_val, 0);
-      if (low1_limb == 0) { log_base = mp_val->base_limb_width; }
-      else while (low1_limb % mp_val->limb_base == 0) { low1_limb /= mp_val->limb_base; log_base++; }
-      if (log_base + exp >= mp_val->base_limb_width) {
-        mp_val->exp += 1;
-        const uint32_t shift_width = mp_val->base_limb_width - exp;
-        MP_BASE_NUMBER_div_abs_base_exp(mp_val, shift_width);
-      } else {
-        const lmp_exp_t shift_width = exp;
-        MP_INT_realloc((MP_INT *)mp_val, abs(mp_val->size) + 1, allocator);
-        MP_BASE_NUMBER_mul_abs_base_exp(mp_val, shift_width);
-      }
-    } else if (exp < 0) {
-      lmp_exp_t log_base = 0;
-      lmp_limb_t low1_limb = MP_INT_get_limb((MP_INT *)mp_val, 0);
-      if (low1_limb == 0) { log_base = mp_val->base_limb_width; }
-      else while (low1_limb % mp_val->limb_base == 0) { low1_limb /= mp_val->limb_base; log_base++; }
-      if (log_base + exp < 0) {
-        mp_val->exp -= 1;
-        const uint32_t shift_width = mp_val->base_limb_width + exp;
-        MP_INT_realloc((MP_INT *)mp_val, abs(mp_val->size) + 1, allocator);
-        MP_BASE_NUMBER_mul_abs_base_exp(mp_val, shift_width);
-      } else {
-        const lmp_exp_t shift_width = -exp;
-        MP_BASE_NUMBER_div_abs_base_exp(mp_val, shift_width);
-      }
-    }
-  }
 }

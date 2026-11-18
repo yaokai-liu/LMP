@@ -286,7 +286,7 @@ inline void float_compose_adic10(MP_BASE_NUMBER *const NUMBER, const int32_t exp
       MP_INT_clear(&QUOTIENT, allocator);
     } else {
       NUMBER->limbs = QUOTIENT.limbs;
-      NUMBER->prec = QUOTIENT.alloc;
+      NUMBER->prec = QUOTIENT.prec;
       NUMBER->size = QUOTIENT.size;
       NUMBER->exp = - quotient_exp_abs;
     }
@@ -509,7 +509,7 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
   NUMBER->size = negative ? - NUMBER->size : NUMBER->size;
   MP_INT_clamp((MP_INT *)NUMBER);
 
-  int64_t literal_exp = 0;
+  lmp_exp_t literal_exp = 0;
   if (isExponer(pText)) {
     const char *pText_back = pText;
     pText ++;
@@ -527,7 +527,7 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
       is_float = true;
       lmp_limb_t exp_val = 0;
       limb_digit_parse_adic10(&curr_limb, &exp_val);
-      literal_exp = negative_exp ? - (int32_t) exp_val : (int32_t) exp_val;
+      literal_exp = negative_exp ? - (lmp_exp_t) exp_val : (lmp_exp_t) exp_val;
     } else {
       pText = pText_back;
     }
@@ -567,10 +567,10 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
     NUMBER->exp = negative ? MP_NUMBER_NEG_INF : MP_NUMBER_INF;
     NUMBER->limbs = limbs;
   } else if (repr == MP_NUM_REPR_MP_DECIMAL) {
-    MP_BASE_NUMBER_mul_base_exp(NUMBER, (int32_t)literal_exp, allocator);
+    MP_BASE_FLOAT_mul_base_exp(NUMBER, literal_exp, allocator);
     MP_BASE_NUMBER_change_base(NUMBER, 10, allocator);
   } else {
-    MP_BASE_NUMBER_mul_base_exp(NUMBER, (int32_t)literal_exp, allocator);
+    MP_BASE_FLOAT_mul_base_exp(NUMBER, literal_exp, allocator);
     MP_BASE_NUMBER_change_base(NUMBER, 2, allocator);
   }
   return pText - input;
