@@ -53,7 +53,7 @@ uint32_t MP_FLOAT_to_ieee754_f##_w(FLOAT(_w) *restrict dest, const MP_FLOAT *res
       default:{ /*TODO: error report */ return 0; }                                                           \
     }                                                                                                         \
   }                                                                                                           \
-  const int64_t leading_zeros = stdc_leading_zeros(MP_FLOAT_get_limb(mp_val, -1));                            \
+  const int64_t leading_zeros = extstd_leading_zeros(MP_FLOAT_get_limb(mp_val, -1));                          \
   int64_t exp2 = (abs(mp_val->size) + mp_val->exp) * (int64_t)LMP_LIMB_BIT - leading_zeros - 1;               \
   uint128_t mantissa = MP_FLOAT_get_double_limbs(mp_val, -2);                                                 \
   const int64_t mant_bits = (2 * (int64_t)LMP_LIMB_BIT) - leading_zeros;                                      \

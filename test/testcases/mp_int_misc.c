@@ -56,10 +56,19 @@ END_TEST
 
 START_TEST(test_MP_INT_3) {
   MP_INT num = {};
-  MP_INT_init(&num, MP_ALLOC_LEN, &STDAllocator);
-  ck_assert_uint_eq(num.prec, MP_ALLOC_LEN + MP_ALLOC_LEN);
+  MP_INT_init(&num, 0, &STDAllocator);
+  ck_assert_uint_eq(num.prec, MP_ALLOC_LEN);
   ck_assert_uint_eq(num.size, 0);
   ck_assert_ptr_ne(num.limbs, nullptr);
+  MP_INT_clear(&num, &STDAllocator);
+  MP_INT_init(&num, MP_ALLOC_LEN - 1, &STDAllocator);
+  ck_assert_uint_eq(num.prec, MP_ALLOC_LEN);
+  MP_INT_clear(&num, &STDAllocator);
+  MP_INT_init(&num, MP_ALLOC_LEN, &STDAllocator);
+  ck_assert_uint_eq(num.prec, MP_ALLOC_LEN);
+  MP_INT_clear(&num, &STDAllocator);
+  MP_INT_init(&num, MP_ALLOC_LEN + 1, &STDAllocator);
+  ck_assert_uint_eq(num.prec, 2 * MP_ALLOC_LEN);
   MP_INT_clear(&num, &STDAllocator);
 }
 END_TEST

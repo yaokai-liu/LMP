@@ -48,7 +48,7 @@ uint32_t MP_FLOAT_abs_to_base_string(char *dest, uint32_t max_len, const MP_FLOA
 // result form: INT@EXP
 // INT parts will always align to BASE_LIMB_WIDTH (by fill zero)
 // EXP part will be always signed(±) decimal integer
-// Notice: EXP is based on limb_base instead of base_limb_val.
+// Notice: EXP is based on BASE.base instead of BASE.limb_val.
 // Notice: (1 < base < 37) is required.
 uint32_t MP_FLOAT_abs_to_base_exp_string(char *dest, uint32_t max_len, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
 #endif //LMP_PRINT_H

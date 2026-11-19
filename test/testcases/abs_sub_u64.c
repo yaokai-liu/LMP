@@ -46,7 +46,7 @@ static void run_sub_u64_case(const SubU64Case *c)
   MP_INT A    = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
   MP_INT DEST = { .prec = -(int32_t)(sizeof(dest_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = dest_limbs };
 
-  MP_INT_abs_sub_u64(&DEST, &A, c->val, &STDAllocator);
+  MP_INT_abs_sub_limb(&DEST, &A, c->val, &STDAllocator);
   MP_INT_clamp(&DEST);
 
   ck_assert_msg(abs(DEST.size) == c->e_len,

@@ -34,13 +34,13 @@ void MP_INT_left_shift(MP_INT *op, int32_t bit_count, const Allocator *allocator
 void MP_INT_right_shift(MP_INT *op, int32_t bit_count, const Allocator *);
 // Allow (dest = op)
 // Force set dest->size >= 0
-void MP_INT_abs_mul_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator);
+void MP_INT_abs_mul_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator);
 // Allow (dest = op)
 // Force set dest->size >= 0
-void MP_INT_abs_add_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator);
+void MP_INT_abs_add_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator);
 // Allow (dest = op)
 // Force set dest->size >= 0
-void MP_INT_abs_sub_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator);
+void MP_INT_abs_sub_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator);
 
 // Force set rop->size >= 0
 void MP_INT_abs_mul(MP_INT *restrict rop, const MP_INT *op1, const MP_INT *op2, const Allocator *allocator);
@@ -63,11 +63,11 @@ void MP_INT_abs_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
 lmp_double_limb_t MP_INT_abs_3limbs_inv(lmp_double_limb_t op);
 
 // Allow (dest = op)
-void MP_INT_mul_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator);
+void MP_INT_mul_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator);
 // Allow (dest = op)
-void MP_INT_add_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator);
+void MP_INT_add_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator);
 // Allow (dest = op)
-void MP_INT_sub_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator);
+void MP_INT_sub_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator);
 
 void MP_INT_mul(MP_INT *restrict rop, const MP_INT *op1, const MP_INT *op2, const Allocator *allocator);
 // Allow (rop = op1) or (rop = op2)
@@ -82,61 +82,61 @@ void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
 #define MP_FLOAT_left_shift(op, bit_count, allocator)     MP_INT_left_shift((MP_INT *)(op), (bit_count), (allocator))
 #define MP_FLOAT_right_shift(op, bit_count, allocator)    MP_INT_right_shift((MP_INT *)(op), (bit_count), (allocator))
 
-void MP_BASE_INT_mul_abs_base_exp(MP_BASE_NUMBER *mp_val, uint32_t abs_exp);
-void MP_BASE_INT_div_abs_base_exp(MP_BASE_NUMBER *mp_val, uint32_t abs_exp);
+void MP_BASE_INT_mul_abs_base_exp(MP_BASE_NUMBER *mp_val, uint32_t abs_exp, const Allocator *allocator);
+void MP_BASE_INT_div_abs_base_exp(MP_BASE_NUMBER *mp_val, uint32_t abs_exp, const Allocator *allocator);
 
-// Notice: exp based on limb_base instead of base_limb_val.
+// Notice: exp based on BASE.base instead of BASE.limb_val.
 void MP_BASE_FLOAT_mul_base_exp(MP_BASE_NUMBER *mp_val, lmp_exp_t exp, const Allocator *allocator);
 
 // Allow (dest = op)
 // Always assume op is an integer
-// Always assume (op->limb_base == dest->limb_base)
+// Always assume (op->BASE.base == dest->BASE.base)
 // else is an unexpected behavior
 // Force set dest->size >= 0
-void MP_BASE_INT_abs_mul_u64(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *op, uint64_t val, const Allocator *allocator);
+void MP_BASE_INT_abs_mul_limb(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *op, lmp_limb_t val, const Allocator *allocator);
 // Allow (dest = op)
 // Always assume op is an integer
-// Always assume (op->limb_base == dest->limb_base)
+// Always assume (op->BASE.base == dest->BASE.base)
 //    else is an unexpected behavior
-// Always assume (val < base_limb_val)
+// Always assume (val < BASE.limb_val)
 //    else is an unexpected behavior
 // Force set dest->size >= 0
-void MP_BASE_INT_abs_add_limb(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *op, uint64_t val, const Allocator *allocator);
+void MP_BASE_INT_abs_add_limb(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *op, lmp_limb_t val, const Allocator *allocator);
 // Allow (dest = op)
 // Always assume op is an integer
-// Always assume (op->limb_base == dest->limb_base)
+// Always assume (op->BASE.base == dest->BASE.base)
 //    else is an unexpected behavior
-// Always assume (val < base_limb_val)
+// Always assume (val < BASE.limb_val)
 //    else is an unexpected behavior
 // Force set dest->size >= 0
-void MP_BASE_INT_abs_sub_limb(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *op, uint64_t val, const Allocator *allocator);
+void MP_BASE_INT_abs_sub_limb(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *op, lmp_limb_t val, const Allocator *allocator);
 
 // Force set rop->size >= 0
 // Always assume op1, op2 both are integer
-// Always assume (op1->limb_base == op2->limb_base == rop->limb_base)
+// Always assume (op1->BASE.base == op2->BASE.base == rop->BASE.base)
 // else is an unexpected behavior
 // Always assume op1, op2 both are integer
 void MP_BASE_INT_abs_mul(MP_BASE_NUMBER *restrict rop, const MP_BASE_NUMBER *op1,
-                    const MP_BASE_NUMBER *op2, const Allocator *allocator);
+                         const MP_BASE_NUMBER *op2, const Allocator *allocator);
 // Allow (rop = op1) or (rop = op2)
 // Always assume op1, op2 both are integer
-// Always assume (op1->limb_base == op2->limb_base == rop->limb_base)
+// Always assume (op1->BASE.base == op2->BASE.base == rop->BASE.base)
 // else is an unexpected behavior
 // Force set rop->size >= 0
 void MP_BASE_INT_abs_add_offset(MP_BASE_NUMBER *rop, const MP_BASE_NUMBER *op1, const MP_BASE_NUMBER * op2,
-                           int32_t offset, const Allocator *allocator);
+                                int32_t offset, const Allocator *allocator);
 // Allow (rop = op1) or (rop = op2)
 // Always assume op1, op2 both are integer
-// Always assume (op1->limb_base == op2->limb_base == rop->limb_base)
+// Always assume (op1->BASE.base == op2->BASE.base == rop->BASE.base)
 // else is an unexpected behavior
-// Always assume abs(op1) >= abs(op2) * pow(base_limb_val, offset)
+// Always assume abs(op1) >= abs(op2) * pow(BASE.limb_val, offset)
 // Force set rop->size >= 0
 void MP_BASE_INT_abs_sub_offset(MP_BASE_NUMBER *rop, const MP_BASE_NUMBER *op1, const MP_BASE_NUMBER * op2,
-                           int32_t offset, const Allocator *allocator);
+                                int32_t offset, const Allocator *allocator);
 
 // dividend as remainder
 // Always assume dividend, divisor both are integer
-// Always assume (dividend->limb_base == divisor->limb_base == quotient->limb_base)
+// Always assume (dividend->BASE.base == divisor->BASE.base == quotient->BASE.base)
 // else is an unexpected behavior
 // Force set dividend->size >= 0
 // Force set quotient->size >= 0

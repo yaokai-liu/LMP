@@ -32,11 +32,11 @@
 #define digit(n, _upper)  ((n) < 10 ? ('0' + (n)) : ((_upper) == UPPER ? ('A' + ((n) - 10)) : ('a' + ((n) - 10))))
 
 uint32_t MP_BASE_NUMBER_abs_to_string(char *dest, const uint32_t max_len, const MP_BASE_NUMBER *mp_val, const Allocator *allocator) {
-  if (mp_val->limb_base < 2 || mp_val->limb_base > 36 || max_len == 0) { return 0; }
+  if (mp_val->BASE.base < 2 || mp_val->BASE.base > 36 || max_len == 0) { return 0; }
   if (mp_val->size == 0) {  *dest = '0'; return 1; }
   const uint32_t size = mp_val->size;
 
-  if (max_len < mp_val->base_limb_width * size + 1) {
+  if (max_len < mp_val->BASE.limb_width * size + 1) {
     MP_INT_clear((MP_INT *)&mp_val, allocator);
     return 0;
   }
@@ -44,12 +44,12 @@ uint32_t MP_BASE_NUMBER_abs_to_string(char *dest, const uint32_t max_len, const 
   char *ptr = dest;
   for (uint32_t i = size - 1; i < size; i--) {
     lmp_limb_t limb = mp_val->limbs[i];
-    for (uint32_t j = mp_val->base_limb_width - 1; j < mp_val->base_limb_width; j--) {
-      const uint8_t n = limb % mp_val->limb_base;
+    for (uint32_t j = mp_val->BASE.limb_width - 1; j < mp_val->BASE.limb_width; j--) {
+      const uint8_t n = limb % mp_val->BASE.base;
       ptr[j] = digit(n, UPPER);
-      limb /= mp_val->limb_base;
+      limb /= mp_val->BASE.base;
     }
-    ptr += mp_val->base_limb_width;
+    ptr += mp_val->BASE.limb_width;
   }
 
   MP_INT_clear((MP_INT *)&mp_val, allocator);

@@ -59,6 +59,7 @@ enum LMP_PARSE_ADIC_TYPE : uint8_t {
   ADIC_TYPE_2 ,
 };
 
+// MP_BASE_NUMBER, number with it adic base.
 // Fixed-capacity mode (caller-provided buffer
 //   If (NUMBER->prec < 0), the parser will NOT allocate or free
 //   limbs. The caller MUST set NUMBER->limbs to a buffer of at

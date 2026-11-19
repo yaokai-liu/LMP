@@ -32,7 +32,7 @@
 #define abs(a)      ((a) > (0) ? (a) : -(a))
 #define sgn(a)      ((a) > (0) ?   1 :  -1)
 
-inline void MP_INT_abs_mul_u64(MP_INT *dest, const MP_INT *op, const uint64_t val, const Allocator *allocator) {
+inline void MP_INT_abs_mul_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator) {
   if (op->size == 0 || val == 0) { dest->size = 0; return; }
 
   const lmp_size_t size = abs(op->size);
@@ -53,7 +53,7 @@ inline void MP_INT_abs_mul_u64(MP_INT *dest, const MP_INT *op, const uint64_t va
   }
 }
 
-inline void MP_INT_abs_add_u64(MP_INT *dest, const MP_INT *op, const uint64_t val, const Allocator *allocator) {
+inline void MP_INT_abs_add_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator) {
   const lmp_size_t size = abs(op->size);
   if (size == 0) {
     dest->limbs[0] = val;
@@ -76,7 +76,7 @@ inline void MP_INT_abs_add_u64(MP_INT *dest, const MP_INT *op, const uint64_t va
   }
 }
 
-void MP_INT_abs_sub_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *) {
+void MP_INT_abs_sub_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *) {
   const lmp_size_t size = abs(op->size);
   if (size == 0) {
     dest->limbs[0] = val;
@@ -115,7 +115,7 @@ inline void MP_INT_abs_mul(MP_INT *rop, const MP_INT *op1, const MP_INT * restri
   MP_INT_realloc(rop, size1 + size2, allocator);
 
   if (size1 + size2 > USING_NTT_SIZE) {
-    // TODO: using NTT
+    // TODO: use NTT
   }
 
   lmp_limb_t *const res_limbs = rop->limbs;
@@ -181,7 +181,7 @@ inline void MP_INT_left_shift(MP_INT *op, const int32_t bit_count, const Allocat
   const int32_t shift_limbs = bit_count / (int32_t) LMP_LIMB_BIT;
   const int32_t shift_bits = bit_count % (int32_t) LMP_LIMB_BIT;
 
-  const int32_t leading_zeros = stdc_leading_zeros(op->limbs[size - 1]);
+  const int32_t leading_zeros = extstd_leading_zeros(op->limbs[size - 1]);
   const int32_t res_size = size + shift_limbs + (shift_bits > leading_zeros);
   MP_INT_realloc(op, res_size, allocator);
 
@@ -226,7 +226,6 @@ inline lmp_double_limb_t MP_INT_abs_3limbs_inv(const lmp_double_limb_t op) {
   return d_inv;
 }
 
-#define d_high (d >> LMP_LIMB_BIT)
 inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict divisor,
                               MP_INT *restrict quotient, const Allocator *allocator) {
   if (dividend->size == 0 || MP_INT_abs_cmp(dividend, divisor) < 0) {
@@ -236,9 +235,10 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
   const lmp_size_t size_divisor  = abs(divisor->size);
   const lmp_size_t size_dividend = abs(dividend->size);
 
-  const int32_t d_leading_zeros = stdc_leading_zeros(divisor->limbs[abs(divisor->size) - 1]);
-  const int32_t n_leading_zeros = stdc_leading_zeros(dividend->limbs[size_dividend - 1]);
+  const int32_t d_leading_zeros = extstd_leading_zeros(divisor->limbs[abs(divisor->size) - 1]);
+  const int32_t n_leading_zeros = extstd_leading_zeros(dividend->limbs[size_dividend - 1]);
   const lmp_double_limb_t d = MP_INT_left_shift_load_double(divisor, -2, d_leading_zeros);
+  const lmp_double_limb_t d_high = d >> LMP_LIMB_BIT;
 
   const bool overflow = n_leading_zeros <= d_leading_zeros;
   const lmp_size_t size_quotient = size_dividend - size_divisor + overflow;
@@ -261,7 +261,7 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
     const lmp_double_limb_t n_hat_tail = ((q * d_high) << LMP_LIMB_BIT) + (((lmp_double_limb_t)q) * (lmp_limb_t) d);
     const lmp_double_limb_t n_tail = (n << LMP_LIMB_BIT) + MP_INT_left_shift_load(dividend, -2, d_leading_zeros);
     if (n_hat_high > n_high || (n_hat_high == n_high && n_hat_tail > n_tail)) { q -= 1; }
-    MP_INT_abs_mul_u64(&interval, divisor, q, allocator);
+    MP_INT_abs_mul_limb(&interval, divisor, q, allocator);
     if (!MP_INT_abs_offset_ge(dividend, &interval, size_quotient - 1)) {
       MP_INT_abs_sub_offset(&interval, &interval, divisor, 0, allocator);
       q --;
@@ -291,7 +291,7 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
     if (n_hat_high > n_high || (n_hat_high == n_high && n_hat_tail > n_tail)) { q -= 1; }
     if (q == 0 && MP_INT_abs_offset_ge(dividend, divisor, curr_q_idx)) { q += 1; }
 
-    MP_INT_abs_mul_u64(&interval, divisor, q, allocator);
+    MP_INT_abs_mul_limb(&interval, divisor, q, allocator);
     if (!MP_INT_abs_offset_ge(dividend, &interval, curr_q_idx)) {
       MP_INT_abs_sub_offset(&interval, &interval, divisor, 0, allocator);
       q -= 1;
@@ -303,29 +303,28 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
   }
   MP_INT_clear(&interval, allocator);
 }
-#undef d_high
 
-void MP_INT_mul_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator) {
-  MP_INT_abs_mul_u64(dest, op, val, allocator);
+void MP_INT_mul_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator) {
+  MP_INT_abs_mul_limb(dest, op, val, allocator);
   dest->size = sgn(op->size) * dest->size;
 }
 
-void MP_INT_add_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator) {
+void MP_INT_add_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator) {
   if (op->size < 0) {
-    MP_INT_abs_sub_u64(dest, op, val, allocator);
+    MP_INT_abs_sub_limb(dest, op, val, allocator);
     dest->size = - abs(dest->size);
   } else {
-    MP_INT_abs_add_u64(dest, op, val, allocator);
+    MP_INT_abs_add_limb(dest, op, val, allocator);
     dest->size = abs(dest->size);
   }
 }
 
-void MP_INT_sub_u64(MP_INT *dest, const MP_INT *op, uint64_t val, const Allocator *allocator) {
+void MP_INT_sub_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator) {
   if (op->size > 0) {
-    MP_INT_abs_sub_u64(dest, op, val, allocator);
+    MP_INT_abs_sub_limb(dest, op, val, allocator);
     dest->size = abs(dest->size);
   } else {
-    MP_INT_abs_add_u64(dest, op, val, allocator);
+    MP_INT_abs_add_limb(dest, op, val, allocator);
     dest->size = - abs(dest->size);
   }
 }
@@ -372,7 +371,7 @@ void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
   int32_t sgn_dividend = sgn(dividend->size);
   MP_INT_abs_divmod(dividend, divisor, quotient, allocator);
   if (sgn_dividend * sgn(divisor->size) < 0 && dividend->size) {
-    MP_INT_abs_add_u64(quotient, quotient, 1, allocator);
+    MP_INT_abs_add_limb(quotient, quotient, 1, allocator);
     quotient->size = - quotient->size;
     MP_INT_abs_sub_offset(dividend, divisor, dividend, 0, allocator);
   }

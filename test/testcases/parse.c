@@ -60,7 +60,7 @@ static void run_parse_case(const ParseCase *c) {
                     (lmp_limb_t)NUMBER.limbs[i],
                     (lmp_limb_t)c->res_limbs[i]);
     }
-  } else if (NUMBER.limb_base == 2) {
+  } else if (NUMBER.BASE.base == 2) {
     ck_assert_msg(NUMBER.size == c->res_size,
                   "%s: result size %d != %d", c->name, NUMBER.size, c->res_size);
     ck_assert_msg(NUMBER.exp == c->res_exp,
@@ -71,9 +71,9 @@ static void run_parse_case(const ParseCase *c) {
                     (lmp_limb_t)NUMBER.limbs[i],
                     (lmp_limb_t)c->res_limbs[i]);
     }
-  } else if (NUMBER.limb_base == 10) {
+  } else if (NUMBER.BASE.base == 10) {
     ck_assert_msg(NUMBER.size == c->res_size,
-    "%s: result type %d != %d", c->name, NUMBER.size, c->res_size);
+    "%s: result size %d != %d", c->name, NUMBER.size, c->res_size);
     ck_assert_msg(NUMBER.exp == c->res_exp,
                   "%s: result exponet %lld != %lld", c->name, NUMBER.exp, c->res_exp);
     for (int32_t i = 0; i < abs(c->res_size); i++) {
@@ -87,7 +87,7 @@ static void run_parse_case(const ParseCase *c) {
 
 static const lmp_limb_t L_0    [] = { 0 };
 static const lmp_limb_t L_1    [] = { 1 };
-static const lmp_limb_t L_0x1P4    [] = { 0x1'0000 };
+static const lmp_limb_t L_0x1P4 [] = { 0x1'0000 };
 static const lmp_limb_t L_7    [] = { 007 };
 static const lmp_limb_t L_1M    [] = { 1'000'000 };
 static const lmp_limb_t L_123  [] = { 123 };
