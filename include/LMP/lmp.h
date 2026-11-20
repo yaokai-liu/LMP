@@ -42,18 +42,25 @@
 #define MP_ALLOC_LEN 8
 #endif
 
-#ifndef _LMP_LIMB_WIDTH_
-typedef uint64_t lmp_limb_t;
-typedef uint32_t lmp_half_limb_t;
-typedef uint128_t lmp_double_limb_t;
-typedef uint256_t lmp_quarter_limb_t;
-#define _LMP_LIMB_WIDTH_  64
-#endif
-
 typedef int64_t lmp_exp_t;
 typedef int32_t lmp_prec_t;
 typedef int32_t lmp_size_t;
 
+#ifndef _LMP_LIMB_WIDTH_
+#define _LMP_LIMB_WIDTH_        64
+typedef uint64_t  lmp_limb_t;
+typedef uint32_t  lmp_half_limb_t;
+typedef uint128_t lmp_double_limb_t;
+typedef uint256_t lmp_quarter_limb_t;
+#define HEX_LIMB_WIDTH          16
+#define DEC_LIMB_WIDTH          19
+#define OCT_LIMB_WIDTH          21
+#define BIN_LIMB_WIDTH          64
+#define HEX_LIMB_VAL            ((lmp_double_limb_t)0x1'0000'0000'0000'0000ULL)
+#define DEC_LIMB_VAL            ((lmp_double_limb_t)  1'0000'0000'0000'0000'000ULL)
+#define OCT_LIMB_VAL            ((lmp_double_limb_t)0x8000'0000'0000'0000ULL)
+#define BIN_LIMB_VAL            HEX_LIMB_VAL
+#endif
 #define LMP_LIMB_SIZE         (sizeof(lmp_limb_t))
 #define LMP_LIMB_BIT          (LMP_LIMB_SIZE * CHAR_BIT)
 #define LMP_LIMB_MAX          (~(lmp_limb_t)0)
@@ -212,7 +219,6 @@ void MP_FLOAT_clamp(MP_FLOAT *val);
 #define MP_FLOAT_left_shift_load(num, index, bit_count)           MP_INT_left_shift_load((MP_INT *)(num), (index), (bit_count))
 #define MP_FLOAT_left_shift_load_double(num, index, bit_count)    MP_INT_left_shift_load_double((MP_INT *)(num), (index), (bit_count))
 
-
 void MP_BASE_NUMBER_clear(MP_BASE_NUMBER *val, const Allocator *allocator);
 #define MP_BASE_NUMBER_realloc(val, required, allocator)          MP_INT_realloc((MP_INT *)(val), (required), (allocator))
 #define MP_BASE_INT_init(val,  initial_alloc, allocator)          MP_INT_init((MP_INT *)(val), (initial_alloc), (allocator))
@@ -237,9 +243,9 @@ lmp_double_limb_t MP_BASE_NUMBER_left_shift_load_double (const MP_BASE_NUMBER *m
 
 void MP_BASE_INT_to_int(MP_INT *dest, const MP_BASE_NUMBER *src, const Allocator *allocator);
 void MP_BASE_FLOAT_to_float(MP_FLOAT *dest, const MP_BASE_NUMBER *src, const Allocator *allocator);
-void MP_INT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
+void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
 void MP_FLOAT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
 void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, lmp_half_limb_t base, const Allocator *allocator);
-
 lmp_limb_t lmp_fast_pow(lmp_half_limb_t base, lmp_exp_t exp);
+
 #endif //LMP_H

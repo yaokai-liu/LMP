@@ -32,187 +32,175 @@
 typedef struct {
   const char * name;
   const char * str;
-  const int32_t     res_size;
-  const uint32_t    res_type;
-  const int64_t     res_exp;
-  const lmp_limb_t *res_limbs;
+  const int32_t     expected_size;
+  const uint32_t    expected_type;
+  const int64_t     expected_exp;
+  const lmp_limb_t *expected_limbs;
   const uint32_t    parsed_len;
+  const MP_BASE     BASE;
 } ParseCase;
 
+#if (_LMP_LIMB_WIDTH_ == 64)
+#define DEC_LIMB_VAL            (0x8AC7'2304'89E8'0000ULL)
+#define OCT_LIMB_VAL            (0x8000'0000'0000'0000ULL)
+#endif
 
 #define abs(a)             ((a) > (0) ? (a) : -(a))
 static void run_parse_case(const ParseCase *c) {
   lmp_limb_t res_limbs[64] = {};
   MP_NUM_TYPE type = {};
   MP_BASE_NUMBER NUMBER = {.prec = -64, .limbs = res_limbs};
-  const uint32_t length = LMP_parse(c->str, &type, &NUMBER, &STDAllocator);
+  const uint32_t length = LMP_parse_base_number(c->str, &type, &NUMBER, &STDAllocator);
 
   ck_assert_msg(length == c->parsed_len,
-                "%s: parsed length %u != %u", c->name, length, c->parsed_len);
-  ck_assert_msg(type.type == c->res_type,
-                "%s: result type %x != %x", c->name, type.type, c->res_type);
-  if (NUMBER.exp == 0) {
-    ck_assert_msg(NUMBER.size == c->res_size,
-                  "%s: result size %d != %d", c->name, NUMBER.size, c->res_size);
-    for (int32_t i = 0; i < abs(c->res_size); i++) {
-      ck_assert_msg(NUMBER.limbs[i] == c->res_limbs[i],
-                    "%s: limb[%d] %llu != %llu", c->name, i,
-                    (lmp_limb_t)NUMBER.limbs[i],
-                    (lmp_limb_t)c->res_limbs[i]);
-    }
-  } else if (NUMBER.BASE.base == 2) {
-    ck_assert_msg(NUMBER.size == c->res_size,
-                  "%s: result size %d != %d", c->name, NUMBER.size, c->res_size);
-    ck_assert_msg(NUMBER.exp == c->res_exp,
-                  "%s: result exponet %lld != %lld", c->name, NUMBER.exp, c->res_exp);
-    for (int32_t i = 0; i < abs(c->res_size); i++) {
-      ck_assert_msg(NUMBER.limbs[i] == c->res_limbs[i],
-                    "%s: limb[%d] %llu != %llu", c->name, i,
-                    (lmp_limb_t)NUMBER.limbs[i],
-                    (lmp_limb_t)c->res_limbs[i]);
-    }
-  } else if (NUMBER.BASE.base == 10) {
-    ck_assert_msg(NUMBER.size == c->res_size,
-    "%s: result size %d != %d", c->name, NUMBER.size, c->res_size);
-    ck_assert_msg(NUMBER.exp == c->res_exp,
-                  "%s: result exponet %lld != %lld", c->name, NUMBER.exp, c->res_exp);
-    for (int32_t i = 0; i < abs(c->res_size); i++) {
-      ck_assert_msg(NUMBER.limbs[i] == c->res_limbs[i],
-                    "%s: limb[%d] %llu != %llu", c->name, i,
-                    (lmp_limb_t)NUMBER.limbs[i],
-                    (lmp_limb_t)c->res_limbs[i]);
-    }
+                "%s: parsed length %u != (expected) %u", c->name, length, c->parsed_len);
+  ck_assert_msg(type.type == c->expected_type,
+                "%s: result type %x != (expected) %x", c->name, type.type, c->expected_type);
+  ck_assert_msg(NUMBER.BASE.base == c->BASE.base,
+                "%s: result base %u != (expected) %u", c->name, NUMBER.BASE.base, c->BASE.base);
+  ck_assert_msg(NUMBER.BASE.limb_width == c->BASE.limb_width,
+                "%s: result base %u != (expected) %u", c->name, NUMBER.BASE.limb_width, c->BASE.limb_width);
+  ck_assert_msg(NUMBER.BASE.limb_val == c->BASE.limb_val,
+                "%s: result base %llu != (expected) %llu", c->name, NUMBER.BASE.limb_val, c->BASE.limb_val);
+  ck_assert_msg(NUMBER.size == c->expected_size,
+                "%s: result size %d != (expected) %d", c->name, NUMBER.size, c->expected_size);
+  ck_assert_msg(NUMBER.exp == c->expected_exp,
+                "%s: result exponet %lld != (expected) %lld", c->name, NUMBER.exp, c->expected_exp);
+  for (int32_t i = 0; i < abs(c->expected_size); i++) {
+    ck_assert_msg(NUMBER.limbs[i] == c->expected_limbs[i],
+                  "%s: limb[%d] %llu != (expected) %llu", c->name, i, NUMBER.limbs[i], c->expected_limbs[i]);
   }
 }
 
-static const lmp_limb_t L_0    [] = { 0 };
-static const lmp_limb_t L_1    [] = { 1 };
-static const lmp_limb_t L_0x1P4 [] = { 0x1'0000 };
-static const lmp_limb_t L_7    [] = { 007 };
-static const lmp_limb_t L_1M    [] = { 1'000'000 };
-static const lmp_limb_t L_123  [] = { 123 };
-static const lmp_limb_t L_12332  [] = { 12332 };
-static const lmp_limb_t L_255  [] = { 0xFF };
-static const lmp_limb_t L_1e10   [] = { 10000000000 };
-static const lmp_limb_t L_1010 [] = { 0b1010 };
-static const lmp_limb_t L_511  [] = { 0777 };
-static const lmp_limb_t L_15eLIMB  [] = {0x8000'0000'0000'0000ULL, 0x1};
-static const lmp_limb_t L_15eN3  [] = { 0x0062'4DD2'F1A9'FBE7 };
-static const lmp_limb_t L_N15eN3  [] = { 0x0062'4DD2'F1A9'FBE8 };
-static const lmp_limb_t L_314  [] = {0x243F'6A88'85A2'1F77ULL, 0x3};
-static const lmp_limb_t L_DEAD [] = { 0xDEADBEEFULL };
-static const lmp_limb_t L_C    [] = { 0x1800 };
-static const lmp_limb_t L_25[] = { 0x4000'0000'0000'0000ULL };
-static const lmp_limb_t L_0x1PN2[] = { 0x0100'0000'0000'0000ULL };
-static const lmp_limb_t L_1eN10[] = { 0x0000'0000'6DF3'7F67 };
-static const lmp_limb_t L_1_2[] = { 0x3333'3333'3333'3333, 1 };
-static const lmp_limb_t L_long[] = { 0x437430C1913D27FF, 0x05CA0698478CF1B3, 0x1F9ADD3B84CDAD12, 0x7B };
+// static const lmp_limb_t L_0    [] = { 0 };
+// static const lmp_limb_t L_1    [] = { 1 };
+// static const lmp_limb_t L_0x1P4 [] = { 0x1'0000 };
+// static const lmp_limb_t L_7    [] = { 007 };
+// static const lmp_limb_t L_1M    [] = { 1'000'000 };
+// static const lmp_limb_t L_123  [] = { 123 };
+// static const lmp_limb_t L_12332  [] = { 12332 };
+// static const lmp_limb_t L_255  [] = { 0xFF };
+// static const lmp_limb_t L_1e10   [] = { 10000000000 };
+// static const lmp_limb_t L_1010 [] = { 0b1010 };
+// static const lmp_limb_t L_511  [] = { 0777 };
+// static const lmp_limb_t L_15eLIMB  [] = {0x8000'0000'0000'0000ULL, 0x1};
+// static const lmp_limb_t L_15eN3  [] = { 0x0062'4DD2'F1A9'FBE7 };
+// static const lmp_limb_t L_N15eN3  [] = { 0x0062'4DD2'F1A9'FBE8 };
+// static const lmp_limb_t L_314  [] = {0x243F'6A88'85A2'1F77ULL, 0x3};
+// static const lmp_limb_t L_DEAD [] = { 0xDEADBEEFULL };
+// static const lmp_limb_t L_C    [] = { 0x1800 };
+// static const lmp_limb_t L_25[] = { 0x4000'0000'0000'0000ULL };
+// static const lmp_limb_t L_0x1PN2[] = { 0x0100'0000'0000'0000ULL };
+// static const lmp_limb_t L_1eN10[] = { 0x0000'0000'6DF3'7F67 };
+// static const lmp_limb_t L_1_2[] = { 0x3333'3333'3333'3333, 1 };
+// static const lmp_limb_t L_long[] = { 0x437430C1913D27FF, 0x05CA0698478CF1B3, 0x1F9ADD3B84CDAD12, 0x7B };
+
+static const lmp_limb_t L_0       [] = { 0 };
+static const lmp_limb_t L_1       [] = { 1 };
+static const lmp_limb_t L_0x1P4   [] = { 0x1'0000 };
+static const lmp_limb_t L_7       [] = { 007 };
+static const lmp_limb_t L_170     [] = { 170 };
+static const lmp_limb_t L_1M      [] = { 1'000'000 };
+static const lmp_limb_t L_123     [] = { 123 };
+static const lmp_limb_t L_12332   [] = { 12332 };
+static const lmp_limb_t L_255     [] = { 0xFF };
+static const lmp_limb_t L_1e10    [] = { 10000000000 };
+static const lmp_limb_t L_1010    [] = { 0b1010 };
+static const lmp_limb_t L_511     [] = { 0777 };
+static const lmp_limb_t L_15eLIMB [] = {5000000000000000000ULL, 1ULL};
+static const lmp_limb_t L_15eN3   [] = { 15000000000000000 };
+static const lmp_limb_t L_N15eN3  [] = { 15000000000000000 };
+static const lmp_limb_t L_314     [] = {1415926535897900000ULL, 0x3};
+static const lmp_limb_t L_DEAD    [] = { 0xDEADBEEFULL };
+static const lmp_limb_t L_C       [] = { 0x1800 };
+static const lmp_limb_t L_25      [] = { 2500000000000000000ULL };
+static const lmp_limb_t L_0x1PN2  [] = { 0x0100'0000'0000'0000ULL };
+static const lmp_limb_t L_1eN10   [] = { 1000000000 };
+static const lmp_limb_t L_1_2     [] = { 2000000000000000000, 1 };
+static const lmp_limb_t L_long1   [] = { 8900000000000000000ULL, 7891234567891234567ULL, 1234567899999123456ULL, 123ULL };
+static const lmp_limb_t L_long2   [] = { 2345678912345678900LL, 1234567891234567891LL };
 
 static const ParseCase parse_cases[] = {
-  /* -------- decimal -------- */
-  { "dec_zero",       "0",         0,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_0,    1 },
-  { "dec_one",        "1",         1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_1,    1 },
-  { "dec_123",        "123",       1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_123,  3 },
-  { "dec_pos",        "+123",      1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_123,  4 },
-  { "dec_neg",        "-123",     -1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_123,  4 },
-  { "dec_lead0",      "007",       1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_7,    3 },
-  { "dec_sep_quote",  "1'000'000", 1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_1M,   9 },
-  { "dec_sep_us",     "1_000_000", 1,  MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0, L_1M,   9 },
-  { "dec_long_value",     "-123.12345678999991234'56789123456789_123456789LL<IEEE754>", -4,
-    MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT, 128), -3, L_long,   58 },
-
-  /* -------- hexadecimal -------- */
-  { "hex_ff",         "0xFF",           1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_255,   4  },
-  { "hex_ff_lower",   "0xff",           1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_255,   4  },
-  { "hex_neg",        "-0xDeadBeef",   -1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_DEAD, 11  },
-  { "hex_sep",        "0x1'F'F",        1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_511,   7  },
-  { "hex_us_sep",     "0xdead_beef",    1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_DEAD, 11  },
-
-  /* -------- octal/binary -------- */
-  { "oct_777",        "0o777",  1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_511,  5 },
-  { "oct_upper",      "0O777",  1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_511,  5 },
-  { "bin_1010",       "0b1010", 1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_1010, 6 },
-  { "bin_upper",      "0B1010", 1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_1010, 6 },
-
-  /* -------- float -------- */
-  { "flt_1_0",        "1.0",     1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), 0,  L_1,  3 },
-  { "flt_neg_1_5",    "-1.5",   -2, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), -1,  L_15eLIMB,  4 },
-  { "flt_0_25",       "0.25",    1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), -1,  L_25,  4 },
-  { "flt_pi",         "3.14159265358979", 2, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), -1, L_314, 16 },
-
-  /* -------- exponent -------- */
-  { "exp_e10",        "1e10",     1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), 0,  L_1e10, 4 },
-  { "exp_E10",        "1E10",     1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), 0,  L_1e10, 4 },
-  { "exp_e_pos",      "1e+10",    1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), 0,  L_1e10, 5 },
-  { "exp_e_neg",      "1e-10",    1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), -1, L_1eN10, 5 },
-  { "exp_neg_float",  "-1.5e-3", -1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), -1,  L_N15eN3, 7 },
-  { "exp_hex_p",      "0x1p4",    1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), 0,   L_0x1P4, 5 },
-  { "exp_hex_frac",   "0x1.8p3",  1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), 0,   L_C, 7 },
-  { "exp_hex_P_neg",  "0x1P-2",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), -1,  L_0x1PN2, 6 },
-
-  /* -------- suffix <repr><size><standard> -------- */
-  { "suf_sll<C-INT>",  "123sll<C-INT>", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT, 128), 0, L_123, 13 },
-  { "suf_ull<C-INT>",  "123ull<C-INT>", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,128), 0, L_123, 13 },
-  { "suf_f32<IEEE754>",  "1.5f32<IEEE754>", 2, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT, 32), -1, L_15eLIMB, 15 },
-  { "suf_d64<C-INT>",  "123d64<C-INT>", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123, 13 },
-
-  /* -------- suffix <size><repr><standard> -------- */
-  { "suf_ls<C-INT>",   "123ls<C-INT>",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT, 64), 0, L_123, 12 },
-  { "suf_32f<IEEE754>",  "12332f<IEEE754>", 1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_INT, 0), 0, L_12332, 15 },
-  { "suf_hex_ull<C-INT>","0xFFull<C-INT>",1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,128),0, L_255, 14 },
-
-  /* -------- suffix <size><standard> -------- */
-  { "suf_l<C-INT>",    "123l<C-INT>",   1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123,  11 },
-  { "suf_bin_l<C-INT>","0b1010l<C-INT>",1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_1010, 14 },
-
-  /* -------- suffix <repr><standard> -------- */
-  { "suf_u<C-INT>",  "123u<C-INT>",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,0), 0, L_123, 11 },
-  { "suf_f<IEEE754>",  "1.5f<IEEE754>",  2, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,   0), -1, L_15eLIMB,  13 },
-  { "suf_d<C-INT>",  "123d<C-INT>",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_123, 11 },
-
-  /* -------- suffix <repr><size> -------- */
-  { "suf_sl",  "123sl",  1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT, 64), 0, L_123, 5 },
-  { "suf_f32", "1.5f32", 2, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD,MP_NUM_REPR_IEEE754_FLOAT,   32), -1,L_15eLIMB,  6 },
-  { "suf_d64", "123d64", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123, 6 },
-
-  /* -------- suffix <size> -------- */
-  { "suf_l",  "123l",   1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123, 4 },
-  { "suf_L",  "123L",   1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_123, 4 },
-  { "suf_hex_l","0xFFl",1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,64), 0, L_255, 5 },
-
-  /* -------- suffix <repr> -------- */
-  { "suf_s",  "123s",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT, 0), 0, L_123, 4 },
-  { "suf_u",  "123u",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_123, 4 },
-  { "suf_f",  "1.5f",   2, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,   0), -1,L_15eLIMB,  4 },
-  { "suf_g",  "1.5g",   2, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,   0), -1,L_15eLIMB,  4 },
-  { "suf_d",  "123d",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0, L_123, 4 },
-
-  /* -------- full consists -------- */
-  { "full_neg_hex",   "-0xFFull<C-INT>",         -1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT, 128), 0, L_255, 15 },
-  { "full_pos_float", "+1.5e-3f32<IEEE754>",        1, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,    32), -1,L_15eN3,  19 },
-  { "full_hex_float", "0x1.8p3f32<IEEE754>",        1, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,    32), 0, L_C,   19 },
-  { "full_hex_us_L",  "-0xdead_beefL",     -1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD, MP_NUM_REPR_STD_C_INT,   64), 0, L_DEAD, 13 },
-  { "full_X_P_g<IEEE754>",    "0X1P-2g<IEEE754>",           1, MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,     0), -1,L_0x1PN2,   16 },
-
-  /* -------- error and fallback cases -------- */
-  { "err_empty",      "",       0, 0, 0, nullptr,   0 },
-  { "err_sign_only",  "+",      0, 0, 0, nullptr,   0 },
-  { "err_hex_no_digit","0x",     0, 0, 0, nullptr,   0 },
-  { "err_bin_2",      "0b2",    0, 0, 0, nullptr,   0 },
-  { "err_oct_8",      "0o8",    0, 0, 0, nullptr,   0 },
-  { "err_hex_G",      "0xG",    0, 0, 0, nullptr,   0 },
-  { "err_two_dot",    "1.2.3",  2, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,0), -1,   L_1_2,  3 },
-  { "err_exp_no_digit","1e",     1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0,  L_1,  1 },
-  { "err_exp_plus",   "1e+",    1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0,  L_1,  1 },
-  { "err_double_dot", "1..2",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0), 0,  L_1,  1 },
-  { "err_unknown_suffix", "123x",   1, MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,0),   0,  L_123,4 },
-  { "err_dup_size",   "123lll", 1, MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,128), 0,  L_123,5 },
-  { "err_sep_start",  "'123",   0, 0, 0, nullptr, 0 },
-  { "err_double_sign","--123",  0, 0, 0, nullptr, 0 },
-  { "err_mixed_sign", "+-123",  0, 0, 0, nullptr, 0 },
-  { "err_bin_prefix", "0b",     0, 0, 0, nullptr, 0 },
-  { "err_oct_prefix", "0o",     0, 0, 0, nullptr, 0 },
-  { "err_X_prefix",   "0X",     0, 0, 0, nullptr, 0 },
+  { .name = "dec_long_value",       .str = "-123.12345678999991234'56789123456789_123456789LL<IEEE754>",
+                                                                     .expected_size = -4, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,    128), .expected_exp = -3, .expected_limbs = L_long1,   .parsed_len = 58, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "dec_long_value",       .str = "-0.123456789'123456789_123456789'123456789'0000000000000000000000000000000000000LL<IEEE754>",
+                                                                     .expected_size = -2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,    128), .expected_exp = -2, .expected_limbs = L_long2,   .parsed_len = 91, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "dec_zero",             .str = "0",                   .expected_size =  0, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_0,       .parsed_len =  1, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "dec_one",              .str = "1",                   .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_1,       .parsed_len =  1, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "dec_123",              .str = "123",                 .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  3, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "dec_pos",              .str = "+123",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "dec_neg",              .str = "-123",                .expected_size = -1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "dec_lead0",            .str = "007",                 .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_7,       .parsed_len =  3, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "dec_sep_quote",        .str = "1'000'000",           .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_1M,      .parsed_len =  9, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "dec_sep_us",           .str = "1_000_000",           .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_1M,      .parsed_len =  9, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "hex_ff",               .str = "0xFF",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_255,     .parsed_len =  4, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "hex_ff_lower",         .str = "0xff",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_255,     .parsed_len =  4, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "hex_neg",              .str = "-0xDeadBeef",         .expected_size = -1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_DEAD,    .parsed_len = 11, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "hex_sep",              .str = "0x1'F'F",             .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_511,     .parsed_len =  7, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "hex_us_sep",           .str = "0xdead_beef",         .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_DEAD,    .parsed_len = 11, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "oct_777",              .str = "0o777",               .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_511,     .parsed_len =  5, .BASE = {.base =  8, .limb_width = 21, .limb_val = (lmp_limb_t)OCT_LIMB_VAL }},
+  { .name = "oct_upper",            .str = "0O777",               .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_511,     .parsed_len =  5, .BASE = {.base =  8, .limb_width = 21, .limb_val = (lmp_limb_t)OCT_LIMB_VAL }},
+  { .name = "bin_1010",             .str = "0b1010",              .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_1010,    .parsed_len =  6, .BASE = { .base = 2, .limb_width = 64, .limb_val = (lmp_limb_t)BIN_LIMB_VAL }},
+  { .name = "bin_upper",            .str = "0B1010",              .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_1010,    .parsed_len =  6, .BASE = { .base = 2, .limb_width = 64, .limb_val = (lmp_limb_t)BIN_LIMB_VAL }},
+  { .name = "flt_1_0",              .str = "1.0",                 .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp =  0, .expected_limbs = L_1,       .parsed_len =  3, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "flt_neg_1_5",          .str = "-1.5",                .expected_size = -2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp = -1, .expected_limbs = L_15eLIMB, .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "flt_0_25",             .str = "0.25",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp = -1, .expected_limbs = L_25,      .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "flt_tail0",            .str = "0.17000e3",           .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp =  0, .expected_limbs = L_170,     .parsed_len =  9, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "flt_pi",               .str = "3.14159265358979",    .expected_size =  2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp = -1, .expected_limbs = L_314,     .parsed_len = 16, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "exp_e10",              .str = "1e10",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp =  0, .expected_limbs = L_1e10,    .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "exp_E10",              .str = "1E10",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp =  0, .expected_limbs = L_1e10,    .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "exp_e_pos",            .str = "1e+10",               .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp =  0, .expected_limbs = L_1e10,    .parsed_len =  5, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "exp_e_neg",            .str = "1e-10",               .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp = -1, .expected_limbs = L_1eN10,   .parsed_len =  5, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "exp_neg_float",        .str = "-1.5e-3",             .expected_size = -1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp = -1, .expected_limbs = L_N15eN3,  .parsed_len =  7, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "exp_hex_p",            .str = "0x1p4",               .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp =  0, .expected_limbs = L_0x1P4,   .parsed_len =  5, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "exp_hex_frac",         .str = "0x1.8p3",             .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp =  0, .expected_limbs = L_C,       .parsed_len =  7, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "exp_hex_P_neg",        .str = "0x1P-2",              .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp = -1, .expected_limbs = L_0x1PN2,  .parsed_len =  6, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "suf_sll<C-INT>",       .str = "123sll<C-INT>",       .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,             128), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len = 13, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_ull<C-INT>",       .str = "123ull<C-INT>",       .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,            128), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len = 13, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_f32<IEEE754>",     .str = "1.5f32<IEEE754>",     .expected_size =  2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,     32), .expected_exp = -1, .expected_limbs = L_15eLIMB, .parsed_len = 15, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_d64<C-INT>",       .str = "123d64<C-INT>",       .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,              64), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len = 13, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_ls<C-INT>",        .str = "123ls<C-INT>",        .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,              64), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len = 12, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_32f<IEEE754>",     .str = "12332f<IEEE754>",     .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_INT,                 0), .expected_exp =  0, .expected_limbs = L_12332,   .parsed_len = 15, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_hex_ull<C-INT>",   .str = "0xFFull<C-INT>",      .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,            128), .expected_exp =  0, .expected_limbs = L_255,     .parsed_len = 14, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "suf_l<C-INT>",         .str = "123l<C-INT>",         .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,              64), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len = 11, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_bin_l<C-INT>",     .str = "0b1010l<C-INT>",      .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,              64), .expected_exp =  0, .expected_limbs = L_1010,    .parsed_len = 14, .BASE = { .base = 2, .limb_width = 64, .limb_val = (lmp_limb_t)BIN_LIMB_VAL }},
+  { .name = "suf_u<C-INT>",         .str = "123u<C-INT>",         .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,              0), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len = 11, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_f<IEEE754>",       .str = "1.5f<IEEE754>",       .expected_size =  2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,      0), .expected_exp = -1, .expected_limbs = L_15eLIMB, .parsed_len = 13, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_d<C-INT>",         .str = "123d<C-INT>",         .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len = 11, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_sl",               .str = "123sl",               .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,              64), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  5, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_f32",              .str = "1.5f32",              .expected_size =  2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD,MP_NUM_REPR_IEEE754_FLOAT,      32), .expected_exp = -1, .expected_limbs = L_15eLIMB, .parsed_len =  6, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_d64",              .str = "123d64",              .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,              64), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  6, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_l",                .str = "123l",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,              64), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_L",                .str = "123L",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,              64), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_hex_l",            .str = "0xFFl",               .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,              64), .expected_exp =  0, .expected_limbs = L_255,     .parsed_len =  5, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "suf_s",                .str = "123s",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_u",                .str = "123u",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_f",                .str = "1.5f",                .expected_size =  2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp = -1, .expected_limbs = L_15eLIMB, .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_g",                .str = "1.5g",                .expected_size =  2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,                0), .expected_exp = -1, .expected_limbs = L_15eLIMB, .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "suf_d",                .str = "123d",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "full_neg_hex",         .str = "-0xFFull<C-INT>",     .expected_size = -1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_UINT,            128), .expected_exp =  0, .expected_limbs = L_255,     .parsed_len = 15, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "full_pos_float",       .str = "+1.5e-3f32<IEEE754>", .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,     32), .expected_exp = -1, .expected_limbs = L_15eN3,   .parsed_len = 19, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "full_hex_float",       .str = "0x1.8p3f32<IEEE754>", .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,     32), .expected_exp =  0, .expected_limbs = L_C,       .parsed_len = 19, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "full_hex_us_L",        .str = "-0xdead_beefL",       .expected_size = -1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD, MP_NUM_REPR_STD_C_INT,             64), .expected_exp =  0, .expected_limbs = L_DEAD,    .parsed_len = 13, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "full_X_P_g<IEEE754>",  .str = "0X1P-2g<IEEE754>",    .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,      0), .expected_exp = -1, .expected_limbs = L_0x1PN2,  .parsed_len = 16, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "err_empty",            .str = "",                    .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  0, .limb_width =  0, .limb_val = (lmp_limb_t)0            }},
+  { .name = "err_sign_only",        .str = "+",                   .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  0, .limb_width =  0, .limb_val = (lmp_limb_t)0            }},
+  { .name = "err_hex_no_digit",     .str = "0x",                  .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "err_bin_2",            .str = "0b2",                 .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  2, .limb_width = 64, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "err_oct_8",            .str = "0o8",                 .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  8, .limb_width = 21, .limb_val = (lmp_limb_t)OCT_LIMB_VAL }},
+  { .name = "err_hex_G",            .str = "0xG",                 .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "err_two_dot",          .str = "1.2.3",               .expected_size =  2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_FLOAT,               0),  .expected_exp = -1, .expected_limbs = L_1_2,     .parsed_len =  3, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "err_exp_no_digit",     .str = "1e",                  .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                 0),  .expected_exp =  0, .expected_limbs = L_1,       .parsed_len =  1, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "err_exp_plus",         .str = "1e+",                 .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                 0),  .expected_exp =  0, .expected_limbs = L_1,       .parsed_len =  1, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "err_double_dot",       .str = "1..2",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                 0),  .expected_exp =  0, .expected_limbs = L_1,       .parsed_len =  1, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "err_unknown_suffix",   .str = "123x",                .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                 0),  .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  4, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "err_dup_size",         .str = "123lll",              .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD,MP_NUM_REPR_STD_C_INT,            128),  .expected_exp =  0, .expected_limbs = L_123,     .parsed_len =  5, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
+  { .name = "err_sep_start",        .str = "'123",                .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  0, .limb_width =  0, .limb_val = (lmp_limb_t)0            }},
+  { .name = "err_double_sign",      .str = "--123",               .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  0, .limb_width =  0, .limb_val = (lmp_limb_t)0            }},
+  { .name = "err_mixed_sign",       .str = "+-123",               .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  0, .limb_width =  0, .limb_val = (lmp_limb_t)0            }},
+  { .name = "err_bin_prefix",       .str = "0b",                  .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  2, .limb_width = 64, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
+  { .name = "err_oct_prefix",       .str = "0o",                  .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  8, .limb_width = 21, .limb_val = (lmp_limb_t)OCT_LIMB_VAL }},
+  { .name = "err_X_prefix",         .str = "0X",                  .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
 };
 
 START_TEST(test_parse)

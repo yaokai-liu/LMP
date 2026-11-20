@@ -43,11 +43,13 @@
 #define ALWAYS_INLINE __forceinline
 #endif
 
-inline lmp_limb_t lmp_fast_pow(lmp_half_limb_t base, lmp_exp_t exp) {
+inline lmp_limb_t lmp_fast_pow(const lmp_half_limb_t base, lmp_exp_t exp) {
   lmp_limb_t result = 1;
+  lmp_double_limb_t temp = base;
   while (exp > 0) {
-    if (exp & 1) { result *= base; }
-    base *= base; exp >>= 1;
+    if (exp & 1) { result *= temp; }
+    temp *= temp;
+    exp >>= 1;
   }
   return result;
 }
@@ -263,6 +265,7 @@ inline lmp_limb_t MP_BASE_NUMBER_left_shift_load(const MP_BASE_NUMBER *mp_val, c
   lmp_double_limb_t limb2 = MP_BASE_INT_get_limb(mp_val, index    );
   return (limb2 * mul) % mp_val->BASE.limb_val + limb1 / div;
 }
+
 inline lmp_double_limb_t MP_BASE_NUMBER_left_shift_load_double(const MP_BASE_NUMBER *mp_val, const int32_t index, const int32_t width) {
   if (width == 0) { return MP_BASE_INT_get_double_limbs(mp_val, index); }
   const lmp_limb_t mul = lmp_fast_pow(mp_val->BASE.base, width);
@@ -364,7 +367,7 @@ typedef struct BaseCache {
 } BaseCache;
 // static BaseCache LMP_GLOBAL_BASE_CACHE[] = {};
 
-void MP_INT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const uint32_t base, const Allocator *allocator) {
+void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const uint32_t base, const Allocator *allocator) {
   if (base < 2) {
     dest->size = 0;
     dest->BASE.base = base;
@@ -411,7 +414,7 @@ void MP_INT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const
       MP_INT_init((MP_INT *)dest, 1, allocator);
       dest->limbs[0] = mp_val->limbs[0];
     }
-    dest->size = 1;
+    dest->size = mp_val->size >= 0 ? 1 : -1;
     dest->BASE.limb_val = BASE_LIMB_VAL;
     dest->BASE.limb_width = BASE_LIMB_WIDTH;
     dest->BASE.base = base;
@@ -493,7 +496,7 @@ void MP_INT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const
     dest->prec = result_limb_alloc;
     dest->limbs = result_limbs;
   }
-  dest->size = dest_size;
+  dest->size = mp_val->size >= 0 ? dest_size : -dest_size;
   dest->BASE.limb_val = BASE_LIMB_VAL;
   dest->BASE.limb_width = BASE_LIMB_WIDTH;
   dest->BASE.base = base;
@@ -504,8 +507,8 @@ void MP_FLOAT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, u
   // TODO
 }
 
-void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, lmp_half_limb_t base, const Allocator *allocator) {
-  if (mp_val->BASE.base == base) { return; }
+void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t base, const Allocator *allocator) {
+  if (mp_val->BASE.base == base || mp_val->BASE.base < 2) { return; }
   if (base < 2) {
     if (base == 0) /*means convert to a polynomial */ {
       mp_val->exp = mp_val->size == 0 ? MP_NUMBER_ZERO : mp_val->size;
@@ -524,21 +527,11 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, lmp_half_limb_t base, co
   const int32_t target_size = ceil(mp_val->BASE.limb_width * size / log2(base) / BASE_LIMB_WIDTH);
 
   if (mp_val->size == 0) {
-    if (mp_val->BASE.base == 0)
-    /*means 'mp_val' is a polynomial */ {
-      mp_val->size = (lmp_size_t)mp_val->exp;
-      mp_val->BASE.base = base;
-      mp_val->BASE.limb_width = BASE_LIMB_WIDTH;
-      mp_val->BASE.limb_val = BASE_LIMB_VAL;
-      mp_val->exp = 0;
-      // TODO: check if all limbs less than BASE_LIMB_VAL
-    } else {
-      mp_val->size = 0;
-      mp_val->BASE.base = base;
-      mp_val->BASE.limb_width = BASE_LIMB_WIDTH;
-      mp_val->BASE.limb_val = BASE_LIMB_VAL;
-      mp_val->exp = mp_val->exp;
-    }
+    mp_val->size = 0;
+    mp_val->BASE.base = base;
+    mp_val->BASE.limb_width = BASE_LIMB_WIDTH;
+    mp_val->BASE.limb_val = BASE_LIMB_VAL;
+    mp_val->exp = mp_val->exp;
     return;
   }
   if (target_size == 1) {
@@ -565,7 +558,7 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, lmp_half_limb_t base, co
     MP_INT_init(&copy_val, size, allocator);
     MP_BASE_INT_to_int(&copy_val, mp_val, allocator);
     if (BASE_LIMB_VAL != 0) {
-      MP_INT_abs_to_base_number(mp_val, &copy_val, base, allocator);
+      MP_INT_to_base_number(mp_val, &copy_val, base, allocator);
       mp_val->BASE.base = base;
       mp_val->BASE.limb_width = BASE_LIMB_WIDTH;
       mp_val->BASE.limb_val = BASE_LIMB_VAL;

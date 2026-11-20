@@ -72,6 +72,6 @@ enum LMP_PARSE_ADIC_TYPE : uint8_t {
 //    [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
 //    [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)((REPR)?<standard>)?) |
 //    [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?(([lL]{0,2}|[0-9]+)[dD]?((REPR)?<standard>)?)
-uint32_t LMP_parse(const char * input, MP_NUM_TYPE *type, MP_BASE_NUMBER *NUMBER, const Allocator *allocator);
+uint32_t LMP_parse_base_number(const char * input, MP_NUM_TYPE *type, MP_BASE_NUMBER *NUMBER, const Allocator *allocator);
 
 #endif //LMP_PARSE_H

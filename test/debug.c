@@ -33,21 +33,40 @@
 #define abs(a) ((a) > (0) ? (a) : -(a))
 
 int main () {
-  MP_NUM_TYPE num_type = {};
+  // MP_NUM_TYPE num_type = {};
+  // lmp_limb_t limbs[8] = {};
+  // MP_BASE_NUMBER number = { .prec = -8, .size = 0, .limbs = limbs };
+  // const char *num_str = "-123.12345678999991234'56789123456789_123456789LL<IEEE754>";
+  // constexpr uint32_t str_len = lenof("-123.12345678999991234'56789123456789_123456789LL<IEEE754>");
+  // const uint32_t parse_len = LMP_parse_base_number(num_str, &num_type, &number, &STDAllocator);
+  // if (parse_len != str_len) { return -1; }
+  // if (num_type.type != MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT, 128)) { return -2; }
+  // if (number.size != -4) { return -3; }
+  // if (number.exp != -3) { return -4; }
+  // const int64_t size = abs(number.size);
+  // if (number.size < 0) { printf("-0x"); } else { printf("0x"); }
+  // for (int32_t i = 0; i < size; i++) {
+  //   printf((size - 1 - i >= - number.exp) ? "%llX" : "%016llX", number.limbs[size - 1 - i]);
+  //   if (size - 1 - i == - number.exp) { printf("."); }
+  // }
+  // static lmp_limb_t L_long[] = { 0x437430C1913D27FF, 0x05CA0698478CF1B3, 0x1F9ADD3B84CDAD12, 0x7B };
+  // static lmp_limb_t L_long1   [] = { 8900000000000000000ULL, 7891234567891234567ULL, 1234567899999123456ULL, 123ULL };
   lmp_limb_t limbs[8] = {};
-  MP_BASE_NUMBER number = {.val.INT = {.alloc = -8, .limbs = limbs}, .repr = MP_NUM_REPR_NONE};
-  const char *num_str = "-123.12345678999991234'56789123456789_123456789LL<IEEE754>";
-  constexpr uint32_t str_len = lenof("-123.12345678999991234'56789123456789_123456789LL<IEEE754>");
-  const uint32_t parse_len = LMP_parse(num_str, &num_type, &number, &STDAllocator);
-  if (parse_len != str_len) { return -1; }
-  if (num_type.type != MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT, 128)) { return -2; }
-  if (number.val.FLOAT.size != -4) { return -3; }
-  if (number.val.FLOAT.exp != -3) { return -4; }
-  const int64_t size = abs(number.val.FLOAT.size);
-  if (number.val.FLOAT.size < 0) { printf("-0x"); } else { printf("0x"); }
+  static lmp_limb_t L_long1_bin[] = {  0x4371F157880D2737LL,  0x1F9ADD37C1215E62LL };
+  MP_FLOAT f_number = { .prec = 8, .size = 0, .limbs = L_long1_bin };
+  MP_BASE_NUMBER number = {.prec = -2, .size = -2, .limbs = limbs, .exp = -2, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL } };
+  MP_FLOAT_abs_to_base_number(&number, &f_number, 10, &STDAllocator);
+  // static lmp_limb_t L_long1    [] = { 2345678912345678900LL, 1234567891234567891LL };
+  // MP_FLOAT f_number = { .prec = 8, .size = 0, .limbs = limbs };
+  // MP_BASE_NUMBER number = {.prec = -2, .size = -2, .limbs = L_long1, .exp = -2, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL } };
+  // MP_BASE_FLOAT_to_float(&f_number, &number, &STDAllocator);
+  const int64_t size = abs(f_number.size);
+  if (f_number.size < 0) { printf("-0x"); } else { printf("0x"); }
+  if (size - 1 == - f_number.exp) { printf("."); }
   for (int32_t i = 0; i < size; i++) {
-    printf((size - 1 - i >= - number.val.FLOAT.exp) ? "%llX" : "%016llX", number.val.FLOAT.limbs[size - 1 - i]);
-    if (size - 1 - i == - number.val.FLOAT.exp) { printf("."); }
+    printf((size - 1 - i >= - f_number.exp) ? "%llX" : "%016llX", f_number.limbs[size - 1 - i]);
+  if (size - 1 - i == - number.exp) { printf("."); }
+  { printf("."); }
   }
   return 0;
 }

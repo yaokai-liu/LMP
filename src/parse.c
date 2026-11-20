@@ -84,7 +84,7 @@ uint32_t stridx_o(char chr, const char * str);
 static uint32_t strcmp_o(const char * str1, const char * str2);
 static uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_BASE_NUMBER *NUMBER, bool negative);
 
-static uint32_t LMP_parse_adic_number(const char *input, MP_NUM_TYPE *num_type, MP_BASE_NUMBER *NUMBER,
+static uint32_t LMP_parse_num_digits(const char *input, MP_NUM_TYPE *num_type, MP_BASE_NUMBER *NUMBER,
                                       bool negative, uint32_t adic_type, const Allocator *allocator);
 
 extern const struct MP_STANDARD MP_NUM_INT_STANDARD_LIST[MP_NUM_INT_STANDARD_COUNT];
@@ -92,20 +92,18 @@ extern const struct MP_STANDARD MP_NUM_FLOAT_STANDARD_LIST[MP_NUM_FLOAT_STANDARD
 extern const struct MP_STANDARD_REPR MP_NUM_INT_STD_REPR__LIST[MP_NUM_INT_STANDARD_COUNT];
 extern const struct MP_STANDARD_REPR MP_NUM_FLOAT_STD_REPR__LIST[MP_NUM_FLOAT_STANDARD_COUNT];
 static const struct {
-  lmp_half_limb_t base;
-  lmp_half_limb_t width;
-  lmp_limb_t limb_val;
+  MP_BASE BASE;
   void (*const limb_parser)(const struct limb_pos *, lmp_limb_t *);
   bool (*const digit_checker)(const char *);
 } BASE_LIMB_DATA[] = {
-#if (_LMP_LIMB_WIDTH_ == 64)
-#define DEC_LIMB_WIDTH          19
-#define DEC_LIMB_VAL            (0x8AC7'2304'89E8'0000ULL)
-  [ADIC_TYPE_16] = { .base = 16, .width = LMP_LIMB_BIT / 4, .limb_val = (lmp_limb_t)LMP_LIMB_VAL, .limb_parser = limb_digit_parse_adic16, .digit_checker = isHexDigital },
-  [ADIC_TYPE_10] = { .base = 10, .width = DEC_LIMB_WIDTH,   .limb_val = (lmp_limb_t)DEC_LIMB_VAL, .limb_parser = limb_digit_parse_adic10, .digit_checker = isDecDigital },
-  [ADIC_TYPE_8 ] = { .base =  8, .width = LMP_LIMB_BIT / 3, .limb_val = (lmp_limb_t)LMP_LIMB_VAL, .limb_parser = limb_digit_parse_adic8 , .digit_checker = isOctDigital },
-  [ADIC_TYPE_2 ] = { .base =  2, .width = LMP_LIMB_BIT / 1, .limb_val = (lmp_limb_t)LMP_LIMB_VAL, .limb_parser = limb_digit_parse_adic2 , .digit_checker = isBinDigital },
-#endif
+  [ADIC_TYPE_16] = { .BASE = { .base = 16, .limb_width = HEX_LIMB_WIDTH, .limb_val = (lmp_limb_t)HEX_LIMB_VAL },
+                        .limb_parser = limb_digit_parse_adic16, .digit_checker = isHexDigital },
+  [ADIC_TYPE_10] = { .BASE = { .base = 10, .limb_width = DEC_LIMB_WIDTH, .limb_val = (lmp_limb_t)DEC_LIMB_VAL },
+                        .limb_parser = limb_digit_parse_adic10, .digit_checker = isDecDigital },
+  [ADIC_TYPE_8 ] = { .BASE = { .base =  8, .limb_width = OCT_LIMB_WIDTH, .limb_val = (lmp_limb_t)OCT_LIMB_VAL },
+                        .limb_parser = limb_digit_parse_adic8 , .digit_checker = isOctDigital },
+  [ADIC_TYPE_2 ] = { .BASE = { .base =  2, .limb_width = BIN_LIMB_WIDTH, .limb_val = (lmp_limb_t)BIN_LIMB_VAL },
+                        .limb_parser = limb_digit_parse_adic2 , .digit_checker = isBinDigital },
 };
 
 // [a-fA-F0-9'_]+
@@ -261,11 +259,11 @@ inline uint32_t LMP_parse_num_suffix(const char *const input, const bool is_floa
 //        [0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
 //    case ADIC_TYPE_10:
 //        [0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
-inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_type, MP_BASE_NUMBER *const NUMBER,
-                                      const bool negative, const uint32_t adic_type, const Allocator *const allocator) {
+inline uint32_t LMP_parse_num_digits(const char *const input, MP_NUM_TYPE *num_type, MP_BASE_NUMBER *const NUMBER,
+                                     const bool negative, const uint32_t adic_type, const Allocator *const allocator) {
   if (!*input) { return 0; }
   auto const fun_check = BASE_LIMB_DATA[adic_type].digit_checker;
-  auto const limb_width = BASE_LIMB_DATA[adic_type].width;
+  auto const limb_width = BASE_LIMB_DATA[adic_type].BASE.limb_width;
   auto const func_limb_parse = BASE_LIMB_DATA[adic_type].limb_parser;
 
   /***************************************************/
@@ -277,7 +275,7 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
   uint32_t mantissa_len = 0;
   uint32_t int_part_len = 0;
  struct limb_pos curr_limb = { .start = pText, .end = nullptr };
-  MP_INT_init((MP_INT *)NUMBER, LMP_PARSE_ALLOC_SCALE * MP_ALLOC_LEN, allocator);
+  MP_BASE_FLOAT_init(NUMBER, LMP_PARSE_ALLOC_SCALE * MP_ALLOC_LEN, allocator);
   while (*pText && NUMBER->size <= LMP_PARSE_PREC_MAX) {
     if (isSeparator(pText)) {
       if (!fun_check(pText + 1)) { break; }
@@ -309,6 +307,11 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
     MP_INT_clear((MP_INT *)NUMBER, allocator);
     return 0;
   }
+  for (int32_t i = 0; i < NUMBER->size / 2; i++) {
+    const lmp_limb_t tmp = NUMBER->limbs[i];
+    NUMBER->limbs[i] =  NUMBER->limbs[NUMBER->size - 1 - i];
+    NUMBER->limbs[NUMBER->size - 1 - i] = tmp;
+  }
   if (!int_part_len) { int_part_len = mantissa_len; }
   curr_limb.end = pText;
   if (curr_limb.end > curr_limb.start) {
@@ -317,12 +320,10 @@ inline uint32_t LMP_parse_adic_number(const char *const input, MP_NUM_TYPE *num_
     if (NUMBER->prec < NUMBER->size + 1) {
       MP_INT_realloc((MP_INT *)NUMBER, NUMBER->size + 1, allocator);
     }
-    NUMBER->limbs[NUMBER->size] = limb_val;
-    NUMBER->size++;
+    const uint32_t remain_width = mantissa_len % NUMBER->BASE.limb_width;
+    MP_BASE_INT_mul_abs_base_exp(NUMBER, remain_width, allocator);
+    MP_BASE_INT_abs_add_limb(NUMBER, NUMBER, limb_val, allocator);
   }
-  NUMBER->BASE.base = BASE_LIMB_DATA[adic_type].base;
-  NUMBER->BASE.limb_width = BASE_LIMB_DATA[adic_type].width;
-  NUMBER->BASE.limb_val = BASE_LIMB_DATA[adic_type].limb_val;
   NUMBER->size = negative ? - NUMBER->size : NUMBER->size;
   MP_INT_clamp((MP_INT *)NUMBER);
 
@@ -405,9 +406,7 @@ inline uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_BASE
     if (strcmp_o(input, triple.pattern) == triple.pattern_len && !isIdentChar(&input[triple.pattern_len])) {
       NUMBER->size = 0;
       NUMBER->exp = negative ? - triple.value : triple.value;
-      NUMBER->BASE.base = 2;
-      NUMBER->BASE.limb_width = LMP_LIMB_BIT;
-      NUMBER->BASE.limb_val = (lmp_limb_t)LMP_LIMB_VAL;
+      NUMBER->BASE = BASE_LIMB_DATA[ADIC_TYPE_2].BASE;
       type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_FLOAT, 0);
       return triple.pattern_len;
     }
@@ -431,7 +430,8 @@ inline uint32_t strcmp_o(const char *const str1, const char * const str2) {
 // [+-]?0[bB][01]+(\.[01]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?) |
 // [+-]?0[oO][0-7]+(\.[0-7]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?) |
 // [+-]?[0-9]+(\.[0-9]+([pPeE][+-]?[0-9]+)?)?((REPR)?([lL]{0,2}|[0-9]+)(REPR)?<standard>?)
-uint32_t LMP_parse(const char * const input, MP_NUM_TYPE *type, MP_BASE_NUMBER *NUMBER, const Allocator * const allocator) {
+uint32_t LMP_parse_base_number(const char * const input, MP_NUM_TYPE *type,
+                               MP_BASE_NUMBER *NUMBER, const Allocator * const allocator) {
   const char *pText = input;
   const bool negative = ('-' == *pText);
   if (isSign(pText)) {
@@ -448,9 +448,10 @@ uint32_t LMP_parse(const char * const input, MP_NUM_TYPE *type, MP_BASE_NUMBER *
         default: {  }
       }
     }
-    const uint32_t length = LMP_parse_adic_number(pText, type, NUMBER, negative, adic_type, allocator);
-    if (length) {  return pText + length - input; }
-    return 0;
+    NUMBER->BASE = BASE_LIMB_DATA[adic_type].BASE;
+    const uint32_t length = LMP_parse_num_digits(pText, type, NUMBER, negative, adic_type, allocator);
+    if (!length) { return 0; }
+    return pText + length - input;
   }
   return try_special_number(pText, type, NUMBER, negative);
 }
