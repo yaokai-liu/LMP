@@ -31,11 +31,18 @@
 #include "lmp.h"
 #include "arith.h"
 #include <check.h>
+#include <inttypes.h>
 #define lenof(str_literal) ((sizeof str_literal) - 1)
 #define bitsof(w)          (sizeof(w) * CHAR_BIT)
 #define max(a, b)          ((a) > (b) ? (a) : (b))
 #define min(a, b)          ((a) < (b) ? (a) : (b))
 #define abs(a)             ((a) > (0) ? (a) : -(a))
+
+#define PRI_PREC  PRIi32
+#define PRI_SIZE  PRIi32
+#define PRI_LIMB  PRIu64
+#define PRI_EXP   PRIi64
+#define PRI_HALF_LIMB  PRIu32
 
 Suite *abs_add_offset_suite();
 Suite *abs_sub_offset_suite();

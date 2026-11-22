@@ -46,7 +46,7 @@ static void run_cmp_case(const CmpCase *c)
   int32_t got = MP_INT_abs_cmp(&A, &B);
 
   ck_assert_msg(got == c->expect,
-                "%s: MP_INT_abs_cmp returned %d, expected %d",
+                "%s: MP_INT_abs_cmp returned %"PRI_SIZE", expected %"PRI_SIZE,
                 c->name, got, c->expect);
 }
 

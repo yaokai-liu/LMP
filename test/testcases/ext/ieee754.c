@@ -97,7 +97,7 @@ static void run_f64bin_case(const Ieee754F64Case *c) {
     ck_assert_msg(value == c->expected_value,
                   "%s: value %lf != expected %lf", c->name, value, c->expected_value);
     // ck_assert_msg(value == c->expected_value,
-    //               "%s: value %llx != expected %llx", c->name, *(int64_t *)&value, *(int64_t *)&c->expected_value);
+    //               "%s: value %"PRIu64" != expected %"PRIu64, c->name, *(int64_t *)&value, *(int64_t *)&c->expected_value);
   }
 }
 
@@ -127,7 +127,7 @@ static void run_f64_case(const F64Case *c)
   // ck_assert_msg(value == c->expected_value,
   //               "%s: value %lf != expected %lf", c->name, value, c->expected_value);
   ck_assert_msg(value == c->expected_value,
-                "%s: value %llx != expected %llx", c->name, *(int64_t *)&value, *(int64_t *)&c->expected_value);
+                "%s: value %"PRIu64" != expected %"PRIu64, c->name, *(int64_t *)&value, *(int64_t *)&c->expected_value);
 }
 
 

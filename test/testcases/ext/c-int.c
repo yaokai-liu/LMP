@@ -82,7 +82,7 @@ static void run_i32_case(const I32Case *c)
   ck_assert_msg(result == c->expected_result,
                 "%s: exec result %u != expected %u", c->name, result, c->expected_result);
   ck_assert_msg(value == c->expected_value,
-                "%s: value %d != expected %d", c->name, value, c->expected_value);
+                "%s: value %"PRI_SIZE" != expected %"PRI_SIZE, c->name, value, c->expected_value);
 }
 static void run_i64_case(const I64Case *c)
 {
@@ -132,7 +132,7 @@ static void run_u64_case(const U64Case *c)
   ck_assert_msg(result == c->expected_result,
                 "%s: exec result %u != expected %u", c->name, result, c->expected_result);
   ck_assert_msg(value == c->expected_value,
-                "%s: value %llu != expected %llu", c->name, value, c->expected_value);
+                "%s: value %"PRI_LIMB" != expected %"PRI_LIMB, c->name, value, c->expected_value);
 }
 static void run_u128_case(const U128Case *c)
 {

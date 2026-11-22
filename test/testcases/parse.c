@@ -40,11 +40,6 @@ typedef struct {
   const MP_BASE     BASE;
 } ParseCase;
 
-#if (_LMP_LIMB_WIDTH_ == 64)
-#define DEC_LIMB_VAL            (0x8AC7'2304'89E8'0000ULL)
-#define OCT_LIMB_VAL            (0x8000'0000'0000'0000ULL)
-#endif
-
 #define abs(a)             ((a) > (0) ? (a) : -(a))
 static void run_parse_case(const ParseCase *c) {
   lmp_limb_t res_limbs[64] = {};
@@ -61,14 +56,14 @@ static void run_parse_case(const ParseCase *c) {
   ck_assert_msg(NUMBER.BASE.limb_width == c->BASE.limb_width,
                 "%s: result base %u != (expected) %u", c->name, NUMBER.BASE.limb_width, c->BASE.limb_width);
   ck_assert_msg(NUMBER.BASE.limb_val == c->BASE.limb_val,
-                "%s: result base %llu != (expected) %llu", c->name, NUMBER.BASE.limb_val, c->BASE.limb_val);
+                "%s: result base %"PRI_LIMB" != (expected) %"PRI_LIMB, c->name, NUMBER.BASE.limb_val, c->BASE.limb_val);
   ck_assert_msg(NUMBER.size == c->expected_size,
-                "%s: result size %d != (expected) %d", c->name, NUMBER.size, c->expected_size);
+                "%s: result size %"PRI_SIZE" != (expected) %"PRI_SIZE, c->name, NUMBER.size, c->expected_size);
   ck_assert_msg(NUMBER.exp == c->expected_exp,
                 "%s: result exponet %lld != (expected) %lld", c->name, NUMBER.exp, c->expected_exp);
   for (int32_t i = 0; i < abs(c->expected_size); i++) {
     ck_assert_msg(NUMBER.limbs[i] == c->expected_limbs[i],
-                  "%s: limb[%d] %llu != (expected) %llu", c->name, i, NUMBER.limbs[i], c->expected_limbs[i]);
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB, c->name, i, NUMBER.limbs[i], c->expected_limbs[i]);
   }
 }
 
@@ -123,7 +118,7 @@ static const lmp_limb_t L_long2   [] = { 2345678912345678900LL, 1234567891234567
 static const ParseCase parse_cases[] = {
   { .name = "dec_long_value",       .str = "-123.12345678999991234'56789123456789_123456789LL<IEEE754>",
                                                                      .expected_size = -4, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,    128), .expected_exp = -3, .expected_limbs = L_long1,   .parsed_len = 58, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
-  { .name = "dec_long_value",       .str = "-0.123456789'123456789_123456789'123456789'0000000000000000000000000000000000000LL<IEEE754>",
+  { .name = "dec_long_trail",       .str = "-0.123456789'123456789_123456789'123456789'0000000000000000000000000000000000000LL<IEEE754>",
                                                                      .expected_size = -2, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,    128), .expected_exp = -2, .expected_limbs = L_long2,   .parsed_len = 91, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
   { .name = "dec_zero",             .str = "0",                   .expected_size =  0, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_0,       .parsed_len =  1, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
   { .name = "dec_one",              .str = "1",                   .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD,MP_NUM_REPR_MP_INT,                  0), .expected_exp =  0, .expected_limbs = L_1,       .parsed_len =  1, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL }},
@@ -183,7 +178,7 @@ static const ParseCase parse_cases[] = {
   { .name = "full_hex_float",       .str = "0x1.8p3f32<IEEE754>", .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,     32), .expected_exp =  0, .expected_limbs = L_C,       .parsed_len = 19, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
   { .name = "full_hex_us_L",        .str = "-0xdead_beefL",       .expected_size = -1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_INT_STANDARD, MP_NUM_REPR_STD_C_INT,             64), .expected_exp =  0, .expected_limbs = L_DEAD,    .parsed_len = 13, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
   { .name = "full_X_P_g<IEEE754>",  .str = "0X1P-2g<IEEE754>",    .expected_size =  1, .expected_type = MP_NUM_TYPE_OF(MP_NUM_IEEE754_STANDARD, MP_NUM_REPR_IEEE754_FLOAT,      0), .expected_exp = -1, .expected_limbs = L_0x1PN2,  .parsed_len = 16, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
-  { .name = "err_empty",            .str = "",                    .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  0, .limb_width =  0, .limb_val = (lmp_limb_t)0            }},
+  { .name = "err_empty",            .str = " ",                   .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  0, .limb_width =  0, .limb_val = (lmp_limb_t)0            }},
   { .name = "err_sign_only",        .str = "+",                   .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  0, .limb_width =  0, .limb_val = (lmp_limb_t)0            }},
   { .name = "err_hex_no_digit",     .str = "0x",                  .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base = 16, .limb_width = 16, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},
   { .name = "err_bin_2",            .str = "0b2",                 .expected_size =  0, .expected_type = 0,                                                                          .expected_exp =  0, .expected_limbs = nullptr,   .parsed_len =  0, .BASE = {.base =  2, .limb_width = 64, .limb_val = (lmp_limb_t)LMP_LIMB_VAL }},

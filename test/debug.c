@@ -24,15 +24,18 @@
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
-
+#define _CRTDBG_MAP_ALLOC          // 必须放在最前面
+#include <stdlib.h>
+#include <crtdbg.h>
+#include <inttypes.h>
 #include <stdio.h>
-
 #include "lmp.h"
 #include "parse.h"
 #define lenof(str_literal) ((sizeof str_literal) - 1)
 #define abs(a) ((a) > (0) ? (a) : -(a))
 
 int main () {
+  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
   // MP_NUM_TYPE num_type = {};
   // lmp_limb_t limbs[8] = {};
   // MP_BASE_NUMBER number = { .prec = -8, .size = 0, .limbs = limbs };
@@ -52,21 +55,20 @@ int main () {
   // static lmp_limb_t L_long[] = { 0x437430C1913D27FF, 0x05CA0698478CF1B3, 0x1F9ADD3B84CDAD12, 0x7B };
   // static lmp_limb_t L_long1   [] = { 8900000000000000000ULL, 7891234567891234567ULL, 1234567899999123456ULL, 123ULL };
   lmp_limb_t limbs[8] = {};
-  static lmp_limb_t L_long1_bin[] = {  0x4371F157880D2737LL,  0x1F9ADD37C1215E62LL };
-  MP_FLOAT f_number = { .prec = 8, .size = 0, .limbs = L_long1_bin };
-  MP_BASE_NUMBER number = {.prec = -2, .size = -2, .limbs = limbs, .exp = -2, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL } };
-  MP_FLOAT_abs_to_base_number(&number, &f_number, 10, &STDAllocator);
+  static lmp_limb_t L_long1_bin[] = {  0x37C1780B91B52434LL,  0x949B0F713E9185BLL };
+  MP_FLOAT f_number = { .prec = 8, .size = -2, .limbs = L_long1_bin };
+  MP_BASE_NUMBER number = {.prec = -8, .size = -2, .limbs = limbs, .exp = -2, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL } };
+  MP_INT_to_base_number(&number, (MP_INT*)&f_number, 10, &STDAllocator);
   // static lmp_limb_t L_long1    [] = { 2345678912345678900LL, 1234567891234567891LL };
   // MP_FLOAT f_number = { .prec = 8, .size = 0, .limbs = limbs };
   // MP_BASE_NUMBER number = {.prec = -2, .size = -2, .limbs = L_long1, .exp = -2, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL } };
   // MP_BASE_FLOAT_to_float(&f_number, &number, &STDAllocator);
   const int64_t size = abs(f_number.size);
   if (f_number.size < 0) { printf("-0x"); } else { printf("0x"); }
-  if (size - 1 == - f_number.exp) { printf("."); }
+  if (number.exp && size - 1 == - f_number.exp) { printf("."); }
   for (int32_t i = 0; i < size; i++) {
-    printf((size - 1 - i >= - f_number.exp) ? "%llX" : "%016llX", f_number.limbs[size - 1 - i]);
-  if (size - 1 - i == - number.exp) { printf("."); }
-  { printf("."); }
+    printf((size - 1 - i >= - number.exp) ? "%"PRIu64 : "%"PRIu64, number.limbs[size - 1 - i]);
+   if (number.exp && size - 1 - i == - number.exp) { printf("."); }
   }
   return 0;
 }

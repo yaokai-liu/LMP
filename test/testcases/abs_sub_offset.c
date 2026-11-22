@@ -52,10 +52,10 @@ static void run_sub_case(const SubCase *c)
   MP_INT_clamp(&RES);
 
   ck_assert_msg(abs(RES.size) == c->e_len,
-                "%s: result size %d != %d", c->name, RES.size, c->e_len);
+                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, RES.size, c->e_len);
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(RES.limbs[i] == c->e[i],
-                  "%s: limb[%d] %llu != %llu", c->name, i,
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
                   (lmp_limb_t)RES.limbs[i],
                   (lmp_limb_t)c->e[i]);
   }
@@ -75,7 +75,7 @@ static const lmp_limb_t SE3[] = { LMP_LIMB_MAX };
 
 static const lmp_limb_t SA4[] = { 5, 3 };
 static const lmp_limb_t SB4[] = { 1 };
-static const lmp_limb_t SE4[] = { 0, 2 };
+static const lmp_limb_t SE4[] = { 5, 2 };
 
 static const lmp_limb_t SA5[] = { 0, 0, 5 };
 static const lmp_limb_t SB5[] = { 1, 2 };
@@ -83,7 +83,7 @@ static const lmp_limb_t SE5[] = { 0, LMP_LIMB_MAX, 2 };
 
 static const lmp_limb_t SA6[] = { 16, 0, 3 };
 static const lmp_limb_t SB6[] = { 2 };
-static const lmp_limb_t SE6[] = { 0, 0, 1 };
+static const lmp_limb_t SE6[] = { 16, 0, 1 };
 
 static const lmp_limb_t SA7[] = { 0, 7 };
 static const lmp_limb_t SB7[] = { 0, 7 };

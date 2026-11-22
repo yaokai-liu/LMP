@@ -38,10 +38,10 @@
 // if abs(mp_val) > abs(IEEE754_F32_MAX): result INFs
 // if abs(mp_val) < abs(IEEE754_F32_INS): result IEEE754_F32_INS/0
 // (round-to-nearest, ties-away-from-zero) for normal range
-uint32_t MP_FLOAT_to_ieee754_f32(float32_t *restrict dest, const MP_FLOAT *restrict mp_val);
+_SHARED_API uint32_t MP_FLOAT_to_ieee754_f32(float32_t *restrict dest, const MP_FLOAT *restrict mp_val);
 // if abs(mp_val) > abs(IEEE754_F64_MAX): result INFs
 // if abs(mp_val) < abs(IEEE754_F64_INS): result IEEE754_F64_INS/0
 // (round-to-nearest, ties-away-from-zero) for normal range
-uint32_t MP_FLOAT_to_ieee754_f64(float64_t *restrict dest, const MP_FLOAT *restrict mp_val);
+_SHARED_API uint32_t MP_FLOAT_to_ieee754_f64(float64_t *restrict dest, const MP_FLOAT *restrict mp_val);
 
 #endif //LMP_IEEE754_H

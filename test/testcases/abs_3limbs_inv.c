@@ -37,7 +37,7 @@ typedef struct {
 static void run_add_case(const Inv3Case *c)
 {
   const lmp_limb_t res = MP_INT_abs_3limbs_inv(c->divisor);
-  ck_assert_msg(res == c->expect, "%s: 3limbs inverse %llu != %llu", c->name, res, c->expect);
+  ck_assert_msg(res == c->expect, "%s: 3limbs inverse %"PRI_LIMB" != %"PRI_LIMB, c->name, res, c->expect);
 }
 
 

@@ -50,10 +50,10 @@ static void run_add_case(const AddCase *c)
   MP_INT_abs_add_offset(&RES, &A, &B, c->offset, &STDAllocator);
 
   ck_assert_msg(abs(RES.size) == c->e_len,
-                "%s: result size %d != %d", c->name, RES.size, c->e_len);
+                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, RES.size, c->e_len);
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(RES.limbs[i] == c->e[i],
-                  "%s: limb[%d] %llu != %llu", c->name, i,
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
                   RES.limbs[i], c->e[i]);
   }
 }

@@ -44,7 +44,7 @@
 
 typedef int64_t lmp_exp_t;
 typedef int32_t lmp_prec_t;
-typedef int32_t lmp_size_t;
+typedef lmp_prec_t lmp_size_t;
 
 #ifndef _LMP_LIMB_WIDTH_
 #define _LMP_LIMB_WIDTH_        64
@@ -56,8 +56,8 @@ typedef uint256_t lmp_quarter_limb_t;
 #define DEC_LIMB_WIDTH          19
 #define OCT_LIMB_WIDTH          21
 #define BIN_LIMB_WIDTH          64
-#define HEX_LIMB_VAL            ((lmp_double_limb_t)0x1'0000'0000'0000'0000ULL)
-#define DEC_LIMB_VAL            ((lmp_double_limb_t)  1'0000'0000'0000'0000'000ULL)
+#define HEX_LIMB_VAL            LMP_LIMB_VAL
+#define DEC_LIMB_VAL            ((lmp_double_limb_t)1'0000'0000'0000'0000'000ULL)
 #define OCT_LIMB_VAL            ((lmp_double_limb_t)0x8000'0000'0000'0000ULL)
 #define BIN_LIMB_VAL            HEX_LIMB_VAL
 #endif
@@ -121,7 +121,7 @@ typedef struct MP_FLOAT {
   lmp_size_t  size;
   // mantissa limbs, little endian
   lmp_limb_t *limbs;
-  // exponent of 'LMP_FLOAT_BASE';
+  // exponent of 'LMP_FLOAT_VAL';
   // If (size == 0), this field will be used to represent special value.
   lmp_exp_t   exp;
 } MP_FLOAT;
@@ -190,41 +190,50 @@ typedef struct MP_BASE_NUMBER {
   MP_BASE     BASE;
 } MP_BASE_NUMBER;
 
-void MP_INT_init(MP_INT *val,  int32_t initial_alloc, const Allocator *allocator);
-void MP_INT_realloc(MP_INT *val,  int32_t required, const Allocator *allocator);
-void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator);
+_SHARED_API void MP_INT_init(MP_INT *val,  int32_t initial_alloc, const Allocator *allocator);
+_SHARED_API void MP_INT_realloc(MP_INT *val,  int32_t required, const Allocator *allocator);
+_SHARED_API void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator);
 
-void MP_INT_from_int(MP_INT *mp_val, int256_t val, const Allocator *allocator);
-void MP_INT_from_uint(MP_INT *mp_val, uint256_t val, const Allocator *allocator);
-void MP_INT_clear(MP_INT *val, const Allocator *allocator);
-void MP_INT_clamp(MP_INT *val);
-size_t MP_INT_bitsof(const MP_INT *val);
-int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2);
-bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, int32_t offset);
-lmp_limb_t MP_INT_get_limb(const MP_INT *restrict num, int32_t index);
-lmp_double_limb_t MP_INT_get_double_limbs(const MP_INT *restrict num, int32_t index);
+_SHARED_API void MP_INT_from_int(MP_INT *mp_val, int256_t val, const Allocator *allocator);
+_SHARED_API void MP_INT_from_uint(MP_INT *mp_val, uint256_t val, const Allocator *allocator);
+_SHARED_API void MP_INT_clear(MP_INT *val, const Allocator *allocator);
+_SHARED_API void MP_INT_clamp(MP_INT *val);
+_SHARED_API size_t MP_INT_bitsof(const MP_INT *val);
+_LOCAL_API int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2);
+_LOCAL_API bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, int32_t offset);
+_SHARED_API lmp_limb_t MP_INT_get_limb(const MP_INT *restrict num, int32_t index);
+_SHARED_API lmp_double_limb_t MP_INT_get_double_limbs(const MP_INT *restrict num, int32_t index);
 // Always assume 0 <= bit_count < LMP_LIMB_BIT
-lmp_limb_t MP_INT_left_shift_load(const MP_INT *restrict num, int32_t index, int32_t width);
+_SHARED_API lmp_limb_t MP_INT_left_shift_load(const MP_INT *restrict num, int32_t index, int32_t width);
 // Always assume 0 <= bit_count < LMP_LIMB_BIT
-lmp_double_limb_t MP_INT_left_shift_load_double(const MP_INT *restrict num, int32_t index, int32_t width);
+_SHARED_API lmp_double_limb_t MP_INT_left_shift_load_double(const MP_INT *restrict num, int32_t index, int32_t width);
 
-void MP_FLOAT_init(MP_FLOAT *val, int32_t initial_alloc, const Allocator *allocator);
-void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator);
-void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator);
-void MP_FLOAT_clamp(MP_FLOAT *val);
+_SHARED_API void MP_FLOAT_init(MP_FLOAT *val, int32_t initial_alloc, const Allocator *allocator);
+_SHARED_API void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator);
+_SHARED_API void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator);
+// Truncate mantissa in given prec limbs.
+// It will not change the exp field.
+// Notice: may cause precision-lose
+_SHARED_API void MP_FLOAT_truncate(MP_FLOAT *val, lmp_prec_t prec);
+// Remove trailing zeros of mantissa.
+// It will not change the value or precision.
+// It will change the exp and size field.
+_SHARED_API void MP_FLOAT_trail(MP_FLOAT *val);
+_LOCAL_API int32_t MP_FLOAT_abs_cmp(const MP_FLOAT *op1, const MP_FLOAT *op2);
 #define MP_FLOAT_mantissa(p_float)                                ((MP_INT *)(p_float))
+#define MP_FLOAT_clamp(val)                                       MP_INT_clamp((MP_INT *)(val))
 #define MP_FLOAT_realloc(val, required, allocator)                MP_INT_realloc((MP_INT *)(val), (required), (allocator))
 #define MP_FLOAT_get_limb(num, index)                             MP_INT_get_limb((MP_INT *)(num), (index))
 #define MP_FLOAT_get_double_limbs(num, index)                     MP_INT_get_double_limbs((MP_INT *)(num), (index))
 #define MP_FLOAT_left_shift_load(num, index, bit_count)           MP_INT_left_shift_load((MP_INT *)(num), (index), (bit_count))
 #define MP_FLOAT_left_shift_load_double(num, index, bit_count)    MP_INT_left_shift_load_double((MP_INT *)(num), (index), (bit_count))
 
-void MP_BASE_NUMBER_clear(MP_BASE_NUMBER *val, const Allocator *allocator);
+_SHARED_API void MP_BASE_NUMBER_clear(MP_BASE_NUMBER *val, const Allocator *allocator);
 #define MP_BASE_NUMBER_realloc(val, required, allocator)          MP_INT_realloc((MP_INT *)(val), (required), (allocator))
 #define MP_BASE_INT_init(val,  initial_alloc, allocator)          MP_INT_init((MP_INT *)(val), (initial_alloc), (allocator))
 #define MP_BASE_INT_negative(val)                                 MP_INT_negative((MP_INT *)(val))
 #define MP_BASE_INT_get_limb(num, index)                          MP_INT_get_limb((const MP_INT *)(num), (index))
-lmp_double_limb_t MP_BASE_INT_get_double_limbs(const MP_BASE_NUMBER *restrict num, int32_t index);
+_SHARED_API lmp_double_limb_t MP_BASE_INT_get_double_limbs(const MP_BASE_NUMBER *restrict num, int32_t index);
 #define MP_BASE_INT_clamp(val)                                    MP_INT_clamp((MP_INT *)(val))
 #define MP_BASE_INT_abs_cmp(op1, op2)                             MP_INT_abs_cmp((const MP_INT *)(op1), (const MP_INT *)(op2))
 #define MP_BASE_INT_abs_offset_ge(op1, op2, offset)               MP_INT_abs_offset_ge((const MP_INT *)(op1), (const MP_INT *)(op2), (offset))
@@ -233,19 +242,23 @@ lmp_double_limb_t MP_BASE_INT_get_double_limbs(const MP_BASE_NUMBER *restrict nu
 #define MP_BASE_FLOAT_negative(val)                               MP_FLOAT_negative((MP_FLOAT *)(val))
 #define MP_BASE_FLOAT_get_limb(num, index)                        MP_FLOAT_get_limb((const MP_INT *)(num), (index))
 #define MP_BASE_FLOAT_get_double_limbs(num, index)                MP_BASE_INT_get_double_limbs((num), (index))
+#define MP_BASE_FLOAT_truncate(val)                               MP_FLOAT_truncate((MP_FLOAT *)(val))
 #define MP_BASE_FLOAT_clamp(val)                                  MP_FLOAT_clamp((MP_FLOAT *)(val))
+#define MP_BASE_FLOAT_trail(val)                                  MP_FLOAT_trail((MP_FLOAT *)(val))
 // Always assume 0 <= width <= BASE.limb_width
 // else is an unexpected behavior
-lmp_limb_t MP_BASE_NUMBER_left_shift_load(const MP_BASE_NUMBER *mp_val, int32_t index, int32_t width);
+_SHARED_API lmp_limb_t MP_BASE_NUMBER_left_shift_load(const MP_BASE_NUMBER *mp_val, int32_t index, int32_t width);
 // Always assume 0 <= width <= BASE.limb_width
 // else is an unexpected behavior
-lmp_double_limb_t MP_BASE_NUMBER_left_shift_load_double (const MP_BASE_NUMBER *mp_val, int32_t index, int32_t width);
+_SHARED_API lmp_double_limb_t MP_BASE_NUMBER_left_shift_load_double (const MP_BASE_NUMBER *mp_val, int32_t index, int32_t width);
 
-void MP_BASE_INT_to_int(MP_INT *dest, const MP_BASE_NUMBER *src, const Allocator *allocator);
-void MP_BASE_FLOAT_to_float(MP_FLOAT *dest, const MP_BASE_NUMBER *src, const Allocator *allocator);
-void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
-void MP_FLOAT_abs_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
-void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, lmp_half_limb_t base, const Allocator *allocator);
-lmp_limb_t lmp_fast_pow(lmp_half_limb_t base, lmp_exp_t exp);
+_SHARED_API void MP_BASE_INT_to_int(MP_INT *dest, const MP_BASE_NUMBER *src, const Allocator *allocator);
+_SHARED_API void MP_BASE_FLOAT_to_float(MP_FLOAT *dest, const MP_BASE_NUMBER *src, const Allocator *allocator);
+_SHARED_API void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, uint32_t base, const Allocator *allocator);
+_SHARED_API void MP_FLOAT_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
+// if (mp_val->BASE.base < 2), i.e. is a polynomial or base-INF, it will do nothing.
+_SHARED_API void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, lmp_half_limb_t base, const Allocator *allocator);
 
+_LOCAL_API lmp_limb_t lmp_fast_pow(lmp_half_limb_t base, lmp_exp_t exp);
+_LOCAL_API lmp_limb_t lmp_fast_quotient(lmp_double_limb_t dividend, lmp_double_limb_t dividend_follow, lmp_double_limb_t divisor);
 #endif //LMP_H

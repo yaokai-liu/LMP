@@ -49,10 +49,10 @@ static void run_left_shift_case(const ShiftCase *c)
   MP_INT_left_shift(&A, c->shift, &STDAllocator);
 
   ck_assert_msg(abs(A.size) == c->e_len,
-                "%s: result size %d != %d", c->name, A.size, c->e_len);
+                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, A.size, c->e_len);
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(A.limbs[i] == c->e[i],
-                  "%s: limb[%d] %llu != %llu", c->name, i,
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
                   (lmp_limb_t)A.limbs[i],
                   (lmp_limb_t)c->e[i]);
   }

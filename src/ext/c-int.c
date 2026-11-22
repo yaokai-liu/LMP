@@ -26,9 +26,9 @@
  **/
 
 #include "ext/c-int.h"
-#define max(a, b)   ((a) > (b) ? (a) : (b))
-#define abs(a)      ((a) > (0) ? (a) : -(a))
-#define sgn(a)      ((a) > (0) ?   1 :  -1)
+#define max(a, b)   ((a) >  (b) ? (a) :  (b))
+#define abs(a)      ((a) >  (0) ? (a) : -(a))
+#define sgn(a)      ((a) == (0) ? 0 : ((a) > 0) ? 1  :  -1)
 
 static_assert(sizeof(lmp_limb_t) == sizeof(uint64_t), "'lmp_limb_t' is required has same size with 'uint64_t'");
 static_assert(((lmp_limb_t)-1) > ((lmp_limb_t) 0), "'lmp_limb_t' is required an unsigned type.");

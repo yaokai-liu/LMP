@@ -321,7 +321,7 @@ inline uint32_t LMP_parse_num_digits(const char *const input, MP_NUM_TYPE *num_t
       MP_INT_realloc((MP_INT *)NUMBER, NUMBER->size + 1, allocator);
     }
     const uint32_t remain_width = mantissa_len % NUMBER->BASE.limb_width;
-    MP_BASE_INT_mul_abs_base_exp(NUMBER, remain_width, allocator);
+    MP_BASE_INT_left_shift(NUMBER, remain_width, allocator);
     MP_BASE_INT_abs_add_limb(NUMBER, NUMBER, limb_val, allocator);
   }
   NUMBER->size = negative ? - NUMBER->size : NUMBER->size;
@@ -382,6 +382,7 @@ inline uint32_t LMP_parse_num_digits(const char *const input, MP_NUM_TYPE *num_t
     NUMBER->limbs = limbs;
   } else {
     MP_BASE_FLOAT_mul_base_exp(NUMBER, literal_exp, allocator);
+    MP_BASE_FLOAT_trail(NUMBER);
   }
   return pText - input;
 }

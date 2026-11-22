@@ -53,10 +53,10 @@ static void run_mul_case(const MulCase *c)
   MP_INT_clamp(&DEST);
 
   ck_assert_msg(abs(DEST.size) == c->e_len,
-                "%s: result size %d != %d", c->name, DEST.size, c->e_len);
+                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, DEST.size, c->e_len);
   for (int32_t i = 0; i < c->e_len; i++) {
     ck_assert_msg(DEST.limbs[i] == c->e[i],
-                  "%s: limb[%d] %llu != %llu", c->name, i,
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
                   (lmp_limb_t)DEST.limbs[i],
                   (lmp_limb_t)c->e[i]);
   }
