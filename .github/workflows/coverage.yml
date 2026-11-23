@@ -10,17 +10,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y lcov gcovr
+          sudo apt-get install -y lcov gcovr cmake
       - name: Configure CMake
         run: |
-          cmake -B build \
-            -DENABLE_COVERAGE=ON \
-            -DCMAKE_BUILD_TYPE=Debug
+          cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -G "Unix Makefiles" -S . -B build
       - name: Build
-        run: cmake --build build -j$(nproc)
+        run: cmake --build build --target coverage -- -j$(nproc)
       - name: Run tests & generate coverage
         run: |
           cd build
