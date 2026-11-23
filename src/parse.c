@@ -382,7 +382,7 @@ inline uint32_t LMP_parse_num_digits(const char *const input, MP_NUM_TYPE *num_t
     NUMBER->limbs = limbs;
   } else {
     MP_BASE_FLOAT_mul_base_exp(NUMBER, literal_exp, allocator);
-    MP_BASE_FLOAT_trail(NUMBER);
+    MP_BASE_FLOAT_tidy(NUMBER);
   }
   return pText - input;
 }

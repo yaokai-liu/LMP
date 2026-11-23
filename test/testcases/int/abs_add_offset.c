@@ -18,8 +18,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
- * Filename: arith.c
+ * Module Name: test/testcases/int
+ * Filename: abs_add_offset.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
@@ -37,9 +37,9 @@ typedef struct {
   int32_t           b_len;
   int32_t           e_len;
   int32_t           offset;
-} AddCase;
+} IntAddCase;
 
-static void run_add_case(const AddCase *c)
+static void run_add_case(const IntAddCase *c)
 {
   lmp_limb_t RES_limbs[(c->a_len > c->b_len ? c->a_len : c->b_len) + c->offset + 1] = {};
 
@@ -94,7 +94,7 @@ static const lmp_limb_t A9[] = {7};
 static const lmp_limb_t B9[] = {8, 9};
 static const lmp_limb_t E9[] = {7, 8, 9};
 
-static const AddCase add_cases[] = {
+static const IntAddCase add_cases[] = {
   {"basic3x3",          A1, B1, E1, 3, 3, 3, 0},
   {"basic1x1",          A2, B2, E2, 1, 1, 1, 0},
   {"carry",             A3, B3, E3, 2, 1, 3, 0},
@@ -112,12 +112,12 @@ START_TEST(test_abs_sub_offset)
 }
 END_TEST
 
-Suite *abs_add_offset_suite()
+Suite *MP_TEST_int_abs_add_offset_suite()
 {
   Suite *s = suite_create("abs_sub_offset");
   TCase *tc = tcase_create("abs_add_offset");
 
-  constexpr int n = sizeof(add_cases)/sizeof(AddCase);
+  constexpr int n = sizeof(add_cases)/sizeof(IntAddCase);
   tcase_add_loop_test(tc, test_abs_sub_offset, 0, n);
 
   suite_add_tcase(s, tc);

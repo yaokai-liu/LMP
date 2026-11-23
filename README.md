@@ -1,5 +1,5 @@
 # LMP - A Lite Multiple Precision Arithmetic Library
-
+[![codecov](https://codecov.io/gh/yaokai-liu/LMP/branch/main/graph/badge.svg)](https://codecov.io/gh/yaokai-liu/LMP)
 LMP is a lightweight, multiple-precision arithmetic library written in C. 
 It provides arbitrary-precision integer, floating-point, 
 and decimal arithmetic built on top of compiler-supported wide integer types (_BitInt), 
@@ -12,11 +12,10 @@ and a fixed-capacity mode allows fully allocation-free operation for embedded or
 
 ## Features
 
-* **Arbitrary-precision integers**
-* **Arbitrary-precision floating-point and decimal**
+* **Arbitrary precision arbitrary-base number, floating-point or integer**
 * **Special values for floating-point**: zero, infinity, infinitesimal, NaN, and their negatives.
 * **Flexible parser**: supporting binary, octal, decimal, and hexadecimal literals with optional fractional parts,
-`binary/decimal` exponents, `l/L` suffixes, and standard tags.
+`binary/decimal/other base` and exponents, `l/L` suffixes, and standard tags.
 **Support custom float point number standard**. Users just need add custom standard short name and standard id,
 the parser will automatically recognize and record the number's standard type.
 * **IEEE-754 integration**: literals with an `l/L` suffix or `f/F` + size,
@@ -31,7 +30,7 @@ Build the library:
 cmake -B cmake-build-release -DCMAKE_BUILD_TYPE=Release
 cmake --build cmake-build-release --target LMP
 ```
-Then you will get a `libLMP.a` in `${CMAKE_CURRENT_SOURCE_DIR}/output`.
+Then you will get a `libLMP.so` in your `${CMAKE_CURRENT_SOURCE_DIR}/output`.
 
 Parse Example:
 ```C

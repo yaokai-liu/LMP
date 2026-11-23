@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
+ * Module Name: test/testcases/int
  * Filename: right_shift.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
@@ -36,10 +36,10 @@ typedef struct {
   int32_t           a_len;
   int32_t           e_len;
   int32_t           shift;
-} ShiftCase;
+} IntShiftCase;
 
 
-static void run_right_shift_case(const ShiftCase *c)
+static void run_right_shift_case(const IntShiftCase *c)
 {
   lmp_limb_t buf[64] = {};
   ck_assert((size_t)c->a_len + 2 <= sizeof(buf) / sizeof(buf[0]));
@@ -80,7 +80,7 @@ static const lmp_limb_t SRE5[] = { (1ULL << 63),
 static const lmp_limb_t SRA6[] = { 5 };
 static const lmp_limb_t SRE6[] = { 0 };
 
-static const ShiftCase right_cases[] = {
+static const IntShiftCase right_cases[] = {
   { "right1_bit",        SRA1, SRE1, 1, 1, 1 },
   { "right2_carry",      SRA2, SRE2, 2, 1, 1 },
   { "right3_limb_align", SRA3, SRE3, 2, 1, 64 },
@@ -95,12 +95,12 @@ START_TEST(test_right_shift)
 }
 END_TEST
 
-Suite *right_shift_suite()
+Suite *MP_TEST_int_right_shift_suite()
 {
   Suite *s = suite_create("right_shift");
   TCase *tc = tcase_create("right_shift");
 
-  constexpr int n = sizeof(right_cases)/sizeof(ShiftCase);
+  constexpr int n = sizeof(right_cases)/sizeof(IntShiftCase);
   tcase_add_loop_test(tc, test_right_shift, 0, n);
 
   suite_add_tcase(s, tc);

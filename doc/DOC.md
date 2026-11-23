@@ -1,33 +1,7 @@
 
 ## Core Types
-```C
-typedef _BitInt(128)          int128_t;
-typedef _BitInt(256)          int256_t;
-typedef unsigned _BitInt(128) uint128_t;
-typedef unsigned _BitInt(256) uint256_t;
 
-typedef uint64_t  lmp_limb_t;
-typedef uint32_t  lmp_half_limb_t;
-typedef uint128_t lmp_double_limb_t;
-typedef uint256_t lmp_quarter_limb_t;
-```
-The fundamental integer type is aligned to GNU's mpz:
-```C
-typedef struct MP_INT {
-  int32_t     alloc;   // abs(alloc) = limb capacity; negative = fixed capacity
-  int32_t     size;    // signed number of limbs in use
-  lmp_limb_t *limbs;   // little-endian limb array
-} MP_INT;
-```
-The floating-point / decimal type is:
-```C
-typedef struct MP_FLOAT {
-  int32_t     prec;    // limb capacity; negative = fixed capacity
-  int32_t     size;    // signed magnitude size; 0 = special value
-  int64_t     exp;     // exponent (base LMP_LIMB_VAL for FLOAT, base 10 for DECIMAL)
-  lmp_limb_t *limbs;   // little-endian limb array
-} MP_FLOAT, MP_DECIMAL;
-```
+See [lmp.h](include/LMP/lmp.h)
 
 ## Type and Standard
 

@@ -38,7 +38,6 @@ typedef struct {
   const lmp_limb_t *limbs;
 } PrintCase;
 
-#define abs(a)             ((a) > (0) ? (a) : -(a))
 static void run_print_case(const PrintCase *c) {
   char str[1024] = {};
   const MP_BASE_NUMBER NUMBER = {.prec = -64, .size = c->size, .limbs = (lmp_limb_t *)c->limbs};

@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
+ * Module Name: test/testcases/int
  * Filename: left_shift.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
@@ -35,9 +35,9 @@ typedef struct {
   int32_t           a_len;
   int32_t           e_len;
   int32_t           shift;
-} ShiftCase;
+} IntShiftCase;
 
-static void run_left_shift_case(const ShiftCase *c)
+static void run_left_shift_case(const IntShiftCase *c)
 {
 
   lmp_limb_t buf[64] = {};
@@ -76,7 +76,7 @@ static const lmp_limb_t SLE5[] = { (LMP_LIMB_MAX << 4), 15 };
 static const lmp_limb_t SLA6[] = { 1, 2, 3 };
 static const lmp_limb_t SLE6[] = { (1ULL << 63), 0, (1ULL << 63) + 1, 1};
 
-static const ShiftCase left_cases[] = {
+static const IntShiftCase left_cases[] = {
   { "left1_bit",        SLA1, SLE1, 1, 1, 1 },
   { "left2_carry",      SLA2, SLE2, 1, 2, 1 },
   { "left3_zero",       SLA3, SLE3, 0, 0, 100 },
@@ -91,12 +91,12 @@ START_TEST(test_left_shift)
 }
 END_TEST
 
-Suite *left_shift_suite()
+Suite *MP_TEST_int_left_shift_suite()
 {
   Suite *s = suite_create("left_shift");
   TCase *tc = tcase_create("left_shift");
 
-  constexpr int n = sizeof(left_cases)/sizeof(ShiftCase);
+  constexpr int n = sizeof(left_cases)/sizeof(IntShiftCase);
   tcase_add_loop_test(tc, test_left_shift, 0, n);
 
   suite_add_tcase(s, tc);

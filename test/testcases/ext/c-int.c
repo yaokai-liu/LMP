@@ -94,7 +94,7 @@ static void run_i64_case(const I64Case *c)
   ck_assert_msg(result == c->expected_result,
                 "%s: exec result %u != expected %u", c->name, result, c->expected_result);
   ck_assert_msg(value == c->expected_value,
-                "%s: value %lld != expected %lld", c->name, value, c->expected_value);
+                "%s: value %"PRIi64" != expected %"PRIi64"", c->name, value, c->expected_value);
 }
 static void run_i128_case(const I128Case *c)
 {
@@ -106,7 +106,7 @@ static void run_i128_case(const I128Case *c)
   ck_assert_msg(result == c->expected_result,
                 "%s: exec result %u != expected %u", c->name, result, c->expected_result);
   ck_assert_msg(value == c->expected_value,
-                "%s: value %llX%llX != expected %llX%llX", c->name, (int64_t)(value >> 64), (uint64_t)value,
+                "%s: value %"PRIx64"%"PRIx64" != expected %"PRIx64"%"PRIx64"", c->name, (int64_t)(value >> 64), (uint64_t)value,
                 (int64_t)(c->expected_value >> 64), (uint64_t)c->expected_value);
 }
 
@@ -144,7 +144,7 @@ static void run_u128_case(const U128Case *c)
   ck_assert_msg(result == c->expected_result,
                 "%s: exec result %u != expected %u", c->name, result, c->expected_result);
   ck_assert_msg(value == c->expected_value,
-                "%s: value %llX%llX != expected %llX%llX", c->name, (int64_t)(value >> 64), (uint64_t)value,
+                "%s: value %"PRIx64"%"PRIx64" != expected %"PRIx64"%"PRIx64"", c->name, (int64_t)(value >> 64), (uint64_t)value,
                 (int64_t)(c->expected_value >> 64), (uint64_t)c->expected_value);
 }
 

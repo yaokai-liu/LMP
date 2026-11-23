@@ -24,9 +24,7 @@
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
-#define _CRTDBG_MAP_ALLOC          // 必须放在最前面
-#include <stdlib.h>
-#include <crtdbg.h>
+
 #include <inttypes.h>
 #include <stdio.h>
 #include "lmp.h"
@@ -35,7 +33,6 @@
 #define abs(a) ((a) > (0) ? (a) : -(a))
 
 int main () {
-  _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF | _CRTDBG_CHECK_ALWAYS_DF);
   // MP_NUM_TYPE num_type = {};
   // lmp_limb_t limbs[8] = {};
   // MP_BASE_NUMBER number = { .prec = -8, .size = 0, .limbs = limbs };

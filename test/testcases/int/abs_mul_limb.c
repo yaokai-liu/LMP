@@ -18,8 +18,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
- * Filename: abs_mul_u64.c
+ * Module Name: test/testcases/int
+ * Filename: abs_mul_limb.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
@@ -35,9 +35,9 @@ typedef struct {
   int32_t           a_len;
   int32_t           e_len;
   uint64_t          val;
-} MulU64Case;
+} IntMulLimbCase;
 
-static void run_mul_u64_case(const MulU64Case *c)
+static void run_mul_limb_case(const IntMulLimbCase *c)
 {
   lmp_limb_t dest_limbs[64] = {};
   ck_assert((size_t)c->a_len + 2 <= sizeof(dest_limbs) / sizeof(dest_limbs[0]));
@@ -93,7 +93,7 @@ static const lmp_limb_t ME10[] = { 0, 1 };
 static const lmp_limb_t MA11[] = { 2, 1 };
 static const lmp_limb_t ME11[] = { LMP_LIMB_MAX - 1, 0, 1 };
 
-static const MulU64Case abs_mul_u64_cases[] = {
+static const IntMulLimbCase abs_mul_limb_cases[] = {
   { "mul1_simple",      MA1,  ME1,  1, 1, 1 },
   { "mul2_no_carry",    MA2,  ME2,  1, 1, 1000 },
   { "mul3_carry",       MA3,  ME3,  1, 2, 2 },
@@ -107,19 +107,19 @@ static const MulU64Case abs_mul_u64_cases[] = {
   { "mul11_carry_mid",  MA11, ME11, 2, 3, LMP_LIMB_MAX },
 };
 
-START_TEST(test_abs_mul_u64)
+START_TEST(test_abs_mul_limb)
 {
-  run_mul_u64_case(&abs_mul_u64_cases[_i]);
+  run_mul_limb_case(&abs_mul_limb_cases[_i]);
 }
 END_TEST
 
-Suite *abs_mul_u64_suite()
+Suite *MP_TEST_int_abs_mul_limb_suite()
 {
-  Suite *s = suite_create("abs_mul_u64");
-  TCase *tc = tcase_create("abs_mul_u64");
+  Suite *s = suite_create("abs_mul_limb");
+  TCase *tc = tcase_create("abs_mul_limb");
 
-  constexpr int n = sizeof(abs_mul_u64_cases)/sizeof(MulU64Case);
-  tcase_add_loop_test(tc, test_abs_mul_u64, 0, n);
+  constexpr int n = sizeof(abs_mul_limb_cases)/sizeof(IntMulLimbCase);
+  tcase_add_loop_test(tc, test_abs_mul_limb, 0, n);
 
   suite_add_tcase(s, tc);
   return s;

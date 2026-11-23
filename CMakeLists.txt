@@ -58,6 +58,24 @@ if (BUILD_TESTING)
     target_compile_options(${TARGET_PREFIX}test PRIVATE "--coverage")
     target_link_options(${TARGET_PREFIX}test PRIVATE "--coverage")
     add_test(NAME MyUnitTests COMMAND ${TARGET_PREFIX}test)
+
+    find_program(LCOV_PATH lcov)
+    find_program(GENHTML_PATH genhtml)
+    if(LCOV_PATH AND GENHTML_PATH)
+        add_custom_target(coverage
+            COMMAND ${LCOV_PATH} --directory . --zerocounters
+            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
+            COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage.info
+            COMMAND ${LCOV_PATH} --remove coverage.info --output-file coverage_filtered.info
+            COMMAND ${GENHTML_PATH} coverage_filtered.info --output-directory coverage_html
+            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+            COMMENT "Generating coverage report with lcov..."
+            VERBATIM
+        )
+        add_dependencies(coverage ${TARGET_PREFIX}test)
+    else()
+        message(WARNING "lcov / genhtml not found, coverage target disabled")
+    endif()
 endif ()
 
 add_executable(${TARGET_PREFIX}debug test/debug.c)

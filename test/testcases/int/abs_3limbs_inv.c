@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
+ * Module Name: test/testcases/int
  * Filename: abs_3limbs_inv.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
@@ -32,16 +32,16 @@ typedef struct {
   const char       *name;
   lmp_double_limb_t divisor;
   lmp_limb_t        expect;
-} Inv3Case;
+} IntInv3Case;
 
-static void run_add_case(const Inv3Case *c)
+static void run_add_case(const IntInv3Case *c)
 {
   const lmp_limb_t res = MP_INT_abs_3limbs_inv(c->divisor);
   ck_assert_msg(res == c->expect, "%s: 3limbs inverse %"PRI_LIMB" != %"PRI_LIMB, c->name, res, c->expect);
 }
 
 
-static const Inv3Case inv_cases[] = {
+static const IntInv3Case inv_cases[] = {
   {
     "inv3_one_limb_1",
     (((lmp_double_limb_t)10512282028032306483ULL) << LMP_LIMB_BIT | 2678291321200806564ULL),
@@ -78,7 +78,7 @@ Suite *abs_3limbs_inv_suite()
   Suite *s = suite_create("abs_sub_offset");
   TCase *tc = tcase_create("abs_3limbs_inv");
 
-  constexpr int n = sizeof(inv_cases)/sizeof(Inv3Case);
+  constexpr int n = sizeof(inv_cases)/sizeof(IntInv3Case);
   tcase_add_loop_test(tc, test_abs_3limbs_inv, 0, n);
 
   suite_add_tcase(s, tc);

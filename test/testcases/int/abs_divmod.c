@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
+ * Module Name: test/testcases/int
  * Filename: abs_divmod.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-18
@@ -39,9 +39,9 @@ typedef struct {
   int32_t           b_len;
   int32_t           eq_len;
   int32_t           er_len;
-} DivmodCase;
+} IntDivmodCase;
 
-static void run_abs_divmod_case(const DivmodCase *c)
+static void run_abs_divmod_case(const IntDivmodCase *c)
 {
   lmp_limb_t a_limbs[64] = {};
   lmp_limb_t b_limbs[64] = {};
@@ -217,7 +217,7 @@ static const lmp_limb_t b20[] = { 0x39509fc63d0f5485ULL, 0xb3afe2e942856305ULL, 
 static const lmp_limb_t q20[] = { 0x4a0ULL };
 static const lmp_limb_t r20[] = { 0xe53d0041db8aef4dULL, 0xf00e22da0f178c7bULL, 0x77140026bb0b67bbULL, 0x364b2db098102a2ULL, 0x3308049f13dd0b01ULL, 0x6be37f8ba22fadfULL, 0xfb86d414b5363f63ULL, 0x632058e6883e7ULL };
 
-static const DivmodCase abs_divmod_cases[] = {
+static const IntDivmodCase abs_divmod_cases[] = {
   { "7/3",     a1, b1, q1, r1, 1, 1, 1, 1 },
   { "5/9",     a2, b2, q2, r2, 1, 1, 0, 1 },
   { "(2^64*1+...)/...", a3, b3, q3, r3, 2, 1, 1, 1 },
@@ -248,12 +248,12 @@ START_TEST(test_abs_divmod)
 }
 END_TEST
 
-Suite *abs_divmod_suite()
+Suite *MP_TEST_int_abs_divmod_suite()
 {
   Suite *s = suite_create("abs_divmod");
   TCase *tc = tcase_create("abs_divmod");
 
-  constexpr int n = sizeof(abs_divmod_cases)/sizeof(DivmodCase);
+  constexpr int n = sizeof(abs_divmod_cases)/sizeof(IntDivmodCase);
   tcase_add_loop_test(tc, test_abs_divmod, 0, n);
 
   suite_add_tcase(s, tc);

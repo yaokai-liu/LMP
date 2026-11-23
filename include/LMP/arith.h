@@ -114,6 +114,7 @@ _SHARED_API void MP_INT_add(MP_INT *rop, const MP_INT *op1, const MP_INT * op2, 
 _SHARED_API void MP_INT_sub(MP_INT *rop, const MP_INT *op1, const MP_INT * restrict op2, const Allocator *allocator);
 
 // dividend as remainder
+// Always assume abs(quotient->prec) large enough
 _SHARED_API void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
                    MP_INT *restrict quotient, const Allocator *allocator);
 // No truncating
@@ -130,7 +131,7 @@ _SHARED_API void MP_FLOAT_add(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT
 _SHARED_API void MP_FLOAT_sub(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * restrict op2, const Allocator *allocator);
 // Truncating
 // dividend as remainder
-// Always assume abs(rop->prec) large enough
+// Always assume abs(prec->prec) large enough
 // Precision follow the quotient->prec and not change the quotient->prec.
 _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *restrict divisor,
                                  MP_FLOAT *restrict quotient, const Allocator *allocator);

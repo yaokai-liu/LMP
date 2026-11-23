@@ -18,8 +18,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
- * Filename: abs_sub.c
+ * Module Name: test/testcases/int
+ * Filename: abs_sub_offset.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
@@ -38,9 +38,9 @@ typedef struct {
   int32_t           b_len;
   int32_t           e_len;
   int32_t           offset;
-} SubCase;
+} IntSubCase;
 
-static void run_sub_case(const SubCase *c)
+static void run_sub_case(const IntSubCase *c)
 {
   lmp_limb_t RES_limbs[(c->a_len > c->b_len ? c->a_len : c->b_len) + c->offset + 1] = {};
 
@@ -93,7 +93,7 @@ static const lmp_limb_t SA8[] = { 0, 0, 2 };
 static const lmp_limb_t SB8[] = { 1, 1 };
 static const lmp_limb_t SE8[] = { 0, LMP_LIMB_MAX };
 
-static const SubCase sub_cases[] = {
+static const IntSubCase sub_cases[] = {
   { "case1_simple",         SA1, SB1, SE1, 1, 1, 1, 0 },
   { "case2_multi_limb",     SA2, SB2, SE2, 2, 2, 1, 0 },
   { "case3_borrow_chain",   SA3, SB3, SE3, 2, 2, 1, 0 },
@@ -110,12 +110,12 @@ START_TEST(test_abs_sub_offset)
 }
 END_TEST
 
-Suite *abs_sub_offset_suite()
+Suite *MP_TEST_int_abs_sub_offset_suite()
 {
   Suite *s = suite_create("abs_sub_offset");
   TCase *tc = tcase_create("abs_sub_offset");
 
-  constexpr int n = sizeof(sub_cases)/sizeof(SubCase);
+  constexpr int n = sizeof(sub_cases)/sizeof(IntSubCase);
   tcase_add_loop_test(tc, test_abs_sub_offset, 0, n);
 
   suite_add_tcase(s, tc);

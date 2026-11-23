@@ -60,7 +60,7 @@ static void run_parse_case(const ParseCase *c) {
   ck_assert_msg(NUMBER.size == c->expected_size,
                 "%s: result size %"PRI_SIZE" != (expected) %"PRI_SIZE, c->name, NUMBER.size, c->expected_size);
   ck_assert_msg(NUMBER.exp == c->expected_exp,
-                "%s: result exponet %lld != (expected) %lld", c->name, NUMBER.exp, c->expected_exp);
+                "%s: result exponet %"PRI_EXP" != (expected) %"PRI_EXP"", c->name, NUMBER.exp, c->expected_exp);
   for (int32_t i = 0; i < abs(c->expected_size); i++) {
     ck_assert_msg(NUMBER.limbs[i] == c->expected_limbs[i],
                   "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB, c->name, i, NUMBER.limbs[i], c->expected_limbs[i]);

@@ -34,24 +34,24 @@
 int main()
 {
   SRunner *sr = srunner_create(nullptr);
-  srunner_add_suite(sr, abs_add_offset_suite());
-  srunner_add_suite(sr, abs_sub_offset_suite());
-  srunner_add_suite(sr, left_shift_suite());
-  srunner_add_suite(sr, right_shift_suite());
-  srunner_add_suite(sr, abs_mul_u64_suite());
-  srunner_add_suite(sr, abs_add_u64_suite());
-  srunner_add_suite(sr, abs_sub_u64_suite());
-  srunner_add_suite(sr, abs_mul_suite());
-  srunner_add_suite(sr, mp_int_misc_suite());
-  srunner_add_suite(sr, cmp_suite());
-  srunner_add_suite(sr, abs_3limbs_inv_suite());
-  srunner_add_suite(sr, abs_divmod_suite());
+  srunner_add_suite(sr, MP_TEST_int_abs_add_offset_suite());
+  srunner_add_suite(sr, MP_TEST_int_abs_sub_offset_suite());
+  srunner_add_suite(sr, MP_TEST_int_left_shift_suite());
+  srunner_add_suite(sr, MP_TEST_int_right_shift_suite());
+  srunner_add_suite(sr, MP_TEST_int_abs_mul_limb_suite());
+  srunner_add_suite(sr, MP_TEST_int_abs_add_limb_suite());
+  srunner_add_suite(sr, MP_TEST_int_abs_sub_limb_suite());
+  srunner_add_suite(sr, MP_TEST_int_abs_mul_suite());
+  srunner_add_suite(sr, MP_TEST_int_mp_int_misc_suite());
+  srunner_add_suite(sr, MP_TEST_int_cmp_suite());
+  srunner_add_suite(sr, MP_TEST_int_abs_divmod_suite());
 
   srunner_add_suite(sr, parse_suite());
   srunner_add_suite(sr, print_suite());
 
   srunner_add_suite(sr, ieee754_suite());
   srunner_add_suite(sr, c_int_suite());
+  srunner_add_suite(sr, abs_3limbs_inv_suite());
 
   srunner_set_fork_status(sr, CK_NOFORK);
   srunner_run_all(sr, CK_NORMAL);

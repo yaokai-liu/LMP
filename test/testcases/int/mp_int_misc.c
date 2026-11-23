@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
+ * Module Name: test/testcases/int
  * Filename: mp_int_misc.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
@@ -105,7 +105,7 @@ START_TEST(test_MP_INT_6) {
 END_TEST
 
 
-Suite *mp_int_misc_suite()
+Suite *MP_TEST_int_mp_int_misc_suite()
 {
   Suite *s = suite_create("abs_sub_offset");
   TCase *tc = tcase_create("mp_type_all");

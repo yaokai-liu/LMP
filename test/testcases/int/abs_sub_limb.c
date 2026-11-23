@@ -18,8 +18,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
- * Filename: abs_sub_u64.c
+ * Module Name: test/testcases/int
+ * Filename: abs_sub_limb.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
@@ -36,9 +36,9 @@ typedef struct {
   int32_t           a_len;
   int32_t           e_len;
   uint64_t          val;
-} SubU64Case;
+} IntSubLimbCase;
 
-static void run_sub_u64_case(const SubU64Case *c)
+static void run_sub_limb_case(const IntSubLimbCase *c)
 {
   lmp_limb_t dest_limbs[64] = {};
   ck_assert((size_t)c->a_len + 2 <= sizeof(dest_limbs) / sizeof(dest_limbs[0]));
@@ -100,7 +100,7 @@ static const lmp_limb_t SE11[] = { 0 };
 static const lmp_limb_t SA12[] = { 0, 5 };
 static const lmp_limb_t SE12[] = { LMP_LIMB_MAX - 1, 4 };
 
-static const SubU64Case abs_sub_u64_cases[] = {
+static const IntSubLimbCase abs_sub_limb_cases[] = {
   { "sub1_simple",        SA1,  SE1,  1, 1, 1 },
   { "sub2_no_borrow",     SA2,  SE2,  1, 1, 1000 },
   { "sub3_borrow",        SA3,  SE3,  2, 1, 1 },
@@ -116,19 +116,19 @@ static const SubU64Case abs_sub_u64_cases[] = {
 };
 
 
-START_TEST(test_abs_sub_u64)
+START_TEST(test_abs_sub_limb)
 {
-  run_sub_u64_case(&abs_sub_u64_cases[_i]);
+  run_sub_limb_case(&abs_sub_limb_cases[_i]);
 }
 END_TEST
 
-Suite *abs_sub_u64_suite()
+Suite *MP_TEST_int_abs_sub_limb_suite()
 {
-  Suite *s = suite_create("abs_sub_u64");
-  TCase *tc = tcase_create("abs_sub_u64");
+  Suite *s = suite_create("abs_sub_limb");
+  TCase *tc = tcase_create("abs_sub_limb");
 
-  constexpr int n = sizeof(abs_sub_u64_cases)/sizeof(SubU64Case);
-  tcase_add_loop_test(tc, test_abs_sub_u64, 0, n);
+  constexpr int n = sizeof(abs_sub_limb_cases)/sizeof(IntSubLimbCase);
+  tcase_add_loop_test(tc, test_abs_sub_limb, 0, n);
 
   suite_add_tcase(s, tc);
   return s;

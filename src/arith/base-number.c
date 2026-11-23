@@ -328,8 +328,8 @@ void MP_BASE_INT_abs_divmod(MP_BASE_NUMBER *restrict dividend,const MP_BASE_NUMB
   MP_BASE_NUMBER_realloc(quotient, size_quotient, allocator);
   quotient->size = size_quotient;
 
-  MP_BASE_NUMBER interval = {};
-  MP_BASE_INT_init(&interval, size_divisor + 1, allocator);
+  MP_BASE_NUMBER INTERVAL = {};
+  MP_BASE_INT_init(&INTERVAL, size_divisor + 1, allocator);
   if (overflow) {
     const lmp_double_limb_t n = MP_BASE_NUMBER_left_shift_load_double(dividend, -1, d_leading_zeros);
     lmp_limb_t q = n / d_high;
@@ -339,12 +339,12 @@ void MP_BASE_INT_abs_divmod(MP_BASE_NUMBER *restrict dividend,const MP_BASE_NUMB
     const lmp_double_limb_t n_hat_tail = n_hat_mid * dividend->BASE.limb_val + (lmp_double_limb_t)q * d_tail;
     const lmp_double_limb_t n_tail = n * dividend->BASE.limb_val + MP_BASE_NUMBER_left_shift_load(dividend, -2, d_leading_zeros);
     if (n_hat_high > n_high || (n_hat_high == n_high && n_hat_tail > n_tail)) { q -= 1; }
-    MP_BASE_INT_abs_mul_limb(&interval, divisor, q, allocator);
-    if (!MP_BASE_INT_abs_offset_ge(dividend, &interval, size_quotient - 1)) {
-      MP_BASE_INT_abs_sub_offset(&interval, &interval, divisor, 0, allocator);
+    MP_BASE_INT_abs_mul_limb(&INTERVAL, divisor, q, allocator);
+    if (!MP_BASE_INT_abs_offset_ge(dividend, &INTERVAL, size_quotient - 1)) {
+      MP_BASE_INT_abs_sub_offset(&INTERVAL, &INTERVAL, divisor, 0, allocator);
       q --;
     }
-    MP_BASE_INT_abs_sub_offset(dividend, dividend, &interval, size_quotient - 1, allocator);
+    MP_BASE_INT_abs_sub_offset(dividend, dividend, &INTERVAL, size_quotient - 1, allocator);
     quotient->limbs[size_quotient - 1] = q;
   }
   for (int32_t i = overflow; i < size_quotient; i++) {
@@ -370,15 +370,15 @@ void MP_BASE_INT_abs_divmod(MP_BASE_NUMBER *restrict dividend,const MP_BASE_NUMB
     if (n_hat_high > n_high || (n_hat_high == n_high && n_hat_tail > n_tail)) { q -= 1; }
     if (q == 0 && MP_BASE_INT_abs_offset_ge(dividend, divisor, curr_q_idx)) { q += 1; }
 
-    MP_BASE_INT_abs_mul_limb(&interval, divisor, q, allocator);
-    if (!MP_BASE_INT_abs_offset_ge(dividend, &interval, curr_q_idx)) {
-      MP_BASE_INT_abs_sub_offset(&interval, &interval, divisor, 0, allocator);
+    MP_BASE_INT_abs_mul_limb(&INTERVAL, divisor, q, allocator);
+    if (!MP_BASE_INT_abs_offset_ge(dividend, &INTERVAL, curr_q_idx)) {
+      MP_BASE_INT_abs_sub_offset(&INTERVAL, &INTERVAL, divisor, 0, allocator);
       q -= 1;
     }
-    MP_BASE_INT_abs_sub_offset(dividend, dividend, &interval, curr_q_idx, allocator);
+    MP_BASE_INT_abs_sub_offset(dividend, dividend, &INTERVAL, curr_q_idx, allocator);
     MP_BASE_INT_clamp(dividend);
 
     quotient->limbs[curr_q_idx] = q;
   }
-  MP_BASE_NUMBER_clear(&interval, allocator);
+  MP_BASE_NUMBER_clear(&INTERVAL, allocator);
 }

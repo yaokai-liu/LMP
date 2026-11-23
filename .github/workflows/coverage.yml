@@ -1,0 +1,48 @@
+name: Coverage
+on:
+  push:
+    branches: [ LIU ]
+  pull_request:
+    branches: [ LIU ]
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lcov gcovr
+      - name: Configure CMake
+        run: |
+          cmake -B build \
+            -DENABLE_COVERAGE=ON \
+            -DCMAKE_BUILD_TYPE=Debug
+      - name: Build
+        run: cmake --build build -j$(nproc)
+      - name: Run tests & generate coverage
+        run: |
+          cd build
+          ctest --output-on-failure || true
+          lcov --directory . --capture --output-file coverage.info --ignore-errors mismatch,gcov
+          lcov --remove coverage.info \
+            --output-file coverage_filtered.info
+          lcov --summary coverage_filtered.info > coverage_summary.txt
+          LINE_COV=$(lcov --summary coverage_filtered.info 2>&1 | grep lines | grep -oP '\d+\.\d+(?=%)' | head -1)
+          echo "LINE_COV=${LINE_COV}" >> $GITHUB_ENV
+          echo "Coverage: ${LINE_COV}%"
+      - name: Generate HTML report
+        run: |
+          cd build
+          genhtml coverage_filtered.info --output-directory coverage_html
+      - name: Upload coverage HTML
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build/coverage_html
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: build/coverage_filtered.info
+          fail_ci_if_error: false

@@ -18,8 +18,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
- * Filename: abs_mul_u64.c
+ * Module Name: test/testcases/int
+ * Filename: abs_add_limb.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
@@ -36,9 +36,9 @@ typedef struct {
   int32_t           a_len;
   int32_t           e_len;
   uint64_t          val;
-} AddU64Case;
+} IntAddLimbCase;
 
-static void run_add_u64_case(const AddU64Case *c)
+static void run_add_limb_case(const IntAddLimbCase *c)
 {
   lmp_limb_t dest_limbs[64] = {};
   ck_assert((size_t)c->a_len + 2 <= sizeof(dest_limbs) / sizeof(dest_limbs[0]));
@@ -95,7 +95,7 @@ static const lmp_limb_t AA11[] = { LMP_LIMB_MAX,
                                    LMP_LIMB_MAX };
 static const lmp_limb_t AE11[] = { 0, 0, 0, 1 };
 
-static const AddU64Case abs_add_u64_cases[] = {
+static const IntAddLimbCase abs_add_limb_cases[] = {
   { "add1_simple",      AA1,  AE1,  1, 1, 1 },
   { "add2_no_carry",    AA2,  AE2,  1, 1, 1000 },
   { "add3_carry",       AA3,  AE3,  1, 2, 1 },
@@ -109,19 +109,19 @@ static const AddU64Case abs_add_u64_cases[] = {
   { "add11_triple",     AA11, AE11, 3, 4, 1 },
 };
 
-START_TEST(test_abs_add_u64)
+START_TEST(test_abs_add_limb)
 {
-  run_add_u64_case(&abs_add_u64_cases[_i]);
+  run_add_limb_case(&abs_add_limb_cases[_i]);
 }
 END_TEST
 
-Suite *abs_add_u64_suite()
+Suite *MP_TEST_int_abs_add_limb_suite()
 {
-  Suite *s = suite_create("abs_add_u64");
-  TCase *tc = tcase_create("abs_add_u64");
+  Suite *s = suite_create("abs_add_limb");
+  TCase *tc = tcase_create("abs_add_limb");
 
-  constexpr int n = sizeof(abs_add_u64_cases)/sizeof(AddU64Case);
-  tcase_add_loop_test(tc, test_abs_add_u64, 0, n);
+  constexpr int n = sizeof(abs_add_limb_cases)/sizeof(IntAddLimbCase);
+  tcase_add_loop_test(tc, test_abs_add_limb, 0, n);
 
   suite_add_tcase(s, tc);
   return s;

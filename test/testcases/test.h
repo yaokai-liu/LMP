@@ -38,24 +38,31 @@
 #define min(a, b)          ((a) < (b) ? (a) : (b))
 #define abs(a)             ((a) > (0) ? (a) : -(a))
 
-#define PRI_PREC  PRIi32
-#define PRI_SIZE  PRIi32
-#define PRI_LIMB  PRIu64
-#define PRI_EXP   PRIi64
-#define PRI_HALF_LIMB  PRIu32
+#define PRI_PREC        PRIi32
+#define PRI_SIZE        PRIi32
+#define PRI_LIMB        PRIu64
+#define PRI_EXP         PRIi64
+#define PRI_HALF_LIMB   PRIu32
 
-Suite *abs_add_offset_suite();
-Suite *abs_sub_offset_suite();
-Suite *left_shift_suite();
-Suite *right_shift_suite();
-Suite *abs_mul_u64_suite();
-Suite *abs_add_u64_suite();
-Suite *abs_sub_u64_suite();
-Suite *abs_mul_suite();
-Suite *mp_int_misc_suite();
-Suite *cmp_suite();
+Suite *MP_TEST_int_abs_add_offset_suite();
+Suite *MP_TEST_int_abs_sub_offset_suite();
+Suite *MP_TEST_int_left_shift_suite();
+Suite *MP_TEST_int_right_shift_suite();
+Suite *MP_TEST_int_abs_mul_limb_suite();
+Suite *MP_TEST_int_abs_add_limb_suite();
+Suite *MP_TEST_int_abs_sub_limb_suite();
+Suite *MP_TEST_int_abs_mul_suite();
+Suite *MP_TEST_int_mp_int_misc_suite();
+Suite *MP_TEST_int_cmp_suite();
+Suite *MP_TEST_int_abs_divmod_suite();
+
 Suite *abs_3limbs_inv_suite();
-Suite *abs_divmod_suite();
+
+Suite *MP_TEST_float_cmp_suite();
+Suite *MP_TEST_float_add_suite();
+Suite *MP_TEST_float_sub_suite();
+Suite *MP_TEST_float_mul_suite();
+Suite *MP_TEST_float_divmod_suite();
 
 Suite *parse_suite();
 Suite *print_suite();

@@ -18,8 +18,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
- * Filename: cmp.c
+ * Module Name: test/testcases/int
+ * Filename: abs_cmp.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
@@ -35,19 +35,19 @@ typedef struct {
   const lmp_limb_t *b;
   int32_t           a_len;
   int32_t           b_len;
-  int32_t           expect;
-} CmpCase;
+  int32_t           expected;
+} IntCmpCase;
 
-static void run_cmp_case(const CmpCase *c)
+static void run_cmp_case(const IntCmpCase *c)
 {
   MP_INT A = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
   MP_INT B = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
 
   int32_t got = MP_INT_abs_cmp(&A, &B);
 
-  ck_assert_msg(got == c->expect,
-                "%s: MP_INT_abs_cmp returned %"PRI_SIZE", expected %"PRI_SIZE,
-                c->name, got, c->expect);
+  ck_assert_msg(got == c->expected,
+                "%s: MP_INT_abs_cmp returned %"PRIi32", expected %"PRIi32,
+                c->name, got, c->expected);
 }
 
 static const lmp_limb_t CA1[] = { 1 };
@@ -98,7 +98,7 @@ static const lmp_limb_t CB15[] = { 4, 9, 9 };
 static const lmp_limb_t CA16[] = { 4, 9, 9 };
 static const lmp_limb_t CB16[] = { 5, 9, 9 };
 
-static const CmpCase cmp_cases[] = {
+static const IntCmpCase cmp_cases[] = {
   { "cmp_1_lt_2",        CA1,  CB1,  1, 1, -1 },
   { "cmp_2_gt_1",        CA2,  CB2,  1, 1,  1 },
   { "cmp_7_eq_7",        CA3,  CB3,  1, 1,  0 },
@@ -123,12 +123,12 @@ START_TEST(test_cmp)
 }
 END_TEST
 
-Suite *cmp_suite()
+Suite *MP_TEST_int_cmp_suite()
 {
   Suite *s = suite_create("cmp");
   TCase *tc = tcase_create("cmp");
 
-  constexpr int n = sizeof(cmp_cases)/sizeof(CmpCase);
+  constexpr int n = sizeof(cmp_cases)/sizeof(IntCmpCase);
   tcase_add_loop_test(tc, test_cmp, 0, n);
 
   suite_add_tcase(s, tc);

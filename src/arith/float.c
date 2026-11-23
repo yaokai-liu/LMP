@@ -280,18 +280,18 @@ inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLO
   MP_FLOAT_realloc(quotient, size_quotient, allocator);
   quotient->size = size_quotient;
 
-  MP_INT interval = {};
-  MP_INT_init(&interval, size_divisor + 1, allocator);
+  MP_INT INTERVAL = {};
+  MP_INT_init(&INTERVAL, size_divisor + 1, allocator);
   if (overflow) {
     const lmp_double_limb_t dividend_head = MP_INT_left_shift_load_double((MP_INT *)dividend, -1, d_leading_zeros);
     const lmp_double_limb_t dividend_foll = MP_INT_left_shift_load((MP_INT *)dividend, -2, d_leading_zeros);
     lmp_limb_t q = lmp_fast_quotient(dividend_head, dividend_foll, d);
-    MP_INT_abs_mul_limb(&interval, (MP_INT *)divisor, q, allocator);
-    if (!MP_INT_abs_offset_ge((MP_INT *)dividend, &interval, size_quotient - 1)) {
-      MP_INT_abs_sub_offset(&interval, &interval, (MP_INT *)divisor, 0, allocator);
+    MP_INT_abs_mul_limb(&INTERVAL, (MP_INT *)divisor, q, allocator);
+    if (!MP_INT_abs_offset_ge((MP_INT *)dividend, &INTERVAL, size_quotient - 1)) {
+      MP_INT_abs_sub_offset(&INTERVAL, &INTERVAL, (MP_INT *)divisor, 0, allocator);
       q --;
     }
-    MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, &interval, size_quotient - 1, allocator);
+    MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, &INTERVAL, size_quotient - 1, allocator);
     quotient->limbs[size_quotient - 1] = q;
   }
   for (int32_t i = overflow; i < size_quotient; i++) {
@@ -311,17 +311,86 @@ inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLO
     lmp_limb_t q = lmp_fast_quotient(dividend_head, dividend_foll, d);
     if (q == 0 && MP_INT_abs_offset_ge((MP_INT *)dividend, (MP_INT *)divisor, curr_q_idx)) { q += 1; }
 
-    MP_INT_abs_mul_limb(&interval, (MP_INT *)divisor, q, allocator);
-    if (!MP_INT_abs_offset_ge((MP_INT *)dividend, &interval, curr_q_idx)) {
-      MP_INT_abs_sub_offset(&interval, &interval, (MP_INT *)divisor, 0, allocator);
+    MP_INT_abs_mul_limb(&INTERVAL, (MP_INT *)divisor, q, allocator);
+    if (!MP_INT_abs_offset_ge((MP_INT *)dividend, &INTERVAL, curr_q_idx)) {
+      MP_INT_abs_sub_offset(&INTERVAL, &INTERVAL, (MP_INT *)divisor, 0, allocator);
       q -= 1;
     }
-    MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, &interval, curr_q_idx, allocator);
+    MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, &INTERVAL, curr_q_idx, allocator);
     if (i < size_quotient - 1) { MP_INT_left_shift((MP_INT *)dividend, LMP_LIMB_BIT, allocator); }
     MP_INT_clamp((MP_INT *)dividend);
 
     quotient->limbs[curr_q_idx] = q;
   }
-  MP_INT_clear(&interval, allocator);
+  MP_INT_clear(&INTERVAL, allocator);
   quotient->exp = dividend->exp - divisor->exp - overflow;
+}
+
+_SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *restrict divisor,
+                                 MP_FLOAT *restrict quotient, const Allocator *allocator) {
+  if (divisor->size == 0) {
+    const lmp_exp_t sgn_dividend = sgn(dividend->exp);
+    const lmp_exp_t sgn_divisor  = sgn(divisor->exp);
+    const lmp_exp_t sgn_quotient = sgn_dividend * sgn_divisor;
+    switch (abs(divisor->exp)) {
+      case MP_NUMBER_ZERO:
+      case MP_NUMBER_NAN : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_NAN; return; }
+      case MP_NUMBER_INF : {
+        if (dividend->size == 0) {
+          switch (dividend->exp) {
+            case MP_NUMBER_ZERO: { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
+            case MP_NUMBER_INS : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
+            case MP_NUMBER_NAN :
+            case MP_NUMBER_INF :
+            default: { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_NAN; return; }
+          }
+        } else { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
+      }
+      case  MP_NUMBER_INS: {
+        if (dividend->size == 0) {
+          switch (dividend->exp) {
+            case MP_NUMBER_ZERO: { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
+            case MP_NUMBER_INF : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
+            case MP_NUMBER_NAN :
+            case MP_NUMBER_INS :
+            default: { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_NAN; return; }
+          }
+        } else { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INF; return; }
+      }
+      default: { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INF; return; }
+    }
+  }
+  const int32_t sgn_divisor = sgn(divisor->size);
+  if (dividend->size == 0) {
+    const lmp_exp_t sgn_dividend = sgn(dividend->exp);
+    const lmp_exp_t sgn_quotient = sgn_dividend * sgn_divisor;
+    switch (dividend->exp) {
+      case MP_NUMBER_ZERO: { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
+      case MP_NUMBER_INS : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
+      case MP_NUMBER_INF : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INF; return; }
+      case MP_NUMBER_NAN :
+      default: { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_NAN; return; }
+    }
+  }
+  const int32_t sgn_dividend = sgn(dividend->size);
+  const int32_t sgn_quotient = sgn_dividend * sgn_divisor;
+
+  MP_FLOAT_normal_abs_divmod(dividend, divisor, quotient, allocator);
+  if (sgn_dividend * sgn_divisor < 0 && dividend->size) {
+    const lmp_size_t size_quotient = abs(quotient->size);
+    if (MP_FLOAT_carry_check(quotient) && size_quotient == abs(quotient->prec)) {
+      for (lmp_size_t i = 1; i < size_quotient; i++){ quotient->limbs[i] = 0; }
+      quotient->exp += size_quotient;
+      quotient->size = sgn_quotient;
+      quotient->limbs[1] = 1;
+      return;
+    }
+    MP_FLOAT_mantissa_abs_add_limb(quotient, quotient, 1, allocator);
+    MP_FLOAT INTERVAL = {};
+    MP_FLOAT_init(&INTERVAL, abs(dividend->size), allocator);
+    MP_FLOAT_copy(&INTERVAL, dividend, allocator);
+    MP_FLOAT_normal_abs_sub(dividend, divisor, &INTERVAL, allocator);
+    dividend->size = sgn_dividend * dividend->size;
+  }
+  quotient->size = sgn_quotient * abs(quotient->size);
 }

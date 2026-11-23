@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  *
  * Project Name: LMP
- * Module Name: test/testcases
+ * Module Name: test/testcases/int
  * Filename: abs_mul.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
@@ -37,9 +37,9 @@ typedef struct {
   int32_t           a_len;
   int32_t           b_len;
   int32_t           e_len;
-} MulCase;
+} IntMulCase;
 
-static void run_mul_case(const MulCase *c)
+static void run_mul_case(const IntMulCase *c)
 {
   lmp_limb_t dest_limbs[64] = {};
   ck_assert((size_t)c->a_len + (size_t)c->b_len <=
@@ -107,7 +107,7 @@ static const lmp_limb_t MA11[] = { LMP_LIMB_MAX, LMP_LIMB_MAX };
 static const lmp_limb_t MB11[] = { LMP_LIMB_MAX, LMP_LIMB_MAX };
 static const lmp_limb_t ME11[] = { 1, 0, LMP_LIMB_MAX - 1, LMP_LIMB_MAX };
 
-static const MulCase abs_mul_cases[] = {
+static const IntMulCase abs_mul_cases[] = {
   { "mul1_simple",     MA1,  MB1,  ME1,  1, 1, 1 },
   { "mul2_small",      MA2,  MB2,  ME2,  1, 1, 1 },
   { "mul3_carry",      MA3,  MB3,  ME3,  1, 1, 2 },
@@ -128,12 +128,12 @@ START_TEST(test_abs_mul)
 }
 END_TEST
 
-Suite *abs_mul_suite()
+Suite *MP_TEST_int_abs_mul_suite()
 {
   Suite *s = suite_create("abs_mul");
   TCase *tc = tcase_create("abs_mul");
 
-  constexpr int n = sizeof(abs_mul_cases)/sizeof(MulCase);
+  constexpr int n = sizeof(abs_mul_cases)/sizeof(IntMulCase);
   tcase_add_loop_test(tc, test_abs_mul, 0, n);
 
   suite_add_tcase(s, tc);

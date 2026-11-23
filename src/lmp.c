@@ -170,6 +170,14 @@ inline lmp_double_limb_t MP_INT_get_double_limbs(const MP_INT *restrict num, con
   return (val2 << LMP_LIMB_BIT) | val1;
 }
 
+bool MP_INT_carry_check(const MP_INT *val) {
+  const lmp_size_t size = abs(val->size);
+  for (lmp_size_t i = 0; i < size; i++) {
+    if (val->limbs[i] <= LMP_LIMB_MAX) { return false; }
+  }
+  return true;
+}
+
 inline int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2) {
   const lmp_size_t size = max(abs(op1->size), abs(op2->size));
   for (int32_t i = size - 1; i >= 0; i --) {
@@ -243,6 +251,7 @@ void MP_FLOAT_truncate(MP_FLOAT *val, const lmp_prec_t prec) {
   if (!val->size) { return; }
   lmp_size_t size = abs(val->size);
   const lmp_size_t trun = size - prec;
+  if (trun < 0) { return; }
 
   for (int32_t i = trun; i < size; i ++) {
     val->limbs[i - trun] = val->limbs[i];
@@ -256,7 +265,7 @@ void MP_FLOAT_truncate(MP_FLOAT *val, const lmp_prec_t prec) {
   if (val->size == 0) { val->exp = MP_NUMBER_ZERO; }
 }
 
-inline void MP_FLOAT_trail(MP_FLOAT *val) {
+inline void MP_FLOAT_tidy(MP_FLOAT *val) {
   if (!val->size) { return; }
   lmp_size_t size = abs(val->size);
 
@@ -322,6 +331,15 @@ inline lmp_double_limb_t MP_BASE_NUMBER_left_shift_load_double(const MP_BASE_NUM
   limb3 = (limb3 * mul) % mp_val->BASE.limb_val + limb2 / div;
   limb2 = (limb2 * mul) % mp_val->BASE.limb_val + limb1 / div;
   return limb3 * mp_val->BASE.limb_val + limb2;
+}
+
+bool MP_BASE_INT_carry_check(const MP_BASE_NUMBER *val) {
+  if (val->BASE.limb_val == 0) { return MP_INT_carry_check((const MP_INT *)val); }
+  const lmp_size_t size = abs(val->size);
+  for (lmp_size_t i = 0; i < size; i++) {
+    if (val->limbs[i] < val->BASE.limb_val) { return false; }
+  }
+  return true;
 }
 
 void MP_BASE_INT_to_int(MP_INT *dest, const MP_BASE_NUMBER *src, const Allocator *allocator) {
@@ -519,7 +537,7 @@ void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const uin
   struct divmod_task *DIVMOD_TASK_QUEUE = allocator->calloc(level_count + 2, sizeof(struct divmod_task));
   DIVMOD_TASK_QUEUE[divmod_task_count].limbs = copy_val.limbs;
   DIVMOD_TASK_QUEUE[divmod_task_count].size = copy_val.size;
-  DIVMOD_TASK_QUEUE[divmod_task_count].level = level_count - 1;
+  DIVMOD_TASK_QUEUE[divmod_task_count].level = (int32_t)(level_count - 1);
   divmod_task_count += 1;
   while (divmod_task_count > 0) {
     auto const task = DIVMOD_TASK_QUEUE[--divmod_task_count];
@@ -606,18 +624,46 @@ void MP_FLOAT_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint3
     return;
   }
   const lmp_exp_t target_exp = mp_val->exp + size;
-  if (target_exp > 0) {
-    lmp_limb_t *result_limbs = allocator->calloc(abs(dest->prec), sizeof(lmp_limb_t));
-    MP_FLOAT DIVISOR = { .prec = -abs(dest->prec), .size = 0, .limbs = result_limbs, .exp = 0 };
-    result_limbs[0] = 1;
+  const lmp_prec_t target_prec = abs(dest->prec);
+  const lmp_prec_t unified_alloc = aligned(target_prec + 1);
+  MP_FLOAT UNIFIED_VAL = {};
+  MP_FLOAT_init(&UNIFIED_VAL, unified_alloc, allocator);
+  if (target_exp >= 0) {
+    MP_FLOAT DIVISOR = {};
+    MP_FLOAT_init(&DIVISOR, unified_alloc, allocator);
+    DIVISOR.limbs[0] = 1;
+    // TODO: use Fast Power
     for (lmp_exp_t i = 0; i < target_exp; i++) {
       MP_FLOAT_mantissa_abs_mul_limb(&DIVISOR, &DIVISOR, BASE_LIMB_VAL, allocator);
+      MP_FLOAT_truncate(&DIVISOR, target_prec + 1);
     }
-    // TODO
+    MP_FLOAT_copy((MP_FLOAT *)dest, mp_val, allocator);
+    MP_FLOAT_divmod((MP_FLOAT *)dest, &DIVISOR, &UNIFIED_VAL, allocator);
+    MP_FLOAT_truncate(&UNIFIED_VAL, target_prec + 1);
+    MP_FLOAT_clear(&DIVISOR, allocator);
   } else {
-    // TODO
+    MP_FLOAT MULTIPLIER = {};
+    MP_FLOAT_init(&MULTIPLIER, unified_alloc, allocator);
+    MULTIPLIER.limbs[0] = 1;
+    // TODO: use Fast Power
+    for (lmp_exp_t i = 0; i < -target_exp; i++) {
+      MP_FLOAT_mantissa_abs_mul_limb(&MULTIPLIER, &MULTIPLIER, BASE_LIMB_VAL, allocator);
+      MP_FLOAT_truncate(&MULTIPLIER, target_prec + 1);
+    }
+    MP_FLOAT_normal_abs_mul(&UNIFIED_VAL, &MULTIPLIER, mp_val, allocator);
+    MP_FLOAT_truncate(&UNIFIED_VAL, target_prec + 1);
+    MP_FLOAT_clear(&MULTIPLIER, allocator);
   }
-
+  const lmp_size_t unified_size = abs(UNIFIED_VAL.size);
+  for (lmp_prec_t i = 0; i < target_prec; i++) {
+    MP_FLOAT_mantissa_abs_mul_limb(&UNIFIED_VAL, &UNIFIED_VAL, BASE_LIMB_VAL, allocator);
+    dest->limbs[target_prec - 1 - i] = UNIFIED_VAL.limbs[unified_size];
+    UNIFIED_VAL.limbs[unified_size] = 0;
+  }
+  MP_FLOAT_clear(&UNIFIED_VAL, allocator);
+  dest->size = target_prec;
+  dest->exp = target_exp;
+  MP_BASE_FLOAT_tidy(dest);
 }
 
 void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t base, const Allocator *allocator) {
@@ -675,7 +721,12 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t ba
     }
     mp_val->exp = 0;
   } else {
-    // TODO: Float
+    MP_FLOAT copy_val = {};
+    MP_FLOAT_init(&copy_val, size, allocator);
+    MP_BASE_FLOAT_to_float(&copy_val, mp_val, allocator);
+    if (BASE_LIMB_VAL != 0) {
+      MP_FLOAT_to_base_number(mp_val, &copy_val, base, allocator);
+    }
   }
   mp_val->BASE.limb_width = BASE_LIMB_WIDTH;
   mp_val->BASE.limb_val = BASE_LIMB_VAL;
