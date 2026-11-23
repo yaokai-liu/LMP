@@ -1,6 +1,6 @@
 # LMP - A Lite Multiple Precision Arithmetic Library
 
-[![codecov](https://codecov.io/gh/yaokai-liu/LMP/branch/main/graph/badge.svg)](https://codecov.io/gh/yaokai-liu/LMP)
+[![codecov](https://codecov.io/github/yaokai-liu/LMP/branch/LIU/graph/badge.svg)](https://codecov.io/github/yaokai-liu/LMP)
 
 LMP is a lightweight, multiple-precision arithmetic library written in C. 
 It provides arbitrary-precision integer, floating-point, 
