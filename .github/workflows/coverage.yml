@@ -28,7 +28,7 @@ jobs:
           lcov --directory . --capture --output-file coverage.info --ignore-errors mismatch,gcov
           lcov --remove coverage.info \
             test/* \
-            /usr/* \
+            /usr/include/* \
             --output-file coverage_filtered.info
           lcov --summary coverage_filtered.info > coverage_summary.txt
           LINE_COV=$(lcov --summary coverage_filtered.info 2>&1 | grep lines | grep -oP '\d+\.\d+(?=%)' | head -1)
