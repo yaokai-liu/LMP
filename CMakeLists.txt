@@ -69,7 +69,7 @@ if (BUILD_TESTING)
             COMMAND ${LCOV_PATH} --directory . --zerocounters
             COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
             COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage.info
-            COMMAND ${LCOV_PATH} --remove coverage.info --output-file coverage_filtered.info
+            COMMAND ${LCOV_PATH} --remove coverage.info test/* /usr/* --output-file coverage_filtered.info
             COMMAND ${GENHTML_PATH} coverage_filtered.info --output-directory coverage_html
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             COMMENT "Generating coverage report with lcov..."
