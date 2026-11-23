@@ -15,7 +15,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y lcov gcovr cmake
+          sudo apt-get install -y lcov gcovr cmake check
       - name: Configure CMake
         run: |
           cmake -DCMAKE_BUILD_TYPE=Debug -DBUILD_TESTING=ON -G "Unix Makefiles" -S . -B build
