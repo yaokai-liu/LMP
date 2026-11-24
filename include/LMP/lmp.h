@@ -29,10 +29,12 @@
 #define LMP_H
 #include <stdint.h>
 #include <limits.h>
+
 #if CHAR_BIT != 8
 #error "CHAR_BIT is required with 8."
 #endif
 #include "allocator.h"
+#include "extfloat.h"
 #include "extint.h"
 
 #ifndef USING_NTT_SIZE
@@ -145,7 +147,7 @@ typedef struct MP_BASE {
 // else if (BASE.base == 0):
 //    NUMBER is a polynomial.
 //    NUMBER = sgn(exp) * sum(limbs[i] * pow(X,i)),
-//    i from 0 to (abs(exp) - 1), i.e. abs(exp) = degree(NUMBER) + 1
+//    i from 0 to (abs(size) - 1), i.e. abs(size) = degree(NUMBER) + 1
 // else:
 //    NUMBER = MP_FLOAT_SPECIAL_VALUE_TYPE(exp)
 //    if (prec > 0) limbs will be released.
@@ -199,8 +201,8 @@ _SHARED_API void MP_INT_init(MP_INT *val,  int32_t initial_alloc, const Allocato
 _SHARED_API void MP_INT_realloc(MP_INT *val,  int32_t required, const Allocator *allocator);
 _SHARED_API void MP_INT_copy(MP_INT *dest, const MP_INT *src, const Allocator *allocator);
 
-_SHARED_API void MP_INT_from_int(MP_INT *mp_val, int256_t val, const Allocator *allocator);
-_SHARED_API void MP_INT_from_uint(MP_INT *mp_val, uint256_t val, const Allocator *allocator);
+_SHARED_API void MP_INT_from_c_int(MP_INT *mp_val, int256_t val, const Allocator *allocator);
+_SHARED_API void MP_INT_from_c_uint(MP_INT *mp_val, uint256_t val, const Allocator *allocator);
 _SHARED_API void MP_INT_clear(MP_INT *val, const Allocator *allocator);
 _SHARED_API void MP_INT_clamp(MP_INT *val);
 _SHARED_API size_t MP_INT_bitsof(const MP_INT *val);
@@ -217,6 +219,7 @@ _SHARED_API lmp_limb_t MP_INT_left_shift_load(const MP_INT *restrict num, int32_
 _SHARED_API lmp_double_limb_t MP_INT_left_shift_load_double(const MP_INT *restrict num, int32_t index, int32_t width);
 
 _SHARED_API void MP_FLOAT_init(MP_FLOAT *val, int32_t initial_alloc, const Allocator *allocator);
+_SHARED_API void MP_FLOAT_from_ieee754_float(MP_FLOAT *mp_val, float128_t val, const Allocator *allocator);
 _SHARED_API void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator);
 _SHARED_API void MP_FLOAT_clear(MP_FLOAT *val, const Allocator *allocator);
 // Truncate mantissa in given prec limbs.
@@ -280,4 +283,5 @@ _SHARED_API void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, lmp_half_lim
 
 _LOCAL_API lmp_limb_t lmp_fast_pow(lmp_half_limb_t base, lmp_exp_t exp);
 _LOCAL_API lmp_limb_t lmp_fast_quotient(lmp_double_limb_t dividend, lmp_double_limb_t dividend_follow, lmp_double_limb_t divisor);
+
 #endif //LMP_H

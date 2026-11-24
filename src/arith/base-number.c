@@ -38,7 +38,7 @@
 #define ALWAYS_INLINE __forceinline
 #endif
 
-static unsigned int ALWAYS_INLINE MP_BASE_NUMBER_leading_zeros (const MP_BASE_NUMBER *mp_val);
+static unsigned int ALWAYS_INLINE MP_BASE_NUMBER_leading_zeros(const MP_BASE_NUMBER *mp_val);
 
 inline unsigned int ALWAYS_INLINE MP_BASE_NUMBER_leading_zeros(const MP_BASE_NUMBER *mp_val) {
   const lmp_size_t size = abs(mp_val->size);

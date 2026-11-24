@@ -211,7 +211,7 @@ inline bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, const int
   return true;
 }
 
-inline void MP_INT_from_int(MP_INT *mp_val, const int256_t val, const Allocator *allocator) {
+inline void MP_INT_from_c_int(MP_INT *mp_val, const int256_t val, const Allocator *allocator) {
   if (val == 0) { mp_val->size = 0; return; }
   uint256_t abs_val = abs(val);
   const lmp_size_t size = (extstd_bit_width(abs_val) - 1) / LMP_LIMB_BIT + 1;
@@ -223,7 +223,7 @@ inline void MP_INT_from_int(MP_INT *mp_val, const int256_t val, const Allocator 
   mp_val->size = val > 0 ? size : -size;
 }
 
-inline void MP_INT_from_uint(MP_INT *mp_val, const uint256_t val, const Allocator *allocator) {
+inline void MP_INT_from_c_uint(MP_INT *mp_val, const uint256_t val, const Allocator *allocator) {
   if (val == 0) { mp_val->size = 0; return; }
   const lmp_size_t size = (extstd_bit_width(val) - 1) / LMP_LIMB_BIT + 1;
   if ( mp_val->prec < 0 && -mp_val->prec < size) { return; }
@@ -242,6 +242,16 @@ inline void MP_FLOAT_init(MP_FLOAT *val, const int32_t initial_alloc, const Allo
     val->exp = MP_NUMBER_ZERO;
     val->size = 0;
   }
+}
+
+void MP_FLOAT_from_ieee754_float(MP_FLOAT *mp_val, float128_t val, const Allocator *allocator) {
+  bool sign = 0;
+  int32_t exponent = 0;
+  uint128_t mantissa = 0;
+  extstd_float128_decompose(val, &mantissa, &exponent, &sign);
+  MP_INT_from_c_uint((MP_INT *)mp_val, mantissa, allocator);
+  mp_val->size = sign ? -mp_val->size : mp_val->size;
+  mp_val->exp = exponent;
 }
 
 inline void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator) {
@@ -394,7 +404,7 @@ void MP_BASE_INT_to_int(MP_INT *dest, const MP_BASE_NUMBER *src, const Allocator
   if (size == 0) { dest->size = 0; return; }
   MP_INT_realloc(dest, src->size, allocator);
   lmp_limb_t limb = MP_BASE_INT_get_limb(src, -1);
-  MP_INT_from_uint(dest, limb, allocator);
+  MP_INT_from_c_uint(dest, limb, allocator);
   for (int32_t i = -2; i >= -size; i--) {
     MP_INT_abs_mul_limb(dest, dest, src->BASE.limb_val, allocator);
     limb = MP_BASE_INT_get_limb(src, i);

@@ -126,17 +126,17 @@ END_TEST
 START_TEST(test_MP_INT_9) {
   lmp_limb_t limbs[4] = {};
   MP_INT num1 = {.prec = 4, .size = 0, .limbs = limbs};
-  MP_INT_from_int(&num1, 10086, &STDAllocator);
+  MP_INT_from_c_int(&num1, 10086, &STDAllocator);
   ck_assert_int_eq(num1.size, 1);
   ck_assert_uint_eq(limbs[0], 10086);
-  MP_INT_from_int(&num1, -10086, &STDAllocator);
+  MP_INT_from_c_int(&num1, -10086, &STDAllocator);
   ck_assert_int_eq(num1.size, -1);
   ck_assert_uint_eq(limbs[0], 10086);
-  MP_INT_from_int(&num1, ((int128_t)0x10086110'10100100ULL << 64) | 0x012a, &STDAllocator);
+  MP_INT_from_c_int(&num1, ((int128_t)0x10086110'10100100ULL << 64) | 0x012a, &STDAllocator);
   ck_assert_int_eq(num1.size, 2);
   ck_assert_uint_eq(limbs[0], 0x012aULL);
   ck_assert_uint_eq(limbs[1], 0x10086110'10100100ULL);
-  MP_INT_from_int(&num1, ((int128_t)0x90086110'10100100ULL << 64) | 0x012a, &STDAllocator);
+  MP_INT_from_c_int(&num1, ((int128_t)0x90086110'10100100ULL << 64) | 0x012a, &STDAllocator);
   ck_assert_int_eq(num1.size, -2);
   ck_assert_uint_eq(limbs[0], ~0x012aULL + 1);
   ck_assert_uint_eq(limbs[1], ~0x90086110'10100100ULL);
@@ -146,20 +146,20 @@ END_TEST
 START_TEST(test_MP_INT_10) {
   lmp_limb_t limbs[4] = {};
   MP_INT num1 = {.prec = -4, .size = 0, .limbs = limbs};
-  MP_INT_from_uint(&num1, 10086, &STDAllocator);
+  MP_INT_from_c_uint(&num1, 10086, &STDAllocator);
   ck_assert_int_eq(num1.size, 1);
   ck_assert_uint_eq(limbs[0], 10086);
-  MP_INT_from_uint(&num1, -10086, &STDAllocator);
+  MP_INT_from_c_uint(&num1, -10086, &STDAllocator);
   ck_assert_int_eq(num1.size, 4);
   ck_assert_uint_eq(limbs[0], ~10086 + 1);
   ck_assert_uint_eq(limbs[1], LMP_LIMB_MAX);
   ck_assert_uint_eq(limbs[2], LMP_LIMB_MAX);
   ck_assert_uint_eq(limbs[3], LMP_LIMB_MAX);
-  MP_INT_from_uint(&num1, ((uint128_t)0x10086110'10100100ULL << 64) | 0x012a, &STDAllocator);
+  MP_INT_from_c_uint(&num1, ((uint128_t)0x10086110'10100100ULL << 64) | 0x012a, &STDAllocator);
   ck_assert_int_eq(num1.size, 2);
   ck_assert_uint_eq(limbs[0], 0x012aULL);
   ck_assert_uint_eq(limbs[1], 0x10086110'10100100ULL);
-  MP_INT_from_uint(&num1, ((int128_t)0x90086110'10100100ULL << 64) | 0x012a, &STDAllocator);
+  MP_INT_from_c_uint(&num1, ((int128_t)0x90086110'10100100ULL << 64) | 0x012a, &STDAllocator);
   ck_assert_int_eq(num1.size, 4);
   ck_assert_uint_eq(limbs[0], 0x012aULL);
   ck_assert_uint_eq(limbs[1], 0x90086110'10100100ULL);
