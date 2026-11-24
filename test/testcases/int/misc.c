@@ -19,7 +19,7 @@
  *
  * Project Name: LMP
  * Module Name: test/testcases/int
- * Filename: mp_int_misc.c
+ * Filename: misc.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
@@ -104,11 +104,86 @@ START_TEST(test_MP_INT_6) {
 }
 END_TEST
 
+START_TEST(test_MP_INT_7) {
+  lmp_limb_t limbs[2] = { 1, 1};
+  MP_INT num = {.prec = 2, .size = 2, .limbs = limbs};
+  const size_t bits = MP_INT_bitsof(&num);
+  ck_assert_uint_eq(bits, LMP_LIMB_BIT + 1);
+}
+END_TEST
 
-Suite *MP_TEST_int_mp_int_misc_suite()
+START_TEST(test_MP_INT_8) {
+  lmp_limb_t limbs[2][2] = {{LMP_LIMB_MAX, 0}, {1, LMP_LIMB_MAX}};
+  MP_INT num1 = {.prec = 2, .size = -1, .limbs = limbs[0]};
+  MP_INT num2 = {.prec = 2, .size = -2, .limbs = limbs[1]};
+  bool carray1 = MP_INT_carry_check(&num1);
+  bool carray2 = MP_INT_carry_check(&num2);
+  ck_assert( carray1);
+  ck_assert(!carray2);
+}
+END_TEST
+
+START_TEST(test_MP_INT_9) {
+  lmp_limb_t limbs[4] = {};
+  MP_INT num1 = {.prec = 4, .size = 0, .limbs = limbs};
+  MP_INT_from_int(&num1, 10086, &STDAllocator);
+  ck_assert_int_eq(num1.size, 1);
+  ck_assert_uint_eq(limbs[0], 10086);
+  MP_INT_from_int(&num1, -10086, &STDAllocator);
+  ck_assert_int_eq(num1.size, -1);
+  ck_assert_uint_eq(limbs[0], 10086);
+  MP_INT_from_int(&num1, ((int128_t)0x10086110'10100100ULL << 64) | 0x012a, &STDAllocator);
+  ck_assert_int_eq(num1.size, 2);
+  ck_assert_uint_eq(limbs[0], 0x012aULL);
+  ck_assert_uint_eq(limbs[1], 0x10086110'10100100ULL);
+  MP_INT_from_int(&num1, ((int128_t)0x90086110'10100100ULL << 64) | 0x012a, &STDAllocator);
+  ck_assert_int_eq(num1.size, -2);
+  ck_assert_uint_eq(limbs[0], ~0x012aULL + 1);
+  ck_assert_uint_eq(limbs[1], ~0x90086110'10100100ULL);
+}
+END_TEST
+
+START_TEST(test_MP_INT_10) {
+  lmp_limb_t limbs[4] = {};
+  MP_INT num1 = {.prec = -4, .size = 0, .limbs = limbs};
+  MP_INT_from_uint(&num1, 10086, &STDAllocator);
+  ck_assert_int_eq(num1.size, 1);
+  ck_assert_uint_eq(limbs[0], 10086);
+  MP_INT_from_uint(&num1, -10086, &STDAllocator);
+  ck_assert_int_eq(num1.size, 4);
+  ck_assert_uint_eq(limbs[0], ~10086 + 1);
+  ck_assert_uint_eq(limbs[1], LMP_LIMB_MAX);
+  ck_assert_uint_eq(limbs[2], LMP_LIMB_MAX);
+  ck_assert_uint_eq(limbs[3], LMP_LIMB_MAX);
+  MP_INT_from_uint(&num1, ((uint128_t)0x10086110'10100100ULL << 64) | 0x012a, &STDAllocator);
+  ck_assert_int_eq(num1.size, 2);
+  ck_assert_uint_eq(limbs[0], 0x012aULL);
+  ck_assert_uint_eq(limbs[1], 0x10086110'10100100ULL);
+  MP_INT_from_uint(&num1, ((int128_t)0x90086110'10100100ULL << 64) | 0x012a, &STDAllocator);
+  ck_assert_int_eq(num1.size, 4);
+  ck_assert_uint_eq(limbs[0], 0x012aULL);
+  ck_assert_uint_eq(limbs[1], 0x90086110'10100100ULL);
+  ck_assert_uint_eq(limbs[2], LMP_LIMB_MAX);
+  ck_assert_uint_eq(limbs[3], LMP_LIMB_MAX);
+}
+END_TEST
+
+START_TEST(test_MP_INT_11) {
+  lmp_limb_t limbs[2] = {1, 2};
+  const MP_INT num1 = {.prec = -2, .size = 2, .limbs = limbs};
+  const lmp_double_limb_t val1 = MP_INT_get_double_flat_limbs(&num1, 0);
+  ck_assert(val1 == ((lmp_double_limb_t)2 << LMP_LIMB_BIT) + 1);
+  const lmp_double_limb_t val2 = MP_INT_get_double_flat_limbs(&num1, 1);
+  ck_assert(val2 == (lmp_double_limb_t)2);
+  const lmp_double_limb_t val3 = MP_INT_get_double_flat_limbs(&num1, -1);
+  ck_assert(val3 == ((lmp_double_limb_t)1 << LMP_LIMB_BIT));
+}
+END_TEST
+
+Suite *MP_TEST_int_misc_suite()
 {
-  Suite *s = suite_create("abs_sub_offset");
-  TCase *tc = tcase_create("mp_type_all");
+  Suite *s = suite_create("int_misc");
+  TCase *tc = tcase_create("int_misc");
 
   tcase_add_test(tc, test_MP_INT_1);
   tcase_add_test(tc, test_MP_INT_2);
@@ -116,6 +191,11 @@ Suite *MP_TEST_int_mp_int_misc_suite()
   tcase_add_test(tc, test_MP_INT_4);
   tcase_add_test(tc, test_MP_INT_5);
   tcase_add_test(tc, test_MP_INT_6);
+  tcase_add_test(tc, test_MP_INT_7);
+  tcase_add_test(tc, test_MP_INT_8);
+  tcase_add_test(tc, test_MP_INT_9);
+  tcase_add_test(tc, test_MP_INT_10);
+  tcase_add_test(tc, test_MP_INT_11);
 
   suite_add_tcase(s, tc);
   return s;

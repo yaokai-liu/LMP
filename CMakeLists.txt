@@ -41,7 +41,7 @@ include_directories(include/LMP)
 file(GLOB_RECURSE LMP_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.c src/*.h)
 add_library(LMP SHARED ${LMP_SRC})
 target_link_libraries(LMP PRIVATE m)
-target_compile_definitions(LMP PRIVATE "_BUILDING_SHARED_" $<$<BOOL:${BUILD_TESTING}>:_TEST_LOCAL_API_>)
+target_compile_definitions(LMP PRIVATE "_SHARED_LIB_" $<$<BOOL:${BUILD_TESTING}>:_TEST_LOCAL_API_>)
 
 if (BUILD_TESTING)
     enable_testing()
@@ -52,7 +52,7 @@ if (BUILD_TESTING)
     AUX_SOURCE_DIRECTORY(test/testcases ${TARGET_PREFIX}TESTCASE_SRC)
     file(GLOB_RECURSE ${TARGET_PREFIX}TESTCASE_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/testcases/*.c test/testcases/*.h)
     add_executable(${TARGET_PREFIX}test test/test.c ${${TARGET_PREFIX}TESTCASE_SRC})
-    target_compile_definitions(${TARGET_PREFIX}test PRIVATE "_BUILDING_SHARED_" $<$<BOOL:${BUILD_TESTING}>:_TEST_LOCAL_API_>)
+    target_compile_definitions(${TARGET_PREFIX}test PRIVATE "_SHARED_LIB_" $<$<BOOL:${BUILD_TESTING}>:_TEST_LOCAL_API_>)
     target_include_directories(${TARGET_PREFIX}test PRIVATE test/testcases)
     target_link_libraries(${TARGET_PREFIX}test PRIVATE check gcov LMP)
     if (GITHUB_CI)
@@ -69,7 +69,7 @@ if (BUILD_TESTING)
             COMMAND ${LCOV_PATH} --directory . --zerocounters
             COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
             COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage.info
-            COMMAND ${LCOV_PATH} --remove coverage.info test/* /usr/* --output-file coverage_filtered.info
+            COMMAND ${LCOV_PATH} --remove coverage.info test/* /usr/* --ignore-errors unused --output-file coverage_filtered.info
             COMMAND ${GENHTML_PATH} coverage_filtered.info --output-directory coverage_html
             WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
             COMMENT "Generating coverage report with lcov..."
@@ -83,3 +83,4 @@ endif ()
 
 add_executable(${TARGET_PREFIX}debug test/debug.c)
 target_link_libraries(${TARGET_PREFIX}debug PRIVATE LMP)
+target_compile_definitions(${TARGET_PREFIX}debug PRIVATE "_TEST_LOCAL_API_")

@@ -25,6 +25,8 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
+#include <stdlib.h>
+
 #include "arith.h"
 #include "extbit.h"
 
@@ -268,7 +270,7 @@ inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLO
   const int32_t n_leading_zeros = extstd_leading_zeros(dividend->limbs[size_dividend - 1]);
   const lmp_double_limb_t d = MP_INT_left_shift_load_double((MP_INT *)divisor, -2, d_leading_zeros);
   const lmp_double_limb_t d_high = d >> LMP_LIMB_BIT;
-  const bool overflow = n_leading_zeros <= d_leading_zeros;
+  bool overflow = n_leading_zeros <= d_leading_zeros;
 
   const lmp_size_t size_quotient = abs(quotient->prec);
   if (size_quotient == 0) {
@@ -278,6 +280,7 @@ inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLO
     return;
   }
   MP_FLOAT_realloc(quotient, size_quotient, allocator);
+  quotient->exp = dividend->exp - divisor->exp;
   quotient->size = size_quotient;
 
   MP_INT INTERVAL = {};
@@ -285,28 +288,34 @@ inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLO
   if (overflow) {
     const lmp_double_limb_t dividend_head = MP_INT_left_shift_load_double((MP_INT *)dividend, -1, d_leading_zeros);
     const lmp_double_limb_t dividend_foll = MP_INT_left_shift_load((MP_INT *)dividend, -2, d_leading_zeros);
-    lmp_limb_t q = lmp_fast_quotient(dividend_head, dividend_foll, d);
-    MP_INT_abs_mul_limb(&INTERVAL, (MP_INT *)divisor, q, allocator);
-    if (!MP_INT_abs_offset_ge((MP_INT *)dividend, &INTERVAL, size_quotient - 1)) {
-      MP_INT_abs_sub_offset(&INTERVAL, &INTERVAL, (MP_INT *)divisor, 0, allocator);
-      q --;
+    if (dividend_head < d_high) {
+      overflow = false;
+    } else {
+      lmp_limb_t q = lmp_fast_quotient(dividend_head, dividend_foll, d);
+      MP_INT_abs_mul_limb(&INTERVAL, (MP_INT *)divisor, q, allocator);
+      if (!MP_INT_abs_offset_ge((MP_INT *)dividend, &INTERVAL, size_quotient - 1)) {
+        MP_INT_abs_sub_offset(&INTERVAL, &INTERVAL, (MP_INT *)divisor, 0, allocator);
+        q --;
+      }
+      MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, &INTERVAL, size_quotient - 1, allocator);
+      quotient->limbs[size_quotient - 1] = q;
     }
-    MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, &INTERVAL, size_quotient - 1, allocator);
-    quotient->limbs[size_quotient - 1] = q;
   }
+  const lmp_size_t sub_offset = size_quotient - 1 - overflow;
   for (int32_t i = overflow; i < size_quotient; i++) {
+    const int32_t load_index = size_dividend - 2;
     const int32_t curr_q_idx = size_quotient - 1 - i;
-    lmp_double_limb_t dividend_head = MP_INT_left_shift_load_double((MP_INT *)dividend, -2, d_leading_zeros);
-    lmp_double_limb_t dividend_foll = MP_INT_left_shift_load((MP_INT *)dividend, -3, d_leading_zeros);
+    lmp_double_limb_t dividend_head = MP_INT_left_shift_load_double((MP_INT *)dividend, load_index, d_leading_zeros);
+    lmp_double_limb_t dividend_foll = MP_INT_left_shift_load((MP_INT *)dividend, load_index - 1, d_leading_zeros);
     if (dividend_head < d_high) {
       quotient->limbs[curr_q_idx] = 0;
       continue;
     }
     if (dividend_head > d) { // maybe never be reached
-      MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, (MP_INT *)divisor, curr_q_idx, allocator);
+      MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, (MP_INT *)divisor, sub_offset, allocator);
       quotient->limbs[curr_q_idx + 1] += 1;
-      dividend_head = MP_INT_left_shift_load_double((MP_INT *)dividend, -2, d_leading_zeros);
-      dividend_foll = MP_INT_left_shift_load((MP_INT *)dividend, -3, d_leading_zeros);
+      dividend_head = MP_INT_left_shift_load_double((MP_INT *)dividend, load_index, d_leading_zeros);
+      dividend_foll = MP_INT_left_shift_load((MP_INT *)dividend, load_index - 1, d_leading_zeros);
     }
     lmp_limb_t q = lmp_fast_quotient(dividend_head, dividend_foll, d);
     if (q == 0 && MP_INT_abs_offset_ge((MP_INT *)dividend, (MP_INT *)divisor, curr_q_idx)) { q += 1; }
@@ -316,14 +325,17 @@ inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLO
       MP_INT_abs_sub_offset(&INTERVAL, &INTERVAL, (MP_INT *)divisor, 0, allocator);
       q -= 1;
     }
-    MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, &INTERVAL, curr_q_idx, allocator);
-    if (i < size_quotient - 1) { MP_INT_left_shift((MP_INT *)dividend, LMP_LIMB_BIT, allocator); }
+    MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, &INTERVAL, sub_offset, allocator);
     MP_INT_clamp((MP_INT *)dividend);
 
     quotient->limbs[curr_q_idx] = q;
+
+    MP_INT_left_shift((MP_INT *)dividend, LMP_LIMB_BIT, allocator);
+    dividend->exp-= 1;
   }
   MP_INT_clear(&INTERVAL, allocator);
-  quotient->exp = dividend->exp - divisor->exp - overflow;
+  MP_FLOAT_tidy(quotient);
+  MP_FLOAT_tidy(dividend);
 }
 
 _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *restrict divisor,
@@ -372,6 +384,7 @@ _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *res
       default: { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_NAN; return; }
     }
   }
+  if (quotient->prec == 0) { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
   const int32_t sgn_dividend = sgn(dividend->size);
   const int32_t sgn_quotient = sgn_dividend * sgn_divisor;
 

@@ -61,6 +61,20 @@ START_TEST(test_cmp)
 }
 END_TEST
 
+START_TEST(test_MP_FLOAT_8) {
+  lmp_limb_t limbs[2][2] = {{1, 2}, {2, 2}};
+  MP_FLOAT num1 = {.prec = 2, .size =  2, .limbs = limbs[0]};
+  MP_FLOAT num2 = {.prec = 2, .size = -2, .limbs = limbs[1]};
+  int32_t cmp1 = MP_FLOAT_abs_cmp(&num1, &num2);
+  ck_assert_int_eq(cmp1, -1);
+  lmp_limb_t limbs2[2][2] = {{0, 2}, {2, 0}};
+  MP_FLOAT num3 = {.prec = 2, .size =  2, .limbs = limbs2[0], .exp = -1};
+  MP_FLOAT num4 = {.prec = 2, .size = -1, .limbs = limbs2[1], .exp =  0};
+  int32_t cmp2 = MP_FLOAT_abs_cmp(&num3, &num4);
+  ck_assert_int_eq(cmp2, 0);
+}
+END_TEST
+
 Suite *MP_TEST_float_cmp_suite()
 {
   Suite *s = suite_create("cmp");
@@ -68,6 +82,7 @@ Suite *MP_TEST_float_cmp_suite()
 
   constexpr int n = sizeof(cmp_cases)/sizeof(FloatCmpCase);
   tcase_add_loop_test(tc, test_cmp, 0, n);
+  tcase_add_test(tc, test_MP_FLOAT_8);
 
   suite_add_tcase(s, tc);
   return s;

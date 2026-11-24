@@ -129,7 +129,7 @@ inline void MP_INT_abs_mul(MP_INT * restrict rop, const MP_INT *op1, const MP_IN
     }
     res_limbs[i + size2] += carry;
   }
-  rop->size = size1 + size2;
+  rop->size = size1 + size2 - 1 + (res_limbs[size1 + size2 - 1] != 0);
 }
 
 inline void MP_INT_abs_add_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *op2,
@@ -245,7 +245,7 @@ inline void MP_INT_abs_divmod(MP_INT *restrict dividend, const MP_INT *restrict 
   const lmp_double_limb_t d = MP_INT_left_shift_load_double(divisor, -2, d_leading_zeros);
   const lmp_double_limb_t d_high = d >> LMP_LIMB_BIT;
 
-  const bool overflow = n_leading_zeros <= d_leading_zeros;
+  bool overflow = n_leading_zeros <= d_leading_zeros;
   const lmp_size_t size_quotient = size_dividend - size_divisor + overflow;
   if (size_quotient == 0) {
     MP_INT_abs_sub_offset(dividend, dividend, divisor, 0, allocator);

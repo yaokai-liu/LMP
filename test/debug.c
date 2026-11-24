@@ -51,21 +51,25 @@ int main () {
   // }
   // static lmp_limb_t L_long[] = { 0x437430C1913D27FF, 0x05CA0698478CF1B3, 0x1F9ADD3B84CDAD12, 0x7B };
   // static lmp_limb_t L_long1   [] = { 8900000000000000000ULL, 7891234567891234567ULL, 1234567899999123456ULL, 123ULL };
-  lmp_limb_t limbs[8] = {};
-  static lmp_limb_t L_long1_bin[] = {  0x37C1780B91B52434LL,  0x949B0F713E9185BLL };
-  MP_FLOAT f_number = { .prec = 8, .size = -2, .limbs = L_long1_bin };
-  MP_BASE_NUMBER number = {.prec = -8, .size = -2, .limbs = limbs, .exp = -2, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL } };
-  MP_INT_to_base_number(&number, (MP_INT*)&f_number, 10, &STDAllocator);
+  // lmp_limb_t limbs[8] = {};
+  // static lmp_limb_t L_long1_bin[] = {  0x37C1780B91B52434LL,  0x949B0F713E9185BLL };
+  // MP_FLOAT f_number = { .prec = 8, .size = -2, .limbs = L_long1_bin };
+  // MP_BASE_NUMBER number = {.prec = -8, .size = -2, .limbs = limbs, .exp = -2, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL } };
+  // MP_INT_to_base_number(&number, (MP_INT*)&f_number, 10, &STDAllocator);
   // static lmp_limb_t L_long1    [] = { 2345678912345678900LL, 1234567891234567891LL };
   // MP_FLOAT f_number = { .prec = 8, .size = 0, .limbs = limbs };
   // MP_BASE_NUMBER number = {.prec = -2, .size = -2, .limbs = L_long1, .exp = -2, .BASE = {.base = 10, .limb_width = 19, .limb_val = (lmp_limb_t)DEC_LIMB_VAL } };
   // MP_BASE_FLOAT_to_float(&f_number, &number, &STDAllocator);
-  const int64_t size = abs(f_number.size);
-  if (f_number.size < 0) { printf("-0x"); } else { printf("0x"); }
-  if (number.exp && size - 1 == - f_number.exp) { printf("."); }
-  for (int32_t i = 0; i < size; i++) {
-    printf((size - 1 - i >= - number.exp) ? "%"PRIu64 : "%"PRIu64, number.limbs[size - 1 - i]);
-   if (number.exp && size - 1 - i == - number.exp) { printf("."); }
-  }
-  return 0;
+  // const int64_t size = abs(f_number.size);
+  // if (f_number.size < 0) { printf("-0x"); } else { printf("0x"); }
+  // if (number.exp && size - 1 == - f_number.exp) { printf("."); }
+  // for (int32_t i = 0; i < size; i++) {
+  //   printf((size - 1 - i >= - number.exp) ? "%"PRIu64 : "%"PRIu64, number.limbs[size - 1 - i]);
+  //  if (number.exp && size - 1 - i == - number.exp) { printf("."); }
+  // }
+  lmp_limb_t limbs2[2][2] = {{0, 2}, {2, 0}};
+  MP_FLOAT num3 = {.prec = 2, .size =  2, .limbs = limbs2[0], .exp = -1};
+  MP_FLOAT num4 = {.prec = 2, .size = -1, .limbs = limbs2[1], .exp =  0};
+  int32_t cmp2 = MP_FLOAT_abs_cmp(&num3, &num4);
+  return cmp2;
 }

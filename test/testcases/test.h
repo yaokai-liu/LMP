@@ -52,7 +52,7 @@ Suite *MP_TEST_int_abs_mul_limb_suite();
 Suite *MP_TEST_int_abs_add_limb_suite();
 Suite *MP_TEST_int_abs_sub_limb_suite();
 Suite *MP_TEST_int_abs_mul_suite();
-Suite *MP_TEST_int_mp_int_misc_suite();
+Suite *MP_TEST_int_misc_suite();
 Suite *MP_TEST_int_cmp_suite();
 Suite *MP_TEST_int_abs_divmod_suite();
 
@@ -63,6 +63,9 @@ Suite *MP_TEST_float_add_suite();
 Suite *MP_TEST_float_sub_suite();
 Suite *MP_TEST_float_mul_suite();
 Suite *MP_TEST_float_divmod_suite();
+Suite *MP_TEST_float_misc_suite();
+
+Suite *MP_TEST_base_number_misc_suite();
 
 Suite *parse_suite();
 Suite *print_suite();

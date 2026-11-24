@@ -63,7 +63,62 @@ static void run_mul_case(const FloatMulCase *c)
   }
 }
 
+static const lmp_limb_t MA1[] = { 1 };
+static const lmp_limb_t MB1[] = { 1 };
+static const lmp_limb_t ME1[] = { 1 };
+
+static const lmp_limb_t MA2[] = { 1234 };
+static const lmp_limb_t MB2[] = { 5678 };
+static const lmp_limb_t ME2[] = { 7006652 };
+
+static const lmp_limb_t MA3[] = { LMP_LIMB_MAX };
+static const lmp_limb_t MB3[] = { 2 };
+static const lmp_limb_t ME3[] = { LMP_LIMB_MAX - 1, 1 };
+
+static const lmp_limb_t MA4[] = { (1ULL << 63) };
+static const lmp_limb_t MB4[] = { 2 };
+static const lmp_limb_t ME4[] = { 0, 1 };
+
+static const lmp_limb_t MA5[] = { 2, 3 };
+static const lmp_limb_t MB5[] = { 2 };
+static const lmp_limb_t ME5[] = { 4, 6 };
+
+static const lmp_limb_t MA6[] = { LMP_LIMB_MAX, 1 };
+static const lmp_limb_t MB6[] = { 2 };
+static const lmp_limb_t ME6[] = { LMP_LIMB_MAX - 1, 3 };
+
+static const lmp_limb_t MA7[] = { LMP_LIMB_MAX };
+static const lmp_limb_t MB7[] = { LMP_LIMB_MAX };
+static const lmp_limb_t ME7[] = { 1, LMP_LIMB_MAX - 1 };
+
+static const lmp_limb_t MA8[] = { 2, 1 };
+static const lmp_limb_t MB8[] = { 3, 1 };
+static const lmp_limb_t ME8[] = { 6, 5, 1 };
+
+static const lmp_limb_t MA9[] = { 0 };
+static const lmp_limb_t MB9[] = { 123, 456 };
+static const lmp_limb_t ME9[] = { 0 };
+
+static const lmp_limb_t MA10[] = { 123, 456 };
+static const lmp_limb_t MB10[] = { 0 };
+static const lmp_limb_t ME10[] = { 0 };
+
+static const lmp_limb_t MA11[] = { LMP_LIMB_MAX, LMP_LIMB_MAX };
+static const lmp_limb_t MB11[] = { LMP_LIMB_MAX, LMP_LIMB_MAX };
+static const lmp_limb_t ME11[] = { 1, 0, LMP_LIMB_MAX - 1, LMP_LIMB_MAX };
+
 static const FloatMulCase abs_mul_cases[] = {
+  { .name = "mul1_simple",      .a = MA1,  .b = MB1,  .e = ME1,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 1 },
+  { .name = "mul2_small",       .a = MA2,  .b = MB2,  .e = ME2,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 1 },
+  { .name = "mul3_carry",       .a = MA3,  .b = MB3,  .e = ME3,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 2 },
+  { .name = "mul4_half_carry",  .a = MA4,  .b = MB4,  .e = ME4,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 2 },
+  { .name = "mul5_multi1",      .a = MA5,  .b = MB5,  .e = ME5,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 1, .e_len = 2 },
+  { .name = "mul6_multi_carry", .a = MA6,  .b = MB6,  .e = ME6,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 1, .e_len = 2 },
+  { .name = "mul7_ff_ff",       .a = MA7,  .b = MB7,  .e = ME7,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 2 },
+  { .name = "mul8_multi_multi", .a = MA8,  .b = MB8,  .e = ME8,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 2, .e_len = 3 },
+  { .name = "mul9_zero_a",      .a = MA9,  .b = MB9,  .e = ME9,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 0, .b_len = 2, .e_len = 0 },
+  { .name = "mul10_zero_b",     .a = MA10, .b = MB10, .e = ME10, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 0, .e_len = 0 },
+  { .name = "mul11_chain",      .a = MA11, .b = MB11, .e = ME11, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 2, .e_len = 4 },
 };
 
 

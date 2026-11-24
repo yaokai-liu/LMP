@@ -67,8 +67,52 @@ static void run_add_case(const FloatAddCase *c)
   }
 }
 
-static const FloatAddCase add_cases[] = {
+static const lmp_limb_t A1[] = {1, 2, 3};
+static const lmp_limb_t B1[] = {4, 5, 6};
+static const lmp_limb_t E1[] = {5, 7, 9};
 
+static const lmp_limb_t A2[] = {1};
+static const lmp_limb_t B2[] = {2};
+static const lmp_limb_t E2[] = {3};
+
+static const lmp_limb_t A3[] = {~(lmp_limb_t)0, ~(lmp_limb_t)0};
+static const lmp_limb_t B3[] = {1};
+static const lmp_limb_t E3[] = {0, 0, 1};
+
+static const lmp_limb_t A4[] = {1, 2, 3, 4};
+static const lmp_limb_t B4[] = {5, 6};
+static const lmp_limb_t E4[] = {6, 8, 3, 4};
+
+static const lmp_limb_t A5[] = {1, 2, 3};
+static const lmp_limb_t B5[] = {4, 5};
+static const lmp_limb_t E5[] = {1, 6, 8};
+
+static const lmp_limb_t A6[] = {1, 2};
+static const lmp_limb_t B6[] = {3, 4};
+static const lmp_limb_t E6[] = {1, 2, 0, 3, 4};
+
+static const lmp_limb_t A7[] = {1};
+static const lmp_limb_t B7[] = {2, 3};
+static const lmp_limb_t E7[] = {1, 0, 2, 3};
+
+static const lmp_limb_t A8[] = {~(lmp_limb_t)0, ~(lmp_limb_t)0};
+static const lmp_limb_t B8[] = {1};
+static const lmp_limb_t E8[] = {~(lmp_limb_t)0, 0, 1};
+
+static const lmp_limb_t A9[] = {7};
+static const lmp_limb_t B9[] = {8, 9};
+static const lmp_limb_t E9[] = {7, 8, 9};
+
+static const FloatAddCase add_cases[] = {
+  { .name = "basic3x3",        .a = A1, .b = B1, .e = E1, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 3, .b_len = 3, .e_len = 3 },
+  { .name = "basic1x1",        .a = A2, .b = B2, .e = E2, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 1 },
+  { .name = "carry",           .a = A3, .b = B3, .e = E3, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 1, .e_len = 3 },
+  { .name = "diff_len",        .a = A4, .b = B4, .e = E4, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 4, .b_len = 2, .e_len = 4 },
+  { .name = "offset1_overlap", .a = A5, .b = B5, .e = E5, .a_exp = 0, .b_exp = 1, .e_exp = 0, .a_len = 3, .b_len = 2, .e_len = 3 },
+  { .name = "offset3_gap",     .a = A6, .b = B6, .e = E6, .a_exp = 0, .b_exp = 3, .e_exp = 0, .a_len = 2, .b_len = 2, .e_len = 5 },
+  { .name = "offset2_extend",  .a = A7, .b = B7, .e = E7, .a_exp = 0, .b_exp = 2, .e_exp = 0, .a_len = 1, .b_len = 2, .e_len = 4 },
+  { .name = "offset1_carry",   .a = A8, .b = B8, .e = E8, .a_exp = 0, .b_exp = 1, .e_exp = 0, .a_len = 2, .b_len = 1, .e_len = 3 },
+  { .name = "offset1_tail",    .a = A9, .b = B9, .e = E9, .a_exp = 0, .b_exp = 1, .e_exp = 0, .a_len = 1, .b_len = 2, .e_len = 3 },
 };
 
 START_TEST(test_add)

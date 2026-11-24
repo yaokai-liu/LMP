@@ -19,7 +19,7 @@
  *
  * Project Name: LMP
  * Module Name: test/testcases/int
- * Filename: abs_divmod.c
+ * Filename: divmod.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-18
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
@@ -58,16 +58,16 @@ static void run_abs_divmod_case(const IntDivmodCase *c)
   MP_INT_clamp(&Q);
 
   ck_assert_msg(abs(Q.size) == c->eq_len,
-                "%s: quotient size %"PRI_SIZE" != %"PRI_SIZE, c->name, Q.size, c->eq_len);
+                "%s: quotient size %"PRI_SIZE" != (expected) %"PRI_SIZE, c->name, Q.size, c->eq_len);
   for (int32_t i = 0; i < c->eq_len; i++) {
     ck_assert_msg(Q.limbs[i] == c->eq[i],
-                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i, Q.limbs[i], c->eq[i]);
+                  "%s: quotient limb[%"PRI_SIZE"] (expected) %"PRI_LIMB" != %"PRI_LIMB, c->name, i, Q.limbs[i], c->eq[i]);
   }
   ck_assert_msg(abs(A.size) == c->er_len,
-                "%s: remainder size %"PRI_SIZE" != %"PRI_SIZE, c->name, A.size, c->er_len);
+                "%s: remainder size %"PRI_SIZE" != (expected) %"PRI_SIZE, c->name, A.size, c->er_len);
   for (int32_t i = 0; i < c->er_len; i++) {
     ck_assert_msg(A.limbs[i] == c->er[i],
-                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i, A.limbs[i], c->er[i]);
+                  "%s: quotient limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB, c->name, i, A.limbs[i], c->er[i]);
   }
 }
 
@@ -218,28 +218,27 @@ static const lmp_limb_t q20[] = { 0x4a0ULL };
 static const lmp_limb_t r20[] = { 0xe53d0041db8aef4dULL, 0xf00e22da0f178c7bULL, 0x77140026bb0b67bbULL, 0x364b2db098102a2ULL, 0x3308049f13dd0b01ULL, 0x6be37f8ba22fadfULL, 0xfb86d414b5363f63ULL, 0x632058e6883e7ULL };
 
 static const IntDivmodCase abs_divmod_cases[] = {
-  { "7/3",     a1, b1, q1, r1, 1, 1, 1, 1 },
-  { "5/9",     a2, b2, q2, r2, 1, 1, 0, 1 },
-  { "(2^64*1+...)/...", a3, b3, q3, r3, 2, 1, 1, 1 },
-  { "4limb a<b", a4, b4, q4, r4, 4, 4, 0, 4 },
-  { "4limb/1limb 2^256-1 / 2", a5, b5, q5, r5, 4, 1, 4, 1 },
-  { "a=b+1", a6, b6, q6, r6, 4, 4, 1, 1 },
-  { "a=0", a7, b7, q7, r7, 0, 4, 0, 0 },
-  { "a=b", a8, b8, q8, r8, 4, 4, 1, 0 },
-  { "a=b * 2^319 + 2", a9, b9, q9, r9, 4, 1, 4, 1 },
-  {"a < b", a10, b10, q10, r10, 4, 8, 0, 4},
+  { .name = "7/3",                     .a = a1,   .b = b1,  .eq = q1,  .er = r1,  .a_len = 1, .b_len = 1, .eq_len = 1, .er_len = 1 },
+  { .name = "5/9",                     .a = a2,   .b = b2,  .eq = q2,  .er = r2,  .a_len = 1, .b_len = 1, .eq_len = 0, .er_len = 1 },
+  { .name = "(2^64*1+...)/...",        .a = a3,   .b = b3,  .eq = q3,  .er = r3,  .a_len = 2, .b_len = 1, .eq_len = 1, .er_len = 1 },
+  { .name = "4limb a<b",               .a = a4,   .b = b4,  .eq = q4,  .er = r4,  .a_len = 4, .b_len = 4, .eq_len = 0, .er_len = 4 },
+  { .name = "4limb/1limb 2^256-1 / 2", .a = a5,   .b = b5,  .eq = q5,  .er = r5,  .a_len = 4, .b_len = 1, .eq_len = 4, .er_len = 1 },
+  { .name = "a=b+1",                   .a = a6,   .b = b6,  .eq = q6,  .er = r6,  .a_len = 4, .b_len = 4, .eq_len = 1, .er_len = 1 },
+  { .name = "a=0",                     .a = a7,   .b = b7,  .eq = q7,  .er = r7,  .a_len = 0, .b_len = 4, .eq_len = 0, .er_len = 0 },
+  { .name = "a=b",                     .a = a8,   .b = b8,  .eq = q8,  .er = r8,  .a_len = 4, .b_len = 4, .eq_len = 1, .er_len = 0 },
+  { .name = "a=b * 2^319 + 2",         .a = a9,   .b = b9,  .eq = q9,  .er = r9,  .a_len = 4, .b_len = 1, .eq_len = 4, .er_len = 1 },
+  { .name = "a < b",                   .a = a10,  .b = b10, .eq = q10, .er = r10, .a_len = 4, .b_len = 8, .eq_len = 0, .er_len = 4 },
 
-  {"random_case_11", a11, b11, q11, r11, 8, 4, 4, 4},
-  {"random_case_12", a12, b12, q12, r12, 8, 4, 5, 4},
-  {"random_case_13", a13, b13, q13, r13, 8, 4, 4, 4},
-  {"random_case_14", a14, b14, q14, r14, 8, 4, 4, 4},
-  {"random_case_15", a15, b15, q15, r15, 8, 4, 4, 4},
-  {"random_case_16", a16, b16, q16, r16, 8, 8, 1, 8},
-  {"random_case_17", a17, b17, q17, r17, 8, 8, 1, 8},
-  {"random_case_18", a18, b18, q18, r18, 8, 8, 1, 8},
-  {"random_case_19", a19, b19, q19, r19, 8, 8, 1, 8},
-  {"random_case_20", a20, b20, q20, r20, 8, 8, 1, 8}
-
+  { .name = "random_case_11", .a = a11, .b = b11, .eq = q11, .er = r11, .a_len = 8, .b_len = 4, .eq_len = 4, .er_len = 4},
+  { .name = "random_case_12", .a = a12, .b = b12, .eq = q12, .er = r12, .a_len = 8, .b_len = 4, .eq_len = 5, .er_len = 4},
+  { .name = "random_case_13", .a = a13, .b = b13, .eq = q13, .er = r13, .a_len = 8, .b_len = 4, .eq_len = 4, .er_len = 4},
+  { .name = "random_case_14", .a = a14, .b = b14, .eq = q14, .er = r14, .a_len = 8, .b_len = 4, .eq_len = 4, .er_len = 4},
+  { .name = "random_case_15", .a = a15, .b = b15, .eq = q15, .er = r15, .a_len = 8, .b_len = 4, .eq_len = 4, .er_len = 4},
+  { .name = "random_case_16", .a = a16, .b = b16, .eq = q16, .er = r16, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8},
+  { .name = "random_case_17", .a = a17, .b = b17, .eq = q17, .er = r17, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8},
+  { .name = "random_case_18", .a = a18, .b = b18, .eq = q18, .er = r18, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8},
+  { .name = "random_case_19", .a = a19, .b = b19, .eq = q19, .er = r19, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8},
+  { .name = "random_case_20", .a = a20, .b = b20, .eq = q20, .er = r20, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8}
 };
 
 START_TEST(test_abs_divmod)

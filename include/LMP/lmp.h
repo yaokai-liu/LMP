@@ -209,6 +209,8 @@ _LOCAL_API int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2);
 _LOCAL_API bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, int32_t offset);
 _SHARED_API lmp_limb_t MP_INT_get_limb(const MP_INT *restrict num, int32_t index);
 _SHARED_API lmp_double_limb_t MP_INT_get_double_limbs(const MP_INT *restrict num, int32_t index);
+_SHARED_API lmp_limb_t MP_INT_get_flat_limb(const MP_INT *restrict num, int32_t index);
+_SHARED_API lmp_double_limb_t MP_INT_get_double_flat_limbs(const MP_INT *restrict num, int32_t index);
 // Always assume 0 <= bit_count < LMP_LIMB_BIT
 _SHARED_API lmp_limb_t MP_INT_left_shift_load(const MP_INT *restrict num, int32_t index, int32_t width);
 // Always assume 0 <= bit_count < LMP_LIMB_BIT
@@ -232,6 +234,8 @@ _LOCAL_API int32_t MP_FLOAT_abs_cmp(const MP_FLOAT *op1, const MP_FLOAT *op2);
 #define MP_FLOAT_realloc(val, required, allocator)                MP_INT_realloc((MP_INT *)(val), (required), (allocator))
 #define MP_FLOAT_get_limb(num, index)                             MP_INT_get_limb((const MP_INT *)(num), (index))
 #define MP_FLOAT_get_double_limbs(num, index)                     MP_INT_get_double_limbs((MP_INT *)(num), (index))
+#define MP_FLOAT_get_flat_limb(num, index)                        MP_INT_get_flat_limb((const MP_INT *)(num), (index))
+#define MP_FLOAT_get_double_flat_limbs(num, index)                MP_INT_get_double_flat_limbs((MP_INT *)(num), (index))
 #define MP_FLOAT_left_shift_load(num, index, bit_count)           MP_INT_left_shift_load((MP_INT *)(num), (index), (bit_count))
 #define MP_FLOAT_left_shift_load_double(num, index, bit_count)    MP_INT_left_shift_load_double((MP_INT *)(num), (index), (bit_count))
 
@@ -239,9 +243,9 @@ _LOCAL_API bool MP_BASE_INT_carry_check(const MP_BASE_NUMBER *val);
 _SHARED_API void MP_BASE_NUMBER_clear(MP_BASE_NUMBER *val, const Allocator *allocator);
 #define MP_BASE_NUMBER_realloc(val, required, allocator)          MP_INT_realloc((MP_INT *)(val), (required), (allocator))
 #define MP_BASE_INT_init(val,  initial_alloc, allocator)          MP_INT_init((MP_INT *)(val), (initial_alloc), (allocator))
-#define MP_BASE_INT_negative(val)                                 MP_INT_negative((MP_INT *)(val))
 #define MP_BASE_INT_get_limb(num, index)                          MP_INT_get_limb((const MP_INT *)(num), (index))
 _SHARED_API lmp_double_limb_t MP_BASE_INT_get_double_limbs(const MP_BASE_NUMBER *restrict num, int32_t index);
+_SHARED_API lmp_double_limb_t MP_BASE_INT_get_double_flat_limbs(const MP_BASE_NUMBER *restrict num, int32_t index);
 #define MP_BASE_INT_clamp(val)                                    MP_INT_clamp((MP_INT *)(val))
 #define MP_BASE_INT_abs_cmp(op1, op2)                             MP_INT_abs_cmp((const MP_INT *)(op1), (const MP_INT *)(op2))
 #define MP_BASE_INT_abs_offset_ge(op1, op2, offset)               MP_INT_abs_offset_ge((const MP_INT *)(op1), (const MP_INT *)(op2), (offset))
@@ -250,10 +254,16 @@ _SHARED_API lmp_double_limb_t MP_BASE_INT_get_double_limbs(const MP_BASE_NUMBER 
 #define MP_BASE_FLOAT_negative(val)                               MP_FLOAT_negative((MP_FLOAT *)(val))
 #define MP_BASE_FLOAT_get_limb(num, index)                        MP_FLOAT_get_limb((num), (index))
 #define MP_BASE_FLOAT_get_double_limbs(num, index)                MP_BASE_INT_get_double_limbs((num), (index))
+#define MP_BASE_FLOAT_get_flat_limb(num, index)                   MP_FLOAT_get_flat_limb((num), (index))
+#define MP_BASE_FLOAT_get_double_flat_limbs(num, index)           MP_BASE_INT_get_double_flat_limbs((num), (index))
 #define MP_BASE_FLOAT_carry_check(val)                            MP_BASE_INT_carry_check((val))
 #define MP_BASE_FLOAT_truncate(val)                               MP_FLOAT_truncate((MP_FLOAT *)(val))
 #define MP_BASE_FLOAT_clamp(val)                                  MP_FLOAT_clamp((MP_FLOAT *)(val))
 #define MP_BASE_FLOAT_tidy(val)                                   MP_FLOAT_tidy((MP_FLOAT *)(val))
+#define MP_BASE_FLOAT_abs_cmp(op1, op2)                           MP_FLOAT_abs_cmp((const MP_FLOAT *)(op1), (const MP_FLOAT *)(op2))
+
+_SHARED_API void MP_BASE_NUMBER_init(MP_BASE_NUMBER *val, int32_t initial_alloc, lmp_half_limb_t base, const Allocator *allocator);
+_SHARED_API void MP_BASE_NUMBER_copy(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *src, const Allocator *allocator);
 // Always assume 0 <= width <= BASE.limb_width
 // else is an unexpected behavior
 _SHARED_API lmp_limb_t MP_BASE_NUMBER_left_shift_load(const MP_BASE_NUMBER *mp_val, int32_t index, int32_t width);

@@ -19,7 +19,7 @@
  *
  * Project Name: LMP
  * Module Name: test/testcases/int
- * Filename: abs_add_offset.c
+ * Filename: add.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.

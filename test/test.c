@@ -42,9 +42,18 @@ int main()
   srunner_add_suite(sr, MP_TEST_int_abs_add_limb_suite());
   srunner_add_suite(sr, MP_TEST_int_abs_sub_limb_suite());
   srunner_add_suite(sr, MP_TEST_int_abs_mul_suite());
-  srunner_add_suite(sr, MP_TEST_int_mp_int_misc_suite());
+  srunner_add_suite(sr, MP_TEST_int_misc_suite());
   srunner_add_suite(sr, MP_TEST_int_cmp_suite());
   srunner_add_suite(sr, MP_TEST_int_abs_divmod_suite());
+
+  srunner_add_suite(sr, MP_TEST_float_cmp_suite());
+  srunner_add_suite(sr, MP_TEST_float_add_suite());
+  srunner_add_suite(sr, MP_TEST_float_sub_suite());
+  srunner_add_suite(sr, MP_TEST_float_mul_suite());
+  srunner_add_suite(sr, MP_TEST_float_divmod_suite());
+  srunner_add_suite(sr, MP_TEST_float_misc_suite());
+
+  srunner_add_suite(sr, MP_TEST_base_number_misc_suite());
 
   srunner_add_suite(sr, parse_suite());
   srunner_add_suite(sr, print_suite());
