@@ -47,8 +47,8 @@ static void run_add_case(const FloatAddCase *c)
   lmp_limb_t A_limbs[64] = {};
   lmp_limb_t B_limbs[64] = {};
   lmp_limb_t RES_limbs[64] = {};
-  STDAllocator.memcpy(A_limbs, c->a, LMP_LIMB_SIZE * c->a_len);
-  STDAllocator.memcpy(B_limbs, c->b, LMP_LIMB_SIZE * c->b_len);
+  STDAllocator.memcpy(A_limbs, c->a, LMP_LIMB_SIZE * abs(c->a_len));
+  STDAllocator.memcpy(B_limbs, c->b, LMP_LIMB_SIZE * abs(c->b_len));
 
   MP_FLOAT A = { .prec = -c->a_len, .size = c->a_len, .limbs = A_limbs, .exp = c->a_exp };
   MP_FLOAT B = { .prec = -c->b_len, .size = c->b_len, .limbs = B_limbs, .exp = c->b_exp };

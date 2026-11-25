@@ -50,7 +50,7 @@ static void run_abs_divmod_case(const FloatDivmodCase *c)
 {
   lmp_limb_t a_limbs[64] = {};
   lmp_limb_t q_limbs[64] = {};
-  STDAllocator.memcpy(a_limbs, c->a, LMP_LIMB_SIZE * c->a_len);
+  STDAllocator.memcpy(a_limbs, c->a, LMP_LIMB_SIZE * abs(c->a_len));
 
   MP_FLOAT A = { .prec = -c->a_len, .size = c->a_len, .limbs = a_limbs, .exp = c->a_exp };
   const MP_FLOAT B = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b, .exp = c->b_exp };

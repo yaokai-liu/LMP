@@ -57,7 +57,7 @@ inline lmp_limb_t lmp_fast_pow(const lmp_half_limb_t base, lmp_exp_t exp) {
 
 inline lmp_limb_t lmp_fast_quotient(const lmp_double_limb_t dividend, const lmp_double_limb_t dividend_follow, const lmp_double_limb_t divisor) {
   const lmp_double_limb_t d_high = divisor >> LMP_LIMB_BIT;
-  lmp_limb_t quotient = dividend / d_high;
+  lmp_limb_t quotient = (dividend >> LMP_LIMB_BIT) == d_high ? LMP_LIMB_MAX : dividend / d_high;
   lmp_double_limb_t dividend_hat_high = quotient * d_high;
   lmp_double_limb_t dividend_hat_tail = (lmp_double_limb_t)quotient * (lmp_limb_t)divisor;
   if (dividend_hat_high + (dividend_hat_tail >> LMP_LIMB_BIT) < dividend_hat_high) {
