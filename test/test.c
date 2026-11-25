@@ -34,8 +34,8 @@
 int main()
 {
   SRunner *sr = srunner_create(nullptr);
-  srunner_add_suite(sr, MP_TEST_int_abs_add_offset_suite());
-  srunner_add_suite(sr, MP_TEST_int_abs_sub_offset_suite());
+  srunner_add_suite(sr, MP_TEST_int_add_suite());
+  srunner_add_suite(sr, MP_TEST_int_sub_suite());
   srunner_add_suite(sr, MP_TEST_int_left_shift_suite());
   srunner_add_suite(sr, MP_TEST_int_right_shift_suite());
   srunner_add_suite(sr, MP_TEST_int_abs_mul_limb_suite());

@@ -27,8 +27,11 @@
 
 #include <inttypes.h>
 #include <stdio.h>
+
+#include "arith.h"
 #include "lmp.h"
 #include "parse.h"
+#include "testcases/test.h"
 #define lenof(str_literal) ((sizeof str_literal) - 1)
 #define abs(a) ((a) > (0) ? (a) : -(a))
 
@@ -67,9 +70,18 @@ int main () {
   //   printf((size - 1 - i >= - number.exp) ? "%"PRIu64 : "%"PRIu64, number.limbs[size - 1 - i]);
   //  if (number.exp && size - 1 - i == - number.exp) { printf("."); }
   // }
-  lmp_limb_t limbs2[2][2] = {{0, 2}, {2, 0}};
-  MP_FLOAT num3 = {.prec = 2, .size =  2, .limbs = limbs2[0], .exp = -1};
-  MP_FLOAT num4 = {.prec = 2, .size = -1, .limbs = limbs2[1], .exp =  0};
-  int32_t cmp2 = MP_FLOAT_abs_cmp(&num3, &num4);
-  return cmp2;
+  // lmp_limb_t limbs2[2][2] = {{0, 2}, {2, 0}};
+  // MP_FLOAT num3 = {.prec = 2, .size =  2, .limbs = limbs2[0], .exp = -1};
+  // MP_FLOAT num4 = {.prec = 2, .size = -1, .limbs = limbs2[1], .exp =  0};
+  // int32_t cmp2 = MP_FLOAT_abs_cmp(&num3, &num4);
+  static const lmp_limb_t sA8[] = { 0, 1, 1 };
+  static const lmp_limb_t sB8[] = { 0, 0, 2 };
+  static const lmp_limb_t sE8[] = { 0, LMP_LIMB_MAX };
+  lmp_limb_t RES_limbs[64] = {};
+  MP_INT A   = { .prec = -3, .size = 3, .limbs = (lmp_limb_t *)sA8 };
+  MP_INT B   = { .prec = -3, .size = 3, .limbs = (lmp_limb_t *)sB8 };
+  MP_INT RES = { .prec = -64 , .size = 0, .limbs = RES_limbs };
+  MP_INT_sub(&RES, &A, &B, &STDAllocator);
+  printf("%"PRI_SIZE"\n", RES.size);
+  return 0;
 }

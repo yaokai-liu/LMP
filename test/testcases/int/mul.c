@@ -42,21 +42,20 @@ typedef struct {
 static void run_mul_case(const IntMulCase *c)
 {
   lmp_limb_t dest_limbs[64] = {};
-  ck_assert((size_t)c->a_len + (size_t)c->b_len <=
-            sizeof(dest_limbs) / sizeof(dest_limbs[0]));
+  ck_assert((size_t)abs(c->a_len) + (size_t)abs(c->b_len) <= sizeof(dest_limbs) / sizeof(dest_limbs[0]));
 
   MP_INT A    = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
   MP_INT B    = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
   MP_INT DEST = { .prec = -(int32_t)(sizeof(dest_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = dest_limbs };
 
-  MP_INT_abs_mul(&DEST, &A, &B, &STDAllocator);
+  MP_INT_mul(&DEST, &A, &B, &STDAllocator);
   MP_INT_clamp(&DEST);
 
-  ck_assert_msg(abs(DEST.size) == c->e_len,
-                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, DEST.size, c->e_len);
-  for (int32_t i = 0; i < c->e_len; i++) {
+  ck_assert_msg(DEST.size == c->e_len,
+                "%s: result size %"PRI_SIZE" != %"PRI_SIZE"\n", c->name, DEST.size, c->e_len);
+  for (int32_t i = 0; i < abs(c->e_len); i++) {
     ck_assert_msg(DEST.limbs[i] == c->e[i],
-                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB"\n", c->name, i,
                   (lmp_limb_t)DEST.limbs[i],
                   (lmp_limb_t)c->e[i]);
   }
@@ -108,17 +107,17 @@ static const lmp_limb_t MB11[] = { LMP_LIMB_MAX, LMP_LIMB_MAX };
 static const lmp_limb_t ME11[] = { 1, 0, LMP_LIMB_MAX - 1, LMP_LIMB_MAX };
 
 static const IntMulCase abs_mul_cases[] = {
-  { "mul1_simple",     MA1,  MB1,  ME1,  1, 1, 1 },
-  { "mul2_small",      MA2,  MB2,  ME2,  1, 1, 1 },
-  { "mul3_carry",      MA3,  MB3,  ME3,  1, 1, 2 },
-  { "mul4_half_carry", MA4,  MB4,  ME4,  1, 1, 2 },
-  { "mul5_multi1",     MA5,  MB5,  ME5,  2, 1, 2 },
-  { "mul6_multi_carry",MA6,  MB6,  ME6,  2, 1, 2 },
-  { "mul7_ff_ff",      MA7,  MB7,  ME7,  1, 1, 2 },
-  { "mul8_multi_multi",MA8,  MB8,  ME8,  2, 2, 3 },
-  { "mul9_zero_a",     MA9,  MB9,  ME9,  0, 2, 0 },
-  { "mul10_zero_b",    MA10, MB10, ME10, 2, 0, 0 },
-  { "mul11_chain",     MA11, MB11, ME11, 2, 2, 4 },
+  { .name = "mul1_simple",     .a = MA1,  .b = MB1,  .e = ME1,  .a_len =  1, .b_len =  1, .e_len =  1 },
+  { .name = "mul2_small",      .a = MA2,  .b = MB2,  .e = ME2,  .a_len = -1, .b_len =  1, .e_len = -1 },
+  { .name = "mul3_carry",      .a = MA3,  .b = MB3,  .e = ME3,  .a_len =  1, .b_len =  1, .e_len =  2 },
+  { .name = "mul4_half_carry", .a = MA4,  .b = MB4,  .e = ME4,  .a_len = -1, .b_len = -1, .e_len =  2 },
+  { .name = "mul5_multi1",     .a = MA5,  .b = MB5,  .e = ME5,  .a_len =  2, .b_len =  1, .e_len =  2 },
+  { .name = "mul6_multi_carry",.a = MA6,  .b = MB6,  .e = ME6,  .a_len =  2, .b_len = -1, .e_len = -2 },
+  { .name = "mul7_ff_ff",      .a = MA7,  .b = MB7,  .e = ME7,  .a_len =  1, .b_len =  1, .e_len =  2 },
+  { .name = "mul8_multi_multi",.a = MA8,  .b = MB8,  .e = ME8,  .a_len =  2, .b_len =  2, .e_len =  3 },
+  { .name = "mul9_zero_a",     .a = MA9,  .b = MB9,  .e = ME9,  .a_len =  0, .b_len =  2, .e_len =  0 },
+  { .name = "mul10_zero_b",    .a = MA10, .b = MB10, .e = ME10, .a_len =  2, .b_len =  0, .e_len =  0 },
+  { .name = "mul11_chain",     .a = MA11, .b = MB11, .e = ME11, .a_len =  2, .b_len =  2, .e_len =  4 },
 };
 
 
@@ -133,8 +132,8 @@ Suite *MP_TEST_int_abs_mul_suite()
   Suite *s = suite_create("abs_mul");
   TCase *tc = tcase_create("abs_mul");
 
-  constexpr int n = sizeof(abs_mul_cases)/sizeof(IntMulCase);
-  tcase_add_loop_test(tc, test_abs_mul, 0, n);
+  constexpr int n1 = sizeof(abs_mul_cases)/sizeof(IntMulCase);
+  tcase_add_loop_test(tc, test_abs_mul, 0, n1);
 
   suite_add_tcase(s, tc);
   return s;

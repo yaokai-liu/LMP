@@ -60,7 +60,7 @@ static void run_add_case(const FloatAddCase *c)
                 "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, RES.size, c->e_len);
   ck_assert_msg(abs(RES.exp) == c->e_exp,
                 "%s: result exp %"PRI_EXP" != %"PRI_EXP, c->name, RES.exp, c->e_exp);
-  for (int32_t i = 0; i < c->e_len; i++) {
+  for (int32_t i = 0; i < abs(c->e_len); i++) {
     ck_assert_msg(RES.limbs[i] == c->e[i],
                   "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
                   RES.limbs[i], c->e[i]);

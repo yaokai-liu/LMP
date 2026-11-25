@@ -62,7 +62,7 @@ static void run_abs_divmod_case(const FloatDivmodCase *c)
                 "%s: quotient size %"PRI_SIZE" != (expected) %"PRI_SIZE, c->name, Q.size, c->eq_len);
   ck_assert_msg(abs(Q.exp) == c->eq_exp,
                 "%s: quotient exp %"PRI_EXP" != (expected) %"PRI_EXP, c->name, Q.exp, c->eq_exp);
-  for (int32_t i = 0; i < c->eq_len; i++) {
+  for (int32_t i = 0; i < abs(c->eq_len); i++) {
     ck_assert_msg(Q.limbs[i] == c->eq[i],
                   "%s: quotient limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB, c->name, i, Q.limbs[i], c->eq[i]);
   }
@@ -70,7 +70,7 @@ static void run_abs_divmod_case(const FloatDivmodCase *c)
                 "%s: remainder size %"PRI_SIZE" != (expected) %"PRI_SIZE, c->name, A.size, c->er_len);
   ck_assert_msg(abs(A.exp) == c->er_exp,
                 "%s: remainder exp %"PRI_EXP" != (expected) %"PRI_EXP, c->name, A.exp, c->er_exp);
-  for (int32_t i = 0; i < c->er_len; i++) {
+  for (int32_t i = 0; i < abs(c->er_len); i++) {
     ck_assert_msg(A.limbs[i] == c->er[i],
                   "%s: remainder limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB, c->name, i, A.limbs[i], c->er[i]);
   }

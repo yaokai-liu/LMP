@@ -46,14 +46,14 @@ static void run_add_limb_case(const IntAddLimbCase *c)
   MP_INT A    = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
   MP_INT DEST = { .prec = -(int32_t)(sizeof(dest_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = dest_limbs };
 
-  MP_INT_abs_add_limb(&DEST, &A, c->val, &STDAllocator);
+  MP_INT_add_limb(&DEST, &A, c->val, &STDAllocator);
   MP_INT_clamp(&DEST);
 
-  ck_assert_msg(abs(DEST.size) == c->e_len,
-                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, DEST.size, c->e_len);
-  for (int32_t i = 0; i < c->e_len; i++) {
+  ck_assert_msg(DEST.size == c->e_len,
+                "%s: result size %"PRI_SIZE" != %"PRI_SIZE"\n", c->name, DEST.size, c->e_len);
+  for (int32_t i = 0; i < abs(c->e_len); i++) {
     ck_assert_msg(DEST.limbs[i] == c->e[i],
-                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB"\n", c->name, i,
                   (lmp_limb_t)DEST.limbs[i],
                   (lmp_limb_t)c->e[i]);
   }
@@ -95,18 +95,34 @@ static const lmp_limb_t AA11[] = { LMP_LIMB_MAX,
                                    LMP_LIMB_MAX };
 static const lmp_limb_t AE11[] = { 0, 0, 0, 1 };
 
+static const lmp_limb_t AA12[] = { 2234 };
+static const lmp_limb_t AE12[] = { 1234 };
+
+static const lmp_limb_t AA13[] = { 2234 };
+static const lmp_limb_t AE13[] = { 0 };
+
+static const lmp_limb_t AA14[] = {  234 };
+static const lmp_limb_t AE14[] = { 1000 };
+
+static const lmp_limb_t AA15[] = { 1234, 1 };
+static const lmp_limb_t AE15[] = { LMP_LIMB_MAX - 1000 + 1 };
+
 static const IntAddLimbCase abs_add_limb_cases[] = {
-  { "add1_simple",      AA1,  AE1,  1, 1, 1 },
-  { "add2_no_carry",    AA2,  AE2,  1, 1, 1000 },
-  { "add3_carry",       AA3,  AE3,  1, 2, 1 },
-  { "add4_multi",       AA4,  AE4,  2, 2, 1 },
-  { "add5_mid_carry",   AA5,  AE5,  2, 2, 1 },
-  { "add6_zero_size",   AA6,  AE6,  0, 1, 12345 },
-  { "add7_zero_val",    AA7,  AE7,  2, 2, 0 },
-  { "add8_all_ff",      AA8,  AE8,  2, 3, 1 },
-  { "add9_high_zero",   AA9,  AE9,  2, 1, 7 },
-  { "add10_half",       AA10, AE10, 1, 2, (1ULL << 63) },
-  { "add11_triple",     AA11, AE11, 3, 4, 1 },
+  { .name = "add1_simple",      .a = AA1,  .e = AE1,  .a_len =  1, .e_len =  1, .val = 1 },
+  { .name = "add2_no_carry",    .a = AA2,  .e = AE2,  .a_len =  1, .e_len =  1, .val = 1000 },
+  { .name = "add3_carry",       .a = AA3,  .e = AE3,  .a_len =  1, .e_len =  2, .val = 1 },
+  { .name = "add4_multi",       .a = AA4,  .e = AE4,  .a_len =  2, .e_len =  2, .val = 1 },
+  { .name = "add5_mid_carry",   .a = AA5,  .e = AE5,  .a_len =  2, .e_len =  2, .val = 1 },
+  { .name = "add6_zero_size",   .a = AA6,  .e = AE6,  .a_len =  0, .e_len =  1, .val = 12345 },
+  { .name = "add7_zero_val",    .a = AA7,  .e = AE7,  .a_len =  2, .e_len =  2, .val = 0 },
+  { .name = "add8_all_ff",      .a = AA8,  .e = AE8,  .a_len =  2, .e_len =  3, .val = 1 },
+  { .name = "add9_high_zero",   .a = AA9,  .e = AE9,  .a_len =  2, .e_len =  1, .val = 7 },
+  { .name = "add10_half",       .a = AA10, .e = AE10, .a_len =  1, .e_len =  2, .val = (1ULL << 63) },
+  { .name = "add11_triple",     .a = AA11, .e = AE11, .a_len =  3, .e_len =  4, .val = 1 },
+  { .name = "add12_neg",        .a = AA12, .e = AE12, .a_len = -1, .e_len = -1, .val = 1000 },
+  { .name = "add13_res_zero",   .a = AA13, .e = AE13, .a_len = -1, .e_len =  0, .val = 2234 },
+  { .name = "add14_neg_pos",    .a = AA14, .e = AE14, .a_len = -1, .e_len =  1, .val = 1234 },
+  { .name = "add15_neg_limbs",  .a = AA15, .e = AE15, .a_len = -2, .e_len = -1, .val = 2234 },
 };
 
 START_TEST(test_abs_add_limb)

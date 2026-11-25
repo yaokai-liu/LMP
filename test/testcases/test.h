@@ -44,8 +44,8 @@
 #define PRI_EXP         PRIi64
 #define PRI_HALF_LIMB   PRIu32
 
-Suite *MP_TEST_int_abs_add_offset_suite();
-Suite *MP_TEST_int_abs_sub_offset_suite();
+Suite *MP_TEST_int_add_suite();
+Suite *MP_TEST_int_sub_suite();
 Suite *MP_TEST_int_left_shift_suite();
 Suite *MP_TEST_int_right_shift_suite();
 Suite *MP_TEST_int_abs_mul_limb_suite();

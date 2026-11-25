@@ -37,7 +37,7 @@ typedef struct {
 static void run_add_case(const IntInv3Case *c)
 {
   const lmp_limb_t res = MP_INT_abs_3limbs_inv(c->divisor);
-  ck_assert_msg(res == c->expect, "%s: 3limbs inverse %"PRI_LIMB" != %"PRI_LIMB, c->name, res, c->expect);
+  ck_assert_msg(res == c->expect, "%s: 3limbs inverse %"PRI_LIMB" != %"PRI_LIMB"\n", c->name, res, c->expect);
 }
 
 
@@ -75,7 +75,7 @@ END_TEST
 
 Suite *abs_3limbs_inv_suite()
 {
-  Suite *s = suite_create("abs_sub_offset");
+  Suite *s = suite_create("abs_3limbs_inv");
   TCase *tc = tcase_create("abs_3limbs_inv");
 
   constexpr int n = sizeof(inv_cases)/sizeof(IntInv3Case);

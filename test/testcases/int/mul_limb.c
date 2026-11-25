@@ -45,14 +45,14 @@ static void run_mul_limb_case(const IntMulLimbCase *c)
   MP_INT A    = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
   MP_INT DEST = { .prec = -(int32_t)(sizeof(dest_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = dest_limbs };
 
-  MP_INT_abs_mul_limb(&DEST, &A, c->val, &STDAllocator);
+  MP_INT_mul_limb(&DEST, &A, c->val, &STDAllocator);
   MP_INT_clamp(&DEST);
 
-  ck_assert_msg(abs(DEST.size) == c->e_len,
-                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, DEST.size, c->e_len);
-  for (int32_t i = 0; i < c->e_len; i++) {
+  ck_assert_msg(DEST.size == c->e_len,
+                "%s: result size %"PRI_SIZE" != %"PRI_SIZE"\n", c->name, DEST.size, c->e_len);
+  for (int32_t i = 0; i < abs(c->e_len); i++) {
     ck_assert_msg(DEST.limbs[i] == c->e[i],
-                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB"\n", c->name, i,
                   (lmp_limb_t)DEST.limbs[i],
                   (lmp_limb_t)c->e[i]);
   }

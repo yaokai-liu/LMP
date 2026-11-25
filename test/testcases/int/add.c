@@ -39,86 +39,192 @@ typedef struct {
   int32_t           offset;
 } IntAddCase;
 
-static void run_add_case(const IntAddCase *c)
+static void run_abs_add_offset_case(const IntAddCase *c)
 {
-  lmp_limb_t RES_limbs[(c->a_len > c->b_len ? c->a_len : c->b_len) + c->offset + 1] = {};
+  lmp_limb_t RES_limbs[64] = {};
 
-  const MP_INT A = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
-  MP_INT B   = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
+  MP_INT A = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
+  const MP_INT B = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
   MP_INT RES = { .prec = -(int32_t)(sizeof(RES_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = RES_limbs };
 
   MP_INT_abs_add_offset(&RES, &A, &B, c->offset, &STDAllocator);
 
   ck_assert_msg(abs(RES.size) == c->e_len,
-                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, RES.size, c->e_len);
-  for (int32_t i = 0; i < c->e_len; i++) {
+                "%s: result size %"PRI_SIZE" != (expected) %"PRI_SIZE"\n", c->name, RES.size, c->e_len);
+  for (int32_t i = 0; i < abs(c->e_len); i++) {
     ck_assert_msg(RES.limbs[i] == c->e[i],
-                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB"\n", c->name, i,
                   RES.limbs[i], c->e[i]);
   }
 }
 
-static const lmp_limb_t A1[] = {1, 2, 3};
-static const lmp_limb_t B1[] = {4, 5, 6};
-static const lmp_limb_t E1[] = {5, 7, 9};
+static void run_add_case(const IntAddCase *c)
+{
+  lmp_limb_t RES_limbs[64] = {};
 
-static const lmp_limb_t A2[] = {1};
-static const lmp_limb_t B2[] = {2};
-static const lmp_limb_t E2[] = {3};
+  MP_INT A = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
+  MP_INT B   = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
+  MP_INT RES = { .prec = -(int32_t)(sizeof(RES_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = RES_limbs };
 
-static const lmp_limb_t A3[] = {~(lmp_limb_t)0, ~(lmp_limb_t)0};
-static const lmp_limb_t B3[] = {1};
-static const lmp_limb_t E3[] = {0, 0, 1};
+  MP_INT_add(&RES, &A, &B, &STDAllocator);
 
-static const lmp_limb_t A4[] = {1, 2, 3, 4};
-static const lmp_limb_t B4[] = {5, 6};
-static const lmp_limb_t E4[] = {6, 8, 3, 4};
+  ck_assert_msg(RES.size == c->e_len,
+                "%s: result size %"PRI_SIZE" != (expected) %"PRI_SIZE"\n", c->name, RES.size, c->e_len);
+  for (int32_t i = 0; i < abs(c->e_len); i++) {
+    ck_assert_msg(RES.limbs[i] == c->e[i],
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB"\n", c->name, i,
+                  RES.limbs[i], c->e[i]);
+  }
+}
 
-static const lmp_limb_t A5[] = {1, 2, 3};
-static const lmp_limb_t B5[] = {4, 5};
-static const lmp_limb_t E5[] = {1, 6, 8};
+static const lmp_limb_t oA1[] = {1, 2, 3};
+static const lmp_limb_t oB1[] = {4, 5, 6};
+static const lmp_limb_t oE1[] = {5, 7, 9};
 
-static const lmp_limb_t A6[] = {1, 2};
-static const lmp_limb_t B6[] = {3, 4};
-static const lmp_limb_t E6[] = {1, 2, 0, 3, 4};
+static const lmp_limb_t oA2[] = {1};
+static const lmp_limb_t oB2[] = {2};
+static const lmp_limb_t oE2[] = {3};
 
-static const lmp_limb_t A7[] = {1};
-static const lmp_limb_t B7[] = {2, 3};
-static const lmp_limb_t E7[] = {1, 0, 2, 3};
+static const lmp_limb_t oA3[] = {~(lmp_limb_t)0, ~(lmp_limb_t)0};
+static const lmp_limb_t oB3[] = {1};
+static const lmp_limb_t oE3[] = {0, 0, 1};
 
-static const lmp_limb_t A8[] = {~(lmp_limb_t)0, ~(lmp_limb_t)0};
-static const lmp_limb_t B8[] = {1};
-static const lmp_limb_t E8[] = {~(lmp_limb_t)0, 0, 1};
+static const lmp_limb_t oA4[] = {1, 2, 3, 4};
+static const lmp_limb_t oB4[] = {5, 6};
+static const lmp_limb_t oE4[] = {6, 8, 3, 4};
 
-static const lmp_limb_t A9[] = {7};
-static const lmp_limb_t B9[] = {8, 9};
-static const lmp_limb_t E9[] = {7, 8, 9};
+static const lmp_limb_t oA5[] = {1, 2, 3};
+static const lmp_limb_t oB5[] = {4, 5};
+static const lmp_limb_t oE5[] = {1, 6, 8};
 
-static const IntAddCase add_cases[] = {
-  {"basic3x3",          A1, B1, E1, 3, 3, 3, 0},
-  {"basic1x1",          A2, B2, E2, 1, 1, 1, 0},
-  {"carry",             A3, B3, E3, 2, 1, 3, 0},
-  {"diff_len",          A4, B4, E4, 4, 2, 4, 0},
-  {"offset1_overlap",   A5, B5, E5, 3, 2, 3, 1},
-  {"offset3_gap",       A6, B6, E6, 2, 2, 5, 3},
-  {"offset2_extend",    A7, B7, E7, 1, 2, 4, 2},
-  {"offset1_carry",     A8, B8, E8, 2, 1, 3, 1},
-  {"offset1_tail",      A9, B9, E9, 1, 2, 3, 1},
+static const lmp_limb_t oA6[] = {1, 2};
+static const lmp_limb_t oB6[] = {3, 4};
+static const lmp_limb_t oE6[] = {1, 2, 0, 3, 4};
+
+static const lmp_limb_t oA7[] = {1};
+static const lmp_limb_t oB7[] = {2, 3};
+static const lmp_limb_t oE7[] = {1, 0, 2, 3};
+
+static const lmp_limb_t oA8[] = {~(lmp_limb_t)0, ~(lmp_limb_t)0};
+static const lmp_limb_t oB8[] = {1};
+static const lmp_limb_t oE8[] = {~(lmp_limb_t)0, 0, 1};
+
+static const lmp_limb_t oA9[] = {7};
+static const lmp_limb_t oB9[] = {8, 9};
+static const lmp_limb_t oE9[] = {7, 8, 9};
+
+static const IntAddCase abs_add_offset_cases[] = {
+  { .name = "abs_add_offset:basic3x3",        .a = oA1, .b = oB1, .e = oE1, .a_len = 3, .b_len = 3, .e_len = 3, .offset = 0 },
+  { .name = "abs_add_offset:basic1x1",        .a = oA2, .b = oB2, .e = oE2, .a_len = 1, .b_len = 1, .e_len = 1, .offset = 0 },
+  { .name = "abs_add_offset:carry",           .a = oA3, .b = oB3, .e = oE3, .a_len = 2, .b_len = 1, .e_len = 3, .offset = 0 },
+  { .name = "abs_add_offset:diff_len",        .a = oA4, .b = oB4, .e = oE4, .a_len = 4, .b_len = 2, .e_len = 4, .offset = 0 },
+  { .name = "abs_add_offset:offset1_overlap", .a = oA5, .b = oB5, .e = oE5, .a_len = 3, .b_len = 2, .e_len = 3, .offset = 1 },
+  { .name = "abs_add_offset:offset3_gap",     .a = oA6, .b = oB6, .e = oE6, .a_len = 2, .b_len = 2, .e_len = 5, .offset = 3 },
+  { .name = "abs_add_offset:offset2_extend",  .a = oA7, .b = oB7, .e = oE7, .a_len = 1, .b_len = 2, .e_len = 4, .offset = 2 },
+  { .name = "abs_add_offset:offset1_carry",   .a = oA8, .b = oB8, .e = oE8, .a_len = 2, .b_len = 1, .e_len = 3, .offset = 1 },
+  { .name = "abs_add_offset:offset1_tail",    .a = oA9, .b = oB9, .e = oE9, .a_len = 1, .b_len = 2, .e_len = 3, .offset = 1 },
 };
 
-START_TEST(test_abs_sub_offset)
+static const lmp_limb_t aA1[] = {1, 2, 3};
+static const lmp_limb_t aB1[] = {4, 5, 6};
+static const lmp_limb_t aE1[] = {5, 7, 9};
+
+static const lmp_limb_t aA2[] = {1};
+static const lmp_limb_t aB2[] = {2};
+static const lmp_limb_t aE2[] = {3};
+
+static const lmp_limb_t aA3[] = {~(lmp_limb_t)0, ~(lmp_limb_t)0};
+static const lmp_limb_t aB3[] = {1};
+static const lmp_limb_t aE3[] = {0, 0, 1};
+
+static const lmp_limb_t aA4[] = {1, 2, 3, 4};
+static const lmp_limb_t aB4[] = {5, 6};
+static const lmp_limb_t aE4[] = {6, 8, 3, 4};
+
+static const lmp_limb_t aA5[] = {1, 2, 3};
+static const lmp_limb_t aB5[] = {0, 4, 5};
+static const lmp_limb_t aE5[] = {1, 6, 8};
+
+static const lmp_limb_t aA6[] = {1, 2};
+static const lmp_limb_t aB6[] = {0, 0, 0, 3, 4};
+static const lmp_limb_t aE6[] = {1, 2, 0, 3, 4};
+
+static const lmp_limb_t aA7[] = {1};
+static const lmp_limb_t aB7[] = {0, 0, 2, 3};
+static const lmp_limb_t aE7[] = {1, 0, 2, 3};
+
+static const lmp_limb_t aA8[] = {~(lmp_limb_t)0, ~(lmp_limb_t)0};
+static const lmp_limb_t aB8[] = {0, 1};
+static const lmp_limb_t aE8[] = {~(lmp_limb_t)0, 0, 1};
+
+static const lmp_limb_t aA9[] = {7};
+static const lmp_limb_t aB9[] = {0, 8, 9};
+static const lmp_limb_t aE9[] = {7, 8, 9};
+
+static const lmp_limb_t aA10[] = {7};
+static const lmp_limb_t aB10[] = {8, 9};
+static const lmp_limb_t aE10[] = {1, 9};
+
+static const lmp_limb_t aA11[] = {8, 9};
+static const lmp_limb_t aB11[] = {7};
+static const lmp_limb_t aE11[] = {1, 9};
+
+static const lmp_limb_t aA12[] = {8, 9};
+static const lmp_limb_t aB12[] = {8, 9};
+static const lmp_limb_t aE12[] = {0};
+
+static const IntAddCase add_cases[] = {
+  { .name = "add:basic3x3",        .a = aA1,  .b = aB1,  .e = aE1,  .a_len =  3, .b_len = 3, .e_len =  3 },
+  { .name = "add:basic1x1",        .a = aA2,  .b = aB2,  .e = aE2,  .a_len =  1, .b_len = 1, .e_len =  1 },
+  { .name = "add:carry",           .a = aA3,  .b = aB3,  .e = aE3,  .a_len =  2, .b_len = 1, .e_len =  3 },
+  { .name = "add:diff_len",        .a = aA4,  .b = aB4,  .e = aE4,  .a_len =  4, .b_len = 4, .e_len =  4 },
+  { .name = "add:overlap",         .a = aA5,  .b = aB5,  .e = aE5,  .a_len =  3, .b_len = 3, .e_len =  3 },
+  { .name = "add:gap",             .a = aA6,  .b = aB6,  .e = aE6,  .a_len =  2, .b_len = 5, .e_len =  5 },
+  { .name = "add:extend",          .a = aA7,  .b = aB7,  .e = aE7,  .a_len =  1, .b_len = 4, .e_len =  4 },
+  { .name = "add:carry",           .a = aA8,  .b = aB8,  .e = aE8,  .a_len =  2, .b_len = 2, .e_len =  3 },
+  { .name = "add:tail",            .a = aA9,  .b = aB9,  .e = aE9,  .a_len =  1, .b_len = 3, .e_len =  3 },
+  { .name = "add:sub1",            .a = aA10, .b = aB10, .e = aE10, .a_len = -1, .b_len = 2, .e_len =  2 },
+  { .name = "add:sub2",            .a = aA11, .b = aB11, .e = aE11, .a_len = -2, .b_len = 1, .e_len = -2 },
+  { .name = "add:sub3",            .a = aA12, .b = aB12, .e = aE12, .a_len = -2, .b_len = 2, .e_len =  0 },
+};
+
+START_TEST(test_abs_add_offset)
+{
+  run_abs_add_offset_case(&abs_add_offset_cases[_i]);
+}
+END_TEST
+
+START_TEST(test_add)
 {
   run_add_case(&add_cases[_i]);
 }
 END_TEST
 
-Suite *MP_TEST_int_abs_add_offset_suite()
-{
-  Suite *s = suite_create("abs_sub_offset");
-  TCase *tc = tcase_create("abs_add_offset");
+START_TEST(test_MP_INT_add_rop_is_op1) {
+  lmp_limb_t op1_limbs[] = {7, 9};
+  lmp_limb_t op2_limbs[] = {8, 9};
+  lmp_limb_t e_limbs[] = {1, 0};
 
-  constexpr int n = sizeof(add_cases)/sizeof(IntAddCase);
-  tcase_add_loop_test(tc, test_abs_sub_offset, 0, n);
+  MP_INT A = { .prec = -2, .size =  2, .limbs = op1_limbs };
+  MP_INT B = { .prec = -2, .size = -2, .limbs = op2_limbs };
+  MP_INT_add(&A, &A, &B, &STDAllocator);
+  ck_assert(A.size == -1);
+  ck_assert(op1_limbs[0] == e_limbs[0]);
+  ck_assert(op1_limbs[1] == e_limbs[1]);
+}
+END_TEST
+
+
+Suite *MP_TEST_int_add_suite()
+{
+  Suite *s = suite_create("int_add");
+  TCase *tc = tcase_create("int_add");
+
+  constexpr int n1 = sizeof(abs_add_offset_cases)/sizeof(IntAddCase);
+  constexpr int n2 = sizeof(add_cases)/sizeof(IntAddCase);
+  tcase_add_loop_test(tc, test_abs_add_offset, 0, n1);
+  tcase_add_loop_test(tc, test_add, 0, n2);
+  tcase_add_test(tc, test_MP_INT_add_rop_is_op1);
 
   suite_add_tcase(s, tc);
   return s;

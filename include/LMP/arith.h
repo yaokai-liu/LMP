@@ -49,10 +49,10 @@ _LOCAL_API void MP_INT_abs_sub_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t v
 // Force set rop->size >= 0
 // Always assume abs(rop->prec) large enough
 _LOCAL_API void MP_INT_abs_mul(MP_INT *restrict rop, const MP_INT *op1, const MP_INT *op2, const Allocator *allocator);
+// Allow (rop = op1)
 // Force set rop->size >= 0
-// Allow (rop = op1) or (rop = op2)
 // Always assume abs(rop->prec) large enough
-_LOCAL_API void MP_INT_abs_add_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *op2, int32_t offset, const Allocator *allocator);
+_LOCAL_API void MP_INT_abs_add_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *restrict op2, int32_t offset, const Allocator *allocator);
 // Allow (rop = op1)
 // Force set rop->size >= 0
 // Always assume abs(rop->prec) large enough
@@ -163,7 +163,6 @@ _LOCAL_API void MP_BASE_INT_abs_add_limb(MP_BASE_NUMBER *dest, const MP_BASE_NUM
 //    else is an unexpected behavior
 // Force set dest->size >= 0
 _LOCAL_API void MP_BASE_INT_abs_sub_limb(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *op, lmp_limb_t val, const Allocator *allocator);
-
 // Force set rop->size >= 0
 // Always assume op1, op2 both are integer
 // Always assume (op1->BASE.base == op2->BASE.base == rop->BASE.base)
@@ -185,7 +184,7 @@ _LOCAL_API void MP_BASE_INT_abs_add_offset(MP_BASE_NUMBER *rop, const MP_BASE_NU
 // Always assume abs(op1) >= abs(op2) * pow(BASE.limb_val, offset)
 // Force set rop->size >= 0
 _LOCAL_API void MP_BASE_INT_abs_sub_offset(MP_BASE_NUMBER *rop, const MP_BASE_NUMBER *op1, const MP_BASE_NUMBER * op2,
-                                int32_t offset, const Allocator *allocator);
+                                           int32_t offset, const Allocator *allocator);
 // dividend as remainder
 // Always assume dividend, divisor both are integer
 // Always assume (dividend->BASE.base == divisor->BASE.base == quotient->BASE.base)
@@ -193,7 +192,7 @@ _LOCAL_API void MP_BASE_INT_abs_sub_offset(MP_BASE_NUMBER *rop, const MP_BASE_NU
 // Force set dividend->size >= 0
 // Force set quotient->size >= 0
 _LOCAL_API void MP_BASE_INT_abs_divmod(MP_BASE_NUMBER *restrict dividend,const MP_BASE_NUMBER *restrict divisor,
-                            MP_BASE_NUMBER *restrict quotient, const Allocator *allocator);
+                                       MP_BASE_NUMBER *restrict quotient, const Allocator *allocator);
 
 
 #endif //LMP_ARITH_H
