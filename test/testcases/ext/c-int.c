@@ -26,7 +26,7 @@
  **/
 
 #include "test.h"
-#include "ext/c-int.h"
+#include "LMP/ext/c-int.h"
 
 typedef struct {
   const char * name;

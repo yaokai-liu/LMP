@@ -28,7 +28,7 @@
 #ifndef LMP_IEEE754_H
 #define LMP_IEEE754_H
 #include "extfloat.h"
-#include "lmp.h"
+#include "LMP/lmp.h"
 
 #define FLOAT32_MAX         FLT_MAX
 #define FLOAT32_INS         FLT_TRUE_MIN

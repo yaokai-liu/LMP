@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 4.3)
-project(LMP C)
+project(LMP VERSION 0.0.1 LANGUAGES C)
 
 set(CMAKE_C_STANDARD 23)
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
@@ -23,8 +23,6 @@ add_subdirectory(extstd)
 include_directories(extstd/include)
 link_libraries(extstd)
 
-include_directories(include/LMP)
-
 if (ENABLE_GPROF)
     add_compile_options("-pg")
     add_link_options("-pg")
@@ -45,47 +43,16 @@ file(GLOB_RECURSE LMP_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.c src/*.h)
 add_library(LMP SHARED ${LMP_SRC})
 target_link_libraries(LMP PRIVATE m)
 target_compile_definitions(LMP PRIVATE "_SHARED_LIB_" $<$<BOOL:${ENABLE_TEST_COV}>:_TEST_LOCAL_API_>)
+add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
+target_include_directories(${PROJECT_NAME} PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include>
+)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules/InstallCLibrary.cmake)
+setup_c_library_install(${PROJECT_NAME})
 
-if (ENABLE_TEST_COV)
+if(ENABLE_TEST_COV)
     enable_testing()
-    set(TARGET_PREFIX "LMP_")
-    target_link_libraries(LMP PRIVATE gcov)
-    target_compile_options(LMP PRIVATE "-fprofile-arcs" "-ftest-coverage" "--coverage")
-    target_link_options(LMP PRIVATE "-fprofile-arcs" "-ftest-coverage" "--coverage")
-    AUX_SOURCE_DIRECTORY(test/testcases ${TARGET_PREFIX}TESTCASE_SRC)
-    file(GLOB_RECURSE ${TARGET_PREFIX}TESTCASE_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} test/testcases/*.c test/testcases/*.h)
-    add_executable(${TARGET_PREFIX}test test/test.c ${${TARGET_PREFIX}TESTCASE_SRC})
-    target_compile_definitions(${TARGET_PREFIX}test PRIVATE $<$<BOOL:${ENABLE_TEST_COV}>:_TEST_LOCAL_API_>)
-    target_include_directories(${TARGET_PREFIX}test PRIVATE test/testcases)
-    target_link_libraries(${TARGET_PREFIX}test PRIVATE check gcov LMP)
-    if (GITHUB_CI)
-        target_link_libraries(${TARGET_PREFIX}test PRIVATE subunit)
-    endif ()
-    target_compile_options(${TARGET_PREFIX}test PRIVATE "--coverage")
-    target_link_options(${TARGET_PREFIX}test PRIVATE "--coverage")
-    add_test(NAME MyUnitTests COMMAND ${TARGET_PREFIX}test)
-
-    find_program(LCOV_PATH lcov)
-    find_program(GENHTML_PATH genhtml)
-    if(LCOV_PATH AND GENHTML_PATH)
-        add_custom_target(coverage
-            COMMAND ${LCOV_PATH} --directory . --zerocounters
-            COMMAND ${CMAKE_CTEST_COMMAND} --output-on-failure
-            COMMAND ${LCOV_PATH} --directory . --capture --output-file coverage.info
-            COMMAND ${LCOV_PATH} --remove coverage.info test/* /usr/* --ignore-errors unused --output-file coverage_filtered.info
-            COMMAND ${GENHTML_PATH} coverage_filtered.info --output-directory coverage_html
-            WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
-            COMMENT "Generating coverage report with lcov..."
-            VERBATIM
-        )
-        add_dependencies(coverage ${TARGET_PREFIX}test)
-    else()
-        message(WARNING "lcov / genhtml not found, coverage target disabled")
-    endif()
-endif ()
-
-if(BUILD_TYPE_UPPER STREQUAL "DEBUG")
-    add_executable(${TARGET_PREFIX}debug test/debug.c)
-    target_link_libraries(${TARGET_PREFIX}debug PRIVATE LMP)
-    target_compile_definitions(${TARGET_PREFIX}debug PRIVATE "_TEST_LOCAL_API_")
-endif ()
+endif()
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake-modules/SetupCTesting.cmake)
+setup_c_testing(${PROJECT_NAME} PREFIX ${TARGET_PREFIX})

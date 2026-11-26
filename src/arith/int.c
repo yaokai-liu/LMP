@@ -25,7 +25,7 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include "arith.h"
+#include "LMP/arith.h"
 #include "extbit.h"
 
 #define max(a, b)   ((a) >  (b) ? (a) :  (b))

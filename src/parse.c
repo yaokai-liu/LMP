@@ -25,9 +25,9 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include "parse.h"
-#include "type.h"
-#include "arith.h"
+#include "LMP/parse.h"
+#include "LMP/type.h"
+#include "LMP/arith.h"
 #include "allocator.h"
 
 enum LMP_PARSE_MODE_MASK_TYPE : uint8_t {

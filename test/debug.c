@@ -28,9 +28,9 @@
 #include <inttypes.h>
 #include <stdio.h>
 
-#include "arith.h"
-#include "lmp.h"
-#include "parse.h"
+#include "LMP/arith.h"
+#include "LMP/lmp.h"
+#include "LMP/parse.h"
 #include "testcases/test.h"
 #define lenof(str_literal) ((sizeof str_literal) - 1)
 #define abs(a) ((a) > (0) ? (a) : -(a))

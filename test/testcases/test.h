@@ -28,8 +28,8 @@
 #ifndef LMP_TEST_H
 #define LMP_TEST_H
 
-#include "lmp.h"
-#include "arith.h"
+#include "LMP/lmp.h"
+#include "LMP/arith.h"
 #include <check.h>
 #include <inttypes.h>
 #define lenof(str_literal) ((sizeof str_literal) - 1)

@@ -27,7 +27,7 @@
 
 #ifndef LMP_EXT_C_INT_H
 #define LMP_EXT_C_INT_H
-#include "lmp.h"
+#include "LMP/lmp.h"
 
 #ifndef UINT128_MAX
 #define UINT128_MAX ((((uint128_t)UINT64_MAX) << 64) | UINT64_MAX)

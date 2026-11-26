@@ -26,7 +26,7 @@
  **/
 
 #include "test.h"
-#include "parse.h"
+#include "LMP/parse.h"
 #include "allocator.h"
 
 typedef struct {

@@ -25,7 +25,7 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include "ext/c-int.h"
+#include "LMP/ext/c-int.h"
 #define max(a, b)   ((a) >  (b) ? (a) :  (b))
 #define abs(a)      ((a) >  (0) ? (a) : -(a))
 #define sgn(a)      ((a) == (0) ? 0 : ((a) > 0) ? 1  :  -1)

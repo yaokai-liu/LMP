@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 
-#include "arith.h"
+#include "LMP/arith.h"
 #include "extbit.h"
 
 #define max(a, b)   ((a) >  (b) ? (a) :  (b))

@@ -25,7 +25,7 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include "ext/ieee754.h"
+#include "LMP/ext/ieee754.h"
 #include "extbit.h"
 
 #define max(a, b)   ((a) >  (b) ? (a) :  (b))

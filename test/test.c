@@ -25,7 +25,7 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include "lmp.h"
+#include "LMP/lmp.h"
 #include <check.h>
 #include "testcases/test.h"
 #define EXIT_SUCCESS 0

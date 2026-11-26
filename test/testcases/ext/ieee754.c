@@ -27,7 +27,7 @@
 
 #include "test.h"
 #include <stdio.h>
-#include "ext/ieee754.h"
+#include "LMP/ext/ieee754.h"
 #include "allocator.h"
 
 typedef struct {

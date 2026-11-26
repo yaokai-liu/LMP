@@ -1,3 +1,6 @@
 [submodule "extstd"]
 	path = extstd
 	url = git@github.com:yaokai-liu/extstd.git
+[submodule "cmake-modules"]
+	path = cmake-modules
+	url = git@github.com:yaokai-liu/cmake-modules.git

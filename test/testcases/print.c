@@ -26,7 +26,7 @@
  **/
 
 #include "test.h"
-#include "print.h"
+#include "LMP/print.h"
 #include "allocator.h"
 
 typedef struct {
