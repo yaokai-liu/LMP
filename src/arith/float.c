@@ -61,7 +61,7 @@ void MP_FLOAT_mul_base_exp(MP_FLOAT *op, lmp_exp_t exp, const Allocator *allocat
       MP_INT_right_shift((MP_INT *)op, shift_width, allocator);
     }
   }
-  MP_FLOAT_clamp(op);
+  MP_FLOAT_tidy(op);
 }
 
 inline void MP_FLOAT_normal_abs_mul(MP_FLOAT *restrict rop, const MP_FLOAT *op1, const MP_FLOAT *op2, const Allocator *allocator) {
@@ -146,6 +146,7 @@ void MP_FLOAT_mul(MP_FLOAT *restrict rop, const MP_FLOAT *op1, const MP_FLOAT *o
   }
   MP_FLOAT_normal_abs_mul(rop, op1, op2, allocator);
   rop->size = sgn(op1->size) * sgn(op2->size) * abs(rop->size);
+  MP_FLOAT_tidy(rop);
 }
 
 inline void MP_FLOAT_add(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * op2, const Allocator *allocator) {
@@ -201,6 +202,7 @@ inline void MP_FLOAT_add(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * op
     rop->size = - sgn1 * abs(rop->size);
     MP_FLOAT_clear(&tmp, allocator);
   }
+  MP_FLOAT_tidy(rop);
 }
 
 inline void MP_FLOAT_sub(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * restrict op2, const Allocator *allocator) {
@@ -261,11 +263,14 @@ inline void MP_FLOAT_sub(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * re
     rop->size = - sgn1 * abs(rop->size);
     MP_FLOAT_clear(&tmp, allocator);
   }
+  MP_FLOAT_tidy(rop);
 }
 
 inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLOAT *restrict divisor,
                                            MP_FLOAT *restrict quotient, const Allocator *allocator) {
-  if (dividend->size == 0) { quotient->size = 0; return; }
+  const lmp_size_t size_quotient = abs(quotient->prec);
+  if (size_quotient == 0) { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
+  if (dividend->size == 0) { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
   const lmp_size_t size_divisor  = abs(divisor->size);
   const lmp_size_t size_dividend = abs(dividend->size);
   const int32_t d_leading_zeros = extstd_leading_zeros(divisor->limbs[abs(divisor->size) - 1]);
@@ -274,13 +279,6 @@ inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLO
   const lmp_double_limb_t d_high = d >> LMP_LIMB_BIT;
   bool overflow = n_leading_zeros <= d_leading_zeros;
 
-  const lmp_size_t size_quotient = abs(quotient->prec);
-  if (size_quotient == 0) {
-    MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, (MP_INT *)divisor, 0, allocator);
-    quotient->limbs[0] = 1;
-    quotient->size = 1;
-    return;
-  }
   MP_FLOAT_realloc(quotient, size_quotient, allocator);
   quotient->exp = dividend->exp - divisor->exp;
   quotient->size = size_quotient;
@@ -304,13 +302,15 @@ inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLO
     }
   }
   const lmp_size_t sub_offset = size_quotient - 1 - overflow;
-  for (int32_t i = overflow; i < size_quotient; i++) {
-    const int32_t load_index = size_dividend - 2;
-    const int32_t curr_q_idx = size_quotient - 1 - i;
+  for (lmp_size_t i = overflow; i < size_quotient; i++) {
+    const lmp_size_t load_index = size_dividend - 2;
+    const lmp_size_t curr_q_idx = size_quotient - 1 - i;
     lmp_double_limb_t dividend_head = MP_INT_left_shift_load_double((MP_INT *)dividend, load_index, d_leading_zeros);
     lmp_double_limb_t dividend_foll = MP_INT_left_shift_load((MP_INT *)dividend, load_index - 1, d_leading_zeros);
     if (dividend_head < d_high) {
       quotient->limbs[curr_q_idx] = 0;
+      MP_INT_left_shift((MP_INT *)dividend, LMP_LIMB_BIT, allocator);
+      dividend->exp-= 1;
       continue;
     }
     if (dividend_head > d) { // maybe never be reached
@@ -329,9 +329,15 @@ inline void MP_FLOAT_normal_abs_divmod(MP_FLOAT *restrict dividend, const MP_FLO
     }
     MP_INT_abs_sub_offset((MP_INT *)dividend, (MP_INT *)dividend, &INTERVAL, sub_offset, allocator);
     MP_INT_clamp((MP_INT *)dividend);
-
     quotient->limbs[curr_q_idx] = q;
 
+    if (dividend->size == 0) {
+      for (lmp_size_t j = 0; j < curr_q_idx; j ++) {
+        quotient->limbs[j] = 0;
+      }
+      dividend->exp = 0;
+      break;
+    }
     MP_INT_left_shift((MP_INT *)dividend, LMP_LIMB_BIT, allocator);
     dividend->exp-= 1;
   }
@@ -351,37 +357,53 @@ _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *res
       case MP_NUMBER_NAN : { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
       case MP_NUMBER_INF : {
         if (dividend->size == 0) {
-          switch (dividend->exp) {
-            case MP_NUMBER_ZERO: { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
-            case MP_NUMBER_INS : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
+          switch (abs(dividend->exp)) {
+            case MP_NUMBER_ZERO:
+            case MP_NUMBER_INS : { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
             case MP_NUMBER_NAN :
             case MP_NUMBER_INF :
             default: { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
           }
-        } else { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
+        } else { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
       }
       case  MP_NUMBER_INS: {
         if (dividend->size == 0) {
           switch (dividend->exp) {
             case MP_NUMBER_ZERO: { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
-            case MP_NUMBER_INF : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
+            case MP_NUMBER_INF : {
+              quotient->exp = sgn_quotient * MP_NUMBER_INF;
+              dividend->exp = MP_NUMBER_ZERO;
+              quotient->size = 0;
+              return;
+            }
             case MP_NUMBER_NAN :
             case MP_NUMBER_INS :
             default: { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
           }
-        } else { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INF; return; }
+        } else {
+          quotient->exp = sgn_divisor * sgn(dividend->size) * MP_NUMBER_INF;
+          dividend->exp = MP_NUMBER_ZERO;
+          quotient->size = 0;
+          dividend->size = 0;
+          return;
+        }
       }
-      default: { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INF; return; }
+      default: { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
     }
   }
   const int32_t sgn_divisor = sgn(divisor->size);
   if (dividend->size == 0) {
     const lmp_exp_t sgn_dividend = sgn(dividend->exp);
     const lmp_exp_t sgn_quotient = sgn_dividend * sgn_divisor;
-    switch (dividend->exp) {
+    switch (abs(dividend->exp)) {
       case MP_NUMBER_ZERO: { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
-      case MP_NUMBER_INS : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
-      case MP_NUMBER_INF : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INF; return; }
+      case MP_NUMBER_INS : { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }
+      case MP_NUMBER_INF :  {
+        quotient->exp = sgn_quotient * MP_NUMBER_INF;
+        dividend->exp = MP_NUMBER_ZERO;
+        quotient->size = 0;
+        return;
+      }
       case MP_NUMBER_NAN :
       default: { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
     }
@@ -398,14 +420,12 @@ _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *res
       quotient->exp += size_quotient;
       quotient->size = sgn_quotient;
       quotient->limbs[1] = 1;
-      return;
+    } else {
+      MP_FLOAT_mantissa_abs_add_limb(quotient, quotient, 1, allocator);
+      MP_FLOAT_tidy(quotient);
     }
-    MP_FLOAT_mantissa_abs_add_limb(quotient, quotient, 1, allocator);
-    MP_FLOAT INTERVAL = {};
-    MP_FLOAT_init(&INTERVAL, abs(dividend->size), allocator);
-    MP_FLOAT_copy(&INTERVAL, dividend, allocator);
-    MP_FLOAT_normal_abs_sub(dividend, divisor, &INTERVAL, allocator);
     dividend->size = sgn_dividend * dividend->size;
+    MP_FLOAT_add(dividend, dividend, divisor, allocator);
   }
   quotient->size = sgn_quotient * abs(quotient->size);
 }

@@ -28,7 +28,7 @@
 #ifndef LMP_PARSE_H
 #define LMP_PARSE_H
 #include "lmp.h"
-#include "type.h"
+#include "spec.h"
 
 #ifndef LMP_PARSE_ALLOC_SCALE
 #define LMP_PARSE_ALLOC_SCALE 4

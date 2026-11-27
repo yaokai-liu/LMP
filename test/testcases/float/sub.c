@@ -81,7 +81,7 @@ static const lmp_limb_t SE4[] = { 5, 2 };
 
 static const lmp_limb_t SA5[] = { 0, 0, 5 };
 static const lmp_limb_t SB5[] = { 1, 2 };
-static const lmp_limb_t SE5[] = { 0, LMP_LIMB_MAX, 2 };
+static const lmp_limb_t SE5[] = { LMP_LIMB_MAX, 2 };
 
 static const lmp_limb_t SA6[] = { 16, 0, 3 };
 static const lmp_limb_t SB6[] = { 2 };
@@ -93,7 +93,7 @@ static const lmp_limb_t SE7[] = { 0 };
 
 static const lmp_limb_t SA8[] = { 0, 0, 2 };
 static const lmp_limb_t SB8[] = { 1, 1 };
-static const lmp_limb_t SE8[] = { 0, LMP_LIMB_MAX };
+static const lmp_limb_t SE8[] = { LMP_LIMB_MAX };
 
 static const lmp_limb_t A10[] = { 0 };
 static const lmp_limb_t B10[] = { 0 };
@@ -119,10 +119,10 @@ static const FloatSubCase sub_cases[] = {
   { .name = "case2_multi_limb",     .a = SA2, .b = SB2, .e = SE2, .a_exp = 0, .b_exp = 0, .e_exp = 0,.a_len = 2, .b_len = 2, .e_len = 1 },
   { .name = "case3_borrow_chain",   .a = SA3, .b = SB3, .e = SE3, .a_exp = 0, .b_exp = 0, .e_exp = 0,.a_len = 2, .b_len = 2, .e_len = 1 },
   { .name = "case4_offset1",        .a = SA4, .b = SB4, .e = SE4, .a_exp = 0, .b_exp = 1, .e_exp = 0,.a_len = 2, .b_len = 1, .e_len = 2 },
-  { .name = "case5_offset1_borrow", .a = SA5, .b = SB5, .e = SE5, .a_exp = 0, .b_exp = 1, .e_exp = 0,.a_len = 3, .b_len = 2, .e_len = 3 },
+  { .name = "case5_offset1_borrow", .a = SA5, .b = SB5, .e = SE5, .a_exp = 0, .b_exp = 1, .e_exp = 1,.a_len = 3, .b_len = 2, .e_len = 2 },
   { .name = "case6_offset2",        .a = SA6, .b = SB6, .e = SE6, .a_exp = 0, .b_exp = 2, .e_exp = 0,.a_len = 3, .b_len = 1, .e_len = 3 },
   { .name = "case7_zero_result",    .a = SA7, .b = SB7, .e = SE7, .a_exp = 0, .b_exp = 0, .e_exp = 0,.a_len = 2, .b_len = 2, .e_len = 0 },
-  { .name = "case8_offset1_edge",   .a = SA8, .b = SB8, .e = SE8, .a_exp = 0, .b_exp = 1, .e_exp = 0,.a_len = 3, .b_len = 2, .e_len = 2 },
+  { .name = "case8_offset1_edge",   .a = SA8, .b = SB8, .e = SE8, .a_exp = 0, .b_exp = 1, .e_exp = 1,.a_len = 3, .b_len = 2, .e_len = 1 },
 
   { .name = "sub_special1",    .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_NAN, .b_exp = MP_NUMBER_ZERO, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
   { .name = "sub_special2",    .a = A10, .b = B10, .e = E10, .a_exp = MP_NUMBER_ZERO, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
@@ -182,8 +182,8 @@ END_TEST
 
 Suite *MP_TEST_float_sub_suite()
 {
-  Suite *s = suite_create("abs_sub_offset");
-  TCase *tc = tcase_create("abs_sub_offset");
+  Suite *s = suite_create("float_sub");
+  TCase *tc = tcase_create("float_sub");
 
   constexpr int n = sizeof(sub_cases)/sizeof(FloatSubCase);
   tcase_add_loop_test(tc, test_sub, 0, n);

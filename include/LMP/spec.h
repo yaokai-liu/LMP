@@ -19,14 +19,14 @@
  *
  * Project Name: LMP
  * Module Name:
- * Filename: type.h
+ * Filename: spec.h
  * Creator: Yaokai Liu
  * Create Date: 2026-10-26
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#ifndef LMP_TYPE_H
-#define LMP_TYPE_H
+#ifndef LMP_SPEC_H
+#define LMP_SPEC_H
 #include <stdint.h>
 #include "lmp.h"
 
@@ -128,4 +128,4 @@ struct MP_STANDARD_REPR {
   } items[MP_NUM_MAX_REPR_COUNT];
 };
 
-#endif //LMP_TYPE_H
+#endif //LMP_SPEC_H

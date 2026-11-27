@@ -76,7 +76,7 @@ static const lmp_limb_t E2[] = {3};
 
 static const lmp_limb_t A3[] = {~(lmp_limb_t)0, ~(lmp_limb_t)0};
 static const lmp_limb_t B3[] = {1};
-static const lmp_limb_t E3[] = {0, 0, 1};
+static const lmp_limb_t E3[] = {1};
 
 static const lmp_limb_t A4[] = {1, 2, 3, 4};
 static const lmp_limb_t B4[] = {5, 6};
@@ -121,7 +121,7 @@ static const lmp_limb_t E13[] = {1};
 static const FloatAddCase add_cases[] = {
   { .name = "basic3x3",        .a = A1, .b = B1, .e = E1, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 3, .b_len = 3, .e_len = 3 },
   { .name = "basic1x1",        .a = A2, .b = B2, .e = E2, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 1 },
-  { .name = "carry",           .a = A3, .b = B3, .e = E3, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 1, .e_len = 3 },
+  { .name = "carry",           .a = A3, .b = B3, .e = E3, .a_exp = 0, .b_exp = 0, .e_exp = 2, .a_len = 2, .b_len = 1, .e_len = 1 },
   { .name = "diff_len",        .a = A4, .b = B4, .e = E4, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 4, .b_len = 2, .e_len = 4 },
   { .name = "offset1_overlap", .a = A5, .b = B5, .e = E5, .a_exp = 0, .b_exp = 1, .e_exp = 0, .a_len = 3, .b_len = 2, .e_len = 3 },
   { .name = "offset3_gap",     .a = A6, .b = B6, .e = E6, .a_exp = 0, .b_exp = 3, .e_exp = 0, .a_len = 2, .b_len = 2, .e_len = 5 },
@@ -183,8 +183,8 @@ END_TEST
 
 Suite *MP_TEST_float_add_suite()
 {
-  Suite *s = suite_create("abs_sub_offset");
-  TCase *tc = tcase_create("abs_add_offset");
+  Suite *s = suite_create("float_add");
+  TCase *tc = tcase_create("float_add");
 
   constexpr int n = sizeof(add_cases)/sizeof(FloatAddCase);
   tcase_add_loop_test(tc, test_add, 0, n);

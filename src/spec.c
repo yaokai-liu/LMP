@@ -25,7 +25,7 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include "LMP/type.h"
+#include "LMP/spec.h"
 
 #define lenof(str_literal) ((sizeof str_literal) - 1)
 

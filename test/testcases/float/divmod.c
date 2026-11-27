@@ -219,20 +219,25 @@ static const lmp_limb_t b20[] = { 0x39509fc63d0f5485ULL, 0xb3afe2e942856305ULL, 
 static const lmp_limb_t q20[] = { 0x4a0ULL };
 static const lmp_limb_t r20[] = { 0xe53d0041db8aef4dULL, 0xf00e22da0f178c7bULL, 0x77140026bb0b67bbULL, 0x364b2db098102a2ULL, 0x3308049f13dd0b01ULL, 0x6be37f8ba22fadfULL, 0xfb86d414b5363f63ULL, 0x632058e6883e7ULL };
 
-static const lmp_limb_t a21[] = { 7 };
-static const lmp_limb_t b21[] = { 3 };
-static const lmp_limb_t q21[] = { 3 };
-static const lmp_limb_t r21[] = { 2 };
+static const lmp_limb_t a21[] = { 0 };
+static const lmp_limb_t b21[] = { 1 };
+static const lmp_limb_t q21[] = { 0 };
+static const lmp_limb_t r21[] = { 0 };
 
-static const lmp_limb_t a22[] = { 0, 0, 0, 0, 1 };
-static const lmp_limb_t b22[] = { 1, 0, 0, 1 };
-static const lmp_limb_t q22[] = { LMP_LIMB_MAX };
-static const lmp_limb_t r22[] = { 1, LMP_LIMB_MAX, LMP_LIMB_MAX };
+static const lmp_limb_t a22[] = { 1 };
+static const lmp_limb_t b22[] = { 2 };
+static const lmp_limb_t q22[] = { 0 };
+static const lmp_limb_t r22[] = { 1 };
 
-static const lmp_limb_t a23[] = { 1, 0, 1, 1, 0, 1 };
-static const lmp_limb_t b23[] = { 1, 0, 1 };
-static const lmp_limb_t q23[] = { 1, 0, 0, 1 };
-static const lmp_limb_t r23[] = { 0 };
+static const lmp_limb_t a23[] = { 9 };
+static const lmp_limb_t b23[] = { 5 };
+static const lmp_limb_t q23[] = { 2 };
+static const lmp_limb_t r23[] = { 1 };
+
+static const lmp_limb_t a24[] = { 0, 1, 0, 1, 1, 0, 1 };
+static const lmp_limb_t b24[] = { 1, 0, 1 };
+static const lmp_limb_t q24[] = { 1, 0, 0, 1 };
+static const lmp_limb_t r24[] = { 0 };
 
 static const FloatDivmodCase abs_divmod_cases[] = {
   { .name = "7/3",                      .a = a1,  .b = b1,  .eq = q1,  .er =  r1,  .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 1, .b_len = 1, .eq_len = 1, .er_len = 1, .q_prec = 1 },
@@ -256,6 +261,40 @@ static const FloatDivmodCase abs_divmod_cases[] = {
   {.name = "random_case_18", .a = a18, .b = b18, .eq = q18, .er = r18, .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8, .q_prec = 1 },
   {.name = "random_case_19", .a = a19, .b = b19, .eq = q19, .er = r19, .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8, .q_prec = 1 },
   {.name = "random_case_20", .a = a20, .b = b20, .eq = q20, .er = r20, .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8, .q_prec = 1 },
+
+  { .name = "divmod_special1a", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = MP_NUMBER_ZERO, .b_exp =  MP_NUMBER_NAN, .eq_exp =  MP_NUMBER_NAN, .er_exp = MP_NUMBER_ZERO, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special1b", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = -MP_NUMBER_INF, .b_exp =  MP_NUMBER_NAN, .eq_exp =  MP_NUMBER_NAN, .er_exp = -MP_NUMBER_INF, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special1c", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_INS, .b_exp =  MP_NUMBER_NAN, .eq_exp =  MP_NUMBER_NAN, .er_exp =  MP_NUMBER_INS, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special1d", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_NAN, .b_exp =  MP_NUMBER_NAN, .eq_exp =  MP_NUMBER_NAN, .er_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special2a", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = MP_NUMBER_ZERO, .b_exp = MP_NUMBER_ZERO, .eq_exp =  MP_NUMBER_NAN, .er_exp = MP_NUMBER_ZERO, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special2b", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_NAN, .b_exp = MP_NUMBER_ZERO, .eq_exp =  MP_NUMBER_NAN, .er_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special2c", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_INF, .b_exp = MP_NUMBER_ZERO, .eq_exp =  MP_NUMBER_NAN, .er_exp =  MP_NUMBER_INF, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special2d", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_INS, .b_exp = MP_NUMBER_ZERO, .eq_exp =  MP_NUMBER_NAN, .er_exp =  MP_NUMBER_INS, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special3a", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = -MP_NUMBER_INF, .b_exp =  MP_NUMBER_INF, .eq_exp =  MP_NUMBER_NAN, .er_exp = -MP_NUMBER_INF, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special3b", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_INS, .b_exp =  MP_NUMBER_INF, .eq_exp = MP_NUMBER_ZERO, .er_exp =  MP_NUMBER_INS, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special3c", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_NAN, .b_exp =  MP_NUMBER_INF, .eq_exp =  MP_NUMBER_NAN, .er_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special3d", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = MP_NUMBER_ZERO, .b_exp =  MP_NUMBER_INF, .eq_exp = MP_NUMBER_ZERO, .er_exp = MP_NUMBER_ZERO, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special4a", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_INF, .b_exp =  MP_NUMBER_INS, .eq_exp =  MP_NUMBER_INF, .er_exp = MP_NUMBER_ZERO, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special4b", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = -MP_NUMBER_INS, .b_exp = -MP_NUMBER_INS, .eq_exp =  MP_NUMBER_NAN, .er_exp = -MP_NUMBER_INS, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special4c", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_NAN, .b_exp =  MP_NUMBER_INS, .eq_exp =  MP_NUMBER_NAN, .er_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special4d", .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = MP_NUMBER_ZERO, .b_exp =  MP_NUMBER_INS, .eq_exp = MP_NUMBER_ZERO, .er_exp = MP_NUMBER_ZERO, .a_len = 0, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+
+  { .name = "divmod_special5a",   .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_INS, .b_exp = 0, .eq_exp = MP_NUMBER_ZERO, .er_exp =  MP_NUMBER_INS, .a_len = 0, .b_len = 1, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special5b",   .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = -MP_NUMBER_INS, .b_exp = 0, .eq_exp = MP_NUMBER_ZERO, .er_exp = -MP_NUMBER_INS, .a_len = 0, .b_len = 1, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special5c",   .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp =  MP_NUMBER_INF, .b_exp = 0, .eq_exp =  MP_NUMBER_INF, .er_exp = MP_NUMBER_ZERO, .a_len = 0, .b_len = 1, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_special5d",   .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = -MP_NUMBER_INF, .b_exp = 0, .eq_exp = -MP_NUMBER_INF, .er_exp = MP_NUMBER_ZERO, .a_len = 0, .b_len = 1, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+
+  { .name = "divmod_special6a",   .a = a22, .b = b22, .eq = q22, .er = r22, .a_exp = 0, .b_exp = MP_NUMBER_ZERO, .eq_exp =  MP_NUMBER_NAN, .er_exp =              0, .a_len = 1, .b_len = 0, .eq_len = 0, .er_len = 1, .q_prec = 1 },
+  { .name = "divmod_special6b",   .a = a22, .b = b22, .eq = q22, .er = r22, .a_exp = 0, .b_exp =  MP_NUMBER_NAN, .eq_exp =  MP_NUMBER_NAN, .er_exp =              0, .a_len = 1, .b_len = 0, .eq_len = 0, .er_len = 1, .q_prec = 1 },
+  { .name = "divmod_special6c",   .a = a22, .b = b22, .eq = q22, .er = r22, .a_exp = 0, .b_exp = -MP_NUMBER_INF, .eq_exp = MP_NUMBER_ZERO, .er_exp =              0, .a_len = 1, .b_len = 0, .eq_len = 0, .er_len = 1, .q_prec = 1 },
+  { .name = "divmod_special6d",   .a = a22, .b = b22, .eq = q22, .er = r22, .a_exp = 0, .b_exp =  MP_NUMBER_INS, .eq_exp =  MP_NUMBER_INF, .er_exp = MP_NUMBER_ZERO, .a_len = 1, .b_len = 0, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+
+  { .name = "divmod_unknown1",   .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = 10086, .b_exp = 0, .eq_exp = MP_NUMBER_NAN, .er_exp = 10086, .a_len = 0, .b_len = 1, .eq_len = 0, .er_len = 0, .q_prec = 1 },
+  { .name = "divmod_unknown2",   .a = a21, .b = b21, .eq = q21, .er = r21, .a_exp = 0, .b_exp = 10086, .eq_exp = MP_NUMBER_NAN, .er_exp =     0, .a_len = 1, .b_len = 0, .eq_len = 0, .er_len = 1, .q_prec = 1 },
+
+  { .name = "divmod_diff_sgn1",  .a = a23, .b = b23, .eq = q23, .er = r23, .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len =  1, .b_len = -1, .eq_len = -1, .er_len = -1, .q_prec = 1 },
+
+  { .name = "remainder_zero",    .a = a24, .b = b24, .eq = q24, .er = r24, .a_exp = 0, .b_exp = 0, .eq_exp = 1, .er_exp = 0, .a_len = -7, .b_len =  3, .eq_len = -4, .er_len =  0, .q_prec = 5},
 };
 
 START_TEST(test_divmod)

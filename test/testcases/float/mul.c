@@ -76,7 +76,7 @@ static const lmp_limb_t ME3[] = { LMP_LIMB_MAX - 1, 1 };
 
 static const lmp_limb_t MA4[] = { (1ULL << 63) };
 static const lmp_limb_t MB4[] = { 2 };
-static const lmp_limb_t ME4[] = { 0, 1 };
+static const lmp_limb_t ME4[] = { 1 };
 
 static const lmp_limb_t MA5[] = { 2, 3 };
 static const lmp_limb_t MB5[] = { 2 };
@@ -118,7 +118,7 @@ static const FloatMulCase abs_mul_cases[] = {
   { .name = "mul1_simple",      .a = MA1,  .b = MB1,  .e = ME1,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 1 },
   { .name = "mul2_small",       .a = MA2,  .b = MB2,  .e = ME2,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 1 },
   { .name = "mul3_carry",       .a = MA3,  .b = MB3,  .e = ME3,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 2 },
-  { .name = "mul4_half_carry",  .a = MA4,  .b = MB4,  .e = ME4,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 2 },
+  { .name = "mul4_half_carry",  .a = MA4,  .b = MB4,  .e = ME4,  .a_exp = 0, .b_exp = 0, .e_exp = 1, .a_len = 1, .b_len = 1, .e_len = 1 },
   { .name = "mul5_multi1",      .a = MA5,  .b = MB5,  .e = ME5,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 1, .e_len = 2 },
   { .name = "mul6_multi_carry", .a = MA6,  .b = MB6,  .e = ME6,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 1, .e_len = 2 },
   { .name = "mul7_ff_ff",       .a = MA7,  .b = MB7,  .e = ME7,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 2 },

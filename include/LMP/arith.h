@@ -120,19 +120,34 @@ _SHARED_API void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict 
 // No truncating
 // Allow (op1 == op2)
 // Always assume abs(rop->prec) large enough
+// Promise that result rop is tidied
 _SHARED_API void MP_FLOAT_mul(MP_FLOAT *restrict rop, const MP_FLOAT *op1, const MP_FLOAT *op2, const Allocator *allocator);
 // No truncating
 // Allow (rop = op1) or (rop = op2)
 // Always assume abs(rop->prec) large enough
+// Promise that result rop is tidied
 _SHARED_API void MP_FLOAT_add(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * op2, const Allocator *allocator);
 // No truncating
 // Allow (rop = op1)
 // Always assume abs(rop->prec) large enough
+// Promise that result rop is tidied
 _SHARED_API void MP_FLOAT_sub(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * restrict op2, const Allocator *allocator);
 // Truncating
 // dividend as remainder
-// Always assume abs(prec->prec) large enough
+// Always assume divisor is tidied
+// Always assume abs(quotient->prec) large enough
 // Precision follow the quotient->prec and not change the quotient->prec.
+// If divisor is MP_NUMBER_ZERO or MP_NUMBER_NAN, then quotient will be MP_NUMBER_NAN.
+// If quotient is MP_NUMBER_NAN, the remainder is exactly dividend(no change).
+// NAN / (@) = NAN ~ NAN; (*) / NAN = NAN ~ (*);
+// ZERO / (@) = ZERO ~ ZERO; (*) / ZERO = NAN ~ (*);
+// INF / INF = NAN ~ INF; INS / INS = NAN ~ INS;
+// INF / (@) = INF ~ ZERO; INS / (@) = ZERO ~ INS;
+// (@) / INF = ZERO ~ (@); (@) / INS = INF ~ ZERO;
+// Here (*) means any number (special or normal),
+// (@) means normal number or INF/INS (but not the special number it self).
+// if quotient is NAN, then remainder's sign follows the dividend.
+// Promise that result remainder and quotient are tidied.
 _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *restrict divisor,
                                  MP_FLOAT *restrict quotient, const Allocator *allocator);
 

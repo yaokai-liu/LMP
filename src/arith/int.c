@@ -424,11 +424,12 @@ void MP_INT_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor,
                    MP_INT *restrict quotient, const Allocator *allocator) {
   const int32_t sgn_dividend = sgn(dividend->size);
   const int32_t sgn_divisor = sgn(divisor->size);
+  const int32_t sgn_quotient = sgn_dividend * sgn_divisor;
   MP_INT_abs_divmod(dividend, divisor, quotient, allocator);
   if (sgn_dividend * sgn_divisor < 0 && dividend->size) {
     MP_INT_abs_add_limb(quotient, quotient, 1, allocator);
     dividend->size = sgn_dividend * dividend->size;
-    quotient->size = - quotient->size;
+    quotient->size = sgn_quotient * quotient->size;
     MP_INT_add(dividend, dividend, divisor, allocator);
   }
   quotient->size = sgn_dividend * sgn_divisor * abs(quotient->size);

@@ -26,7 +26,7 @@
  **/
 
 #include "LMP/parse.h"
-#include "LMP/type.h"
+#include "LMP/spec.h"
 #include "LMP/arith.h"
 #include "allocator.h"
 
