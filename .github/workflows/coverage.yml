@@ -12,10 +12,29 @@ jobs:
         uses: actions/checkout@v4
         with:
           submodules: recursive
-      - name: Install dependencies
+
+      - name: Install tools
         run: |
           sudo apt-get update
           sudo apt-get install -y lcov gcovr cmake check libsubunit-dev
+
+      - name: Checkout extstd
+        uses: actions/checkout@v4
+        with:
+          repository: yaokai-liu/extstd
+          submodules: recursive
+          path: deps/extstd
+
+      - name: Build and install deps
+        run: |
+          cmake -S deps/extstd -B build_extstd \
+            -G "${{ matrix.generator }}" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DBUILD_SHARED_LIBS=ON \
+            -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/install"
+          cmake --build build_extstd --config Release
+          cmake --install build_extstd
+
       - name: Configure CMake
         run: |
           cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_TEST_COV=ON -DGITHUB_CI=ON -G "Unix Makefiles" -S . -B build
@@ -35,6 +54,7 @@ jobs:
           LINE_COV=$(lcov --summary coverage_filtered.info 2>&1 | grep lines | grep -oP '\d+\.\d+(?=%)' | head -1)
           echo "LINE_COV=${LINE_COV}" >> $GITHUB_ENV
           echo "Coverage: ${LINE_COV}%"
+
       - name: Generate HTML report
         run: |
           cd build
@@ -44,6 +64,7 @@ jobs:
         with:
           name: coverage-report
           path: build/coverage_html
+
       - name: Upload to Codecov
         uses: codecov/codecov-action@v5
         with:
