@@ -28,7 +28,7 @@ jobs:
       - name: Build and install deps
         run: |
           cmake -S deps/extstd -B build_extstd \
-            -G "${{ matrix.generator }}" \
+            -G "Unix Makefiles" \
             -DCMAKE_BUILD_TYPE=Release \
             -DBUILD_SHARED_LIBS=ON \
             -DCMAKE_INSTALL_PREFIX="$GITHUB_WORKSPACE/install"
