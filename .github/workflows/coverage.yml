@@ -35,11 +35,17 @@ jobs:
           cmake --build build_extstd --config Release
           cmake --install build_extstd
 
-      - name: Configure CMake
+      - name: Build LMP
         run: |
-          cmake -DCMAKE_BUILD_TYPE=Debug -DENABLE_TEST_COV=ON -DGITHUB_CI=ON -G "Unix Makefiles" -S . -B build
-      - name: Build
-        run: cmake --build build --target coverage -- -j$(nproc)
+          cmake -S . -B build \
+            -G "Unix Makefiles" \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DBUILD_SHARED_LIBS=ON \
+            -DENABLE_TEST_COV=ON \
+            -DGITHUB_CI=ON \
+            -DCMAKE_PREFIX_PATH="$GITHUB_WORKSPACE/install"
+          cmake --build build --target coverage -- -j$(nproc)
+
       - name: Run tests & generate coverage
         run: |
           cd build
