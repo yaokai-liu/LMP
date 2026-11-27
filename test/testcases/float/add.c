@@ -56,14 +56,13 @@ static void run_add_case(const FloatAddCase *c)
 
   MP_FLOAT_add(&RES, &A, &B, &STDAllocator);
 
-  ck_assert_msg(abs(RES.size) == c->e_len,
-                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, RES.size, c->e_len);
-  ck_assert_msg(abs(RES.exp) == c->e_exp,
-                "%s: result exp %"PRI_EXP" != %"PRI_EXP, c->name, RES.exp, c->e_exp);
+  ck_assert_msg(RES.size == c->e_len,
+                "%s: result size %"PRI_SIZE" != %"PRI_SIZE"\n", c->name, RES.size, c->e_len);
+  ck_assert_msg(RES.exp == c->e_exp,
+                "%s: result exp %"PRI_EXP" != %"PRI_EXP"\n", c->name, RES.exp, c->e_exp);
   for (int32_t i = 0; i < abs(c->e_len); i++) {
     ck_assert_msg(RES.limbs[i] == c->e[i],
-                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
-                  RES.limbs[i], c->e[i]);
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB"\n", c->name, i, RES.limbs[i], c->e[i]);
   }
 }
 
@@ -103,6 +102,22 @@ static const lmp_limb_t A9[] = {7};
 static const lmp_limb_t B9[] = {8, 9};
 static const lmp_limb_t E9[] = {7, 8, 9};
 
+static const lmp_limb_t A10[] = { 0 };
+static const lmp_limb_t B10[] = { 0 };
+static const lmp_limb_t E10[] = { 0 };
+
+static const lmp_limb_t A11[] = { 1 };
+static const lmp_limb_t B11[] = { 2 };
+static const lmp_limb_t E11[] = { 1 };
+
+static const lmp_limb_t A12[] = {1, 0, 2, 3};
+static const lmp_limb_t B12[] = {2, 3};
+static const lmp_limb_t E12[] = {1};
+
+static const lmp_limb_t A13[] = {2, 3};
+static const lmp_limb_t B13[] = {1, 0, 2, 3};
+static const lmp_limb_t E13[] = {1};
+
 static const FloatAddCase add_cases[] = {
   { .name = "basic3x3",        .a = A1, .b = B1, .e = E1, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 3, .b_len = 3, .e_len = 3 },
   { .name = "basic1x1",        .a = A2, .b = B2, .e = E2, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 1 },
@@ -113,6 +128,51 @@ static const FloatAddCase add_cases[] = {
   { .name = "offset2_extend",  .a = A7, .b = B7, .e = E7, .a_exp = 0, .b_exp = 2, .e_exp = 0, .a_len = 1, .b_len = 2, .e_len = 4 },
   { .name = "offset1_carry",   .a = A8, .b = B8, .e = E8, .a_exp = 0, .b_exp = 1, .e_exp = 0, .a_len = 2, .b_len = 1, .e_len = 3 },
   { .name = "offset1_tail",    .a = A9, .b = B9, .e = E9, .a_exp = 0, .b_exp = 1, .e_exp = 0, .a_len = 1, .b_len = 2, .e_len = 3 },
+
+  { .name = "add_special1",    .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_NAN, .b_exp = MP_NUMBER_ZERO, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special2",    .a = A10, .b = B10, .e = E10, .a_exp = MP_NUMBER_ZERO, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special3",    .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_NAN, .b_exp = -MP_NUMBER_INF, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special4",    .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_NAN, .b_exp =  MP_NUMBER_INS, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special5",    .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_NAN, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+
+  { .name = "add_special6",    .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INF, .b_exp =  MP_NUMBER_INF, .e_exp =  MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special7",    .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INF, .b_exp = -MP_NUMBER_INF, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special8",    .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INF, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special9",    .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INF, .b_exp =  MP_NUMBER_INS, .e_exp =  MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special10",   .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INF, .b_exp = -MP_NUMBER_INS, .e_exp =  MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special11",   .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INF, .b_exp = MP_NUMBER_ZERO, .e_exp =  MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special12",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INF, .b_exp =  MP_NUMBER_INF, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special13",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INF, .b_exp = -MP_NUMBER_INF, .e_exp = -MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special14",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INF, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special15",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INF, .b_exp =  MP_NUMBER_INS, .e_exp = -MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special16",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INF, .b_exp = -MP_NUMBER_INS, .e_exp = -MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special17",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INF, .b_exp = MP_NUMBER_ZERO, .e_exp = -MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+
+  { .name = "add_special18",   .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INS, .b_exp =  MP_NUMBER_INF, .e_exp =  MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special19",   .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INS, .b_exp = -MP_NUMBER_INF, .e_exp = -MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special20",   .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INS, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special21",   .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INS, .b_exp =  MP_NUMBER_INS, .e_exp =  MP_NUMBER_INS, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special22",   .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INS, .b_exp = -MP_NUMBER_INS, .e_exp = -MP_NUMBER_INS, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special23",   .a = A10, .b = B10, .e = E10, .a_exp =  MP_NUMBER_INS, .b_exp = MP_NUMBER_ZERO, .e_exp =  MP_NUMBER_INS, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special24",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INS, .b_exp =  MP_NUMBER_INF, .e_exp =  MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special25",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INS, .b_exp = -MP_NUMBER_INF, .e_exp = -MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special26",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INS, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special27",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INS, .b_exp =  MP_NUMBER_INS, .e_exp =  MP_NUMBER_INS, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special28",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INS, .b_exp = -MP_NUMBER_INS, .e_exp = -MP_NUMBER_INS, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "add_special29",   .a = A10, .b = B10, .e = E10, .a_exp = -MP_NUMBER_INS, .b_exp = MP_NUMBER_ZERO, .e_exp = -MP_NUMBER_INS, .a_len = 0, .b_len = 0, .e_len = 0 },
+
+  { .name = "add_special31",   .a = A11, .b = B11, .e = E11, .a_exp = -MP_NUMBER_INF, .b_exp = 0, .e_exp = -MP_NUMBER_INF, .a_len =  0, .b_len =  1, .e_len = 0 },
+
+  { .name = "add_special32",   .a = A11, .b = B11, .e = E11, .a_exp = 0, .b_exp = MP_NUMBER_ZERO, .e_exp =  0, .a_len =  1, .b_len = 0, .e_len = 1 },
+  { .name = "add_special32",   .a = A11, .b = B11, .e = E11, .a_exp = 0, .b_exp = -MP_NUMBER_INS, .e_exp =  0, .a_len =  1, .b_len = 0, .e_len = 1 },
+  { .name = "add_special34",   .a = A11, .b = B11, .e = E11, .a_exp = 0, .b_exp =  MP_NUMBER_INF, .e_exp =  MP_NUMBER_INF, .a_len = -1, .b_len = 0, .e_len = 0 },
+  { .name = "add_special34",   .a = A11, .b = B11, .e = E11, .a_exp = 0, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len =  1, .b_len = 0, .e_len = 0 },
+
+  { .name = "add_unknown1",    .a = A11, .b = B11, .e = E11, .a_exp = -10, .b_exp =   0, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len =  1, .e_len = 0 },
+  { .name = "add_unknown2",    .a = A11, .b = B11, .e = E11, .a_exp =   0, .b_exp =  10, .e_exp =  MP_NUMBER_NAN, .a_len = 1, .b_len =  0, .e_len = 0 },
+
+  { .name = "add_neg_add2",    .a = A12, .b = B12, .e = E12, .a_exp = 0, .b_exp = 2, .e_exp = 0, .a_len =  4, .b_len = -2, .e_len =  1 },
+  { .name = "add_neg_add1",    .a = A13, .b = B13, .e = E13, .a_exp = 2, .b_exp = 0, .e_exp = 0, .a_len = -2, .b_len =  4, .e_len =  1 },
 };
 
 START_TEST(test_add)

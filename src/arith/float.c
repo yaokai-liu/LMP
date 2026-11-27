@@ -40,9 +40,9 @@ void MP_FLOAT_mul_base_exp(MP_FLOAT *op, lmp_exp_t exp, const Allocator *allocat
   if (size == 0) { return; }
   op->exp += exp / (lmp_exp_t)LMP_LIMB_BIT;
   exp %= (lmp_exp_t)LMP_LIMB_BIT;
+  lmp_limb_t low1_limb = MP_FLOAT_get_limb(op, 0);
+  const lmp_exp_t log_base = extstd_trailing_zeros(low1_limb);
   if (exp > 0) {
-    lmp_limb_t low1_limb = MP_BASE_INT_get_limb(op, 0);
-    const lmp_exp_t log_base = extstd_trailing_zeros(low1_limb);
     if (log_base + exp >= (lmp_exp_t)LMP_LIMB_BIT) {
       op->exp += 1;
       const uint32_t shift_width = LMP_LIMB_BIT - exp;
@@ -52,8 +52,6 @@ void MP_FLOAT_mul_base_exp(MP_FLOAT *op, lmp_exp_t exp, const Allocator *allocat
       MP_INT_left_shift((MP_INT *)op, shift_width, allocator);
     }
   } else if (exp < 0) {
-    lmp_limb_t low1_limb = MP_BASE_INT_get_limb(op, 0);
-    const lmp_exp_t log_base = extstd_trailing_zeros(low1_limb);
     if (log_base + exp < 0) {
       op->exp -= 1;
       const uint32_t shift_width = LMP_LIMB_BIT + exp;
@@ -104,42 +102,36 @@ void MP_FLOAT_mul(MP_FLOAT *restrict rop, const MP_FLOAT *op1, const MP_FLOAT *o
   if (op1->size == 0) {
     rop->size = 0;
     const lmp_exp_t sgn1 = sgn(op1->exp);
-    const lmp_exp_t sgn2 = sgn(op2->exp);
     switch (abs(op1->exp)) {
-      case MP_NUMBER_ZERO: { rop->exp = MP_NUMBER_ZERO; return; }
+      case MP_NUMBER_ZERO: { rop->exp = (op2->size == 0 && op2->exp == MP_NUMBER_NAN) ? MP_NUMBER_NAN : MP_NUMBER_ZERO; return; }
       case  MP_NUMBER_INS: {
         if (op2->size == 0) {
+          const lmp_exp_t sgn2 = sgn(op2->exp);
           switch (abs(op2->exp)) {
-            case  MP_NUMBER_INF:
-            case  MP_NUMBER_NAN: { rop->exp = sgn1 * sgn2 * MP_NUMBER_NAN; return; }
             case  MP_NUMBER_INS: { rop->exp = sgn1 * sgn2 * MP_NUMBER_INS; return; }
             case MP_NUMBER_ZERO: { rop->exp = MP_NUMBER_ZERO; return; }
-            default: return;
+            case  MP_NUMBER_INF:
+            case  MP_NUMBER_NAN:
+            default: { rop->exp = MP_NUMBER_NAN; return; }
           }
         }
-        rop->exp = sgn1 * sgn2 * MP_NUMBER_INS; return;
+        rop->exp = sgn1 * sgn(op2->size) * MP_NUMBER_INS; return;
       }
       case  MP_NUMBER_INF: {
         if (op2->size == 0) {
+          const lmp_exp_t sgn2 = sgn(op2->exp);
           switch (abs(op2->exp)) {
-            case  MP_NUMBER_INS:
-            case  MP_NUMBER_NAN: { rop->exp = sgn1 * sgn2 * MP_NUMBER_NAN; return; }
             case  MP_NUMBER_INF: { rop->exp = sgn1 * sgn2 * MP_NUMBER_INF; return; }
             case MP_NUMBER_ZERO: { rop->exp = MP_NUMBER_ZERO; return; }
-            default: return;
+            case  MP_NUMBER_INS:
+            case  MP_NUMBER_NAN:
+            default: { rop->exp = MP_NUMBER_NAN; return; }
           }
         }
-        rop->exp = sgn1 * sgn2 * MP_NUMBER_INF; return;
+        rop->exp = sgn1 * sgn(op2->size) * MP_NUMBER_INF; return;
       }
-      case  MP_NUMBER_NAN: {
-        if (op2->size == 0 && op2->exp == MP_NUMBER_ZERO) {
-          rop->exp = MP_NUMBER_ZERO;
-        } else {
-          rop->exp = sgn1 * sgn2 * MP_NUMBER_NAN;
-        }
-        return;
-      }
-      default: { rop->size = 0; rop->exp = sgn1 * MP_NUMBER_NAN; return; }
+      case  MP_NUMBER_NAN: { rop->exp = MP_NUMBER_NAN; return; }
+      default: { rop->exp = MP_NUMBER_NAN; return; }
     }
   }
   if (op2->size == 0) {
@@ -149,7 +141,7 @@ void MP_FLOAT_mul(MP_FLOAT *restrict rop, const MP_FLOAT *op1, const MP_FLOAT *o
       case  MP_NUMBER_NAN:
       case  MP_NUMBER_INF:
       case MP_NUMBER_ZERO: { rop->exp = op2->exp; return; }
-      default: { rop->exp = sgn(op1->size) * MP_NUMBER_NAN; return; }
+      default: { rop->exp = MP_NUMBER_NAN; return; }
     }
   }
   MP_FLOAT_normal_abs_mul(rop, op1, op2, allocator);
@@ -162,20 +154,24 @@ inline void MP_FLOAT_add(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * op
     const lmp_exp_t sgn2 = sgn(op2->exp);
     switch (abs(op1->exp)) {
       case MP_NUMBER_ZERO:
-      case  MP_NUMBER_INS: { return MP_FLOAT_copy(rop, op2, allocator); }
+      case  MP_NUMBER_INS: {
+        return op2->size == 0 && op2->exp == MP_NUMBER_ZERO
+              ? MP_FLOAT_copy(rop, op1, allocator)
+              : MP_FLOAT_copy(rop, op2, allocator);
+      }
       case  MP_NUMBER_INF: {
         rop->size = 0;
         if (op2->size == 0) {
           if (abs(op2->exp) == MP_NUMBER_INF && sgn1 != sgn2) {
-            rop->exp = sgn1 * MP_NUMBER_NAN;
+            rop->exp = MP_NUMBER_NAN;
           } else if (abs(op2->exp) == MP_NUMBER_NAN){
-            rop->exp = sgn2 * MP_NUMBER_NAN;
+            rop->exp = MP_NUMBER_NAN;
           } else { rop->exp = op1->exp; }
         } else { rop->exp = op1->exp; }
         return;
       }
       case  MP_NUMBER_NAN: { rop->size = 0; rop->exp = op1->exp; return; }
-      default: { rop->size = 0; rop->exp = sgn(op1->size) * MP_NUMBER_NAN; return; }
+      default: { rop->size = 0; rop->exp = MP_NUMBER_NAN; return; }
     }
   }
   if (op2->size == 0) {
@@ -185,7 +181,7 @@ inline void MP_FLOAT_add(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * op
       case  MP_NUMBER_INS: { return MP_FLOAT_copy(rop, op1, allocator); }
       case  MP_NUMBER_NAN:
       case  MP_NUMBER_INF: { rop->size = 0; rop->exp = op2->exp; return; }
-      default: { rop->size = 0; rop->exp = sgn(op1->size) * MP_NUMBER_NAN; return; }
+      default: { rop->size = 0; rop->exp = MP_NUMBER_NAN; return; }
     }
   }
   const lmp_size_t sgn1 = sgn(op1->size);
@@ -214,22 +210,28 @@ inline void MP_FLOAT_sub(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * re
     switch (abs(op1->exp)) {
       case MP_NUMBER_ZERO:
       case  MP_NUMBER_INS: {
-        if (op2->size == 0) { rop->size = 0; rop->exp = -op2->exp; return; }
-        MP_FLOAT_copy(rop, op2, allocator); rop->size = - rop->size; return ;
+        if (op2->size == 0) {
+          rop->exp = op2->exp == MP_NUMBER_ZERO ? op1->exp : -op2->exp;
+          rop->size = 0;
+          return;
+        }
+        MP_FLOAT_copy(rop, op2, allocator);
+        rop->size = -rop->size;
+        return;
       }
       case  MP_NUMBER_INF: {
         rop->size = 0;
         if (op2->size == 0) {
-          if (abs(op2->exp) == MP_NUMBER_INF && sgn1 != sgn2) {
-            rop->exp = sgn1 * MP_NUMBER_NAN;
+          if (abs(op2->exp) == MP_NUMBER_INF && sgn1 == sgn2) {
+            rop->exp = MP_NUMBER_NAN;
           } else if (abs(op2->exp) == MP_NUMBER_NAN){
-            rop->exp = sgn2 * MP_NUMBER_NAN;
+            rop->exp = MP_NUMBER_NAN;
           } else { rop->exp = op1->exp; }
         } else { rop->exp = op1->exp; }
         return;
       }
       case  MP_NUMBER_NAN: { rop->size = 0; rop->exp = op1->exp; return; }
-      default: { rop->size = 0; rop->exp = sgn(op1->size) * MP_NUMBER_NAN; return; }
+      default: { rop->size = 0; rop->exp = MP_NUMBER_NAN; return; }
     }
   }
   if (op2->size == 0) {
@@ -237,9 +239,9 @@ inline void MP_FLOAT_sub(MP_FLOAT *rop, const MP_FLOAT *op1, const MP_FLOAT * re
     switch (abs(op2->exp)) {
       case MP_NUMBER_ZERO:
       case  MP_NUMBER_INS: { return MP_FLOAT_copy(rop, op1, allocator); }
+      case  MP_NUMBER_INF: { rop->size = 0; rop->exp = -op2->exp; return; }
       case  MP_NUMBER_NAN:
-      case  MP_NUMBER_INF: { rop->size = 0; rop->exp = op2->exp; return; }
-      default: { rop->size = 0; rop->exp = sgn(op1->size) * MP_NUMBER_NAN; return; }
+      default: { rop->size = 0; rop->exp = MP_NUMBER_NAN; return; }
     }
   }
   const lmp_size_t sgn1 = sgn(op1->size);
@@ -346,7 +348,7 @@ _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *res
     const lmp_exp_t sgn_quotient = sgn_dividend * sgn_divisor;
     switch (abs(divisor->exp)) {
       case MP_NUMBER_ZERO:
-      case MP_NUMBER_NAN : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_NAN; return; }
+      case MP_NUMBER_NAN : { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
       case MP_NUMBER_INF : {
         if (dividend->size == 0) {
           switch (dividend->exp) {
@@ -354,7 +356,7 @@ _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *res
             case MP_NUMBER_INS : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
             case MP_NUMBER_NAN :
             case MP_NUMBER_INF :
-            default: { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_NAN; return; }
+            default: { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
           }
         } else { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
       }
@@ -365,7 +367,7 @@ _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *res
             case MP_NUMBER_INF : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
             case MP_NUMBER_NAN :
             case MP_NUMBER_INS :
-            default: { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_NAN; return; }
+            default: { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
           }
         } else { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INF; return; }
       }
@@ -381,7 +383,7 @@ _SHARED_API void MP_FLOAT_divmod(MP_FLOAT *restrict dividend,const MP_FLOAT *res
       case MP_NUMBER_INS : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INS; return; }
       case MP_NUMBER_INF : { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_INF; return; }
       case MP_NUMBER_NAN :
-      default: { quotient->size = 0; quotient->exp = sgn_quotient * MP_NUMBER_NAN; return; }
+      default: { quotient->size = 0; quotient->exp = MP_NUMBER_NAN; return; }
     }
   }
   if (quotient->prec == 0) { quotient->size = 0; quotient->exp = MP_NUMBER_ZERO; return; }

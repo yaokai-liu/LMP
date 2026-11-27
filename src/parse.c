@@ -389,15 +389,15 @@ inline uint32_t LMP_parse_num_digits(const char *const input, MP_NUM_TYPE *num_t
 
 static struct {
   const char * pattern;
+  lmp_exp_t    value;
   uint32_t pattern_len;
-  int32_t        value;
 } SPECIAL_NUMBER_PATTERNS[] = {
-  { "inf", lenof("inf"), MP_NUMBER_INF },
-  { "INF", lenof("INF"), MP_NUMBER_INF },
-  { "ins", lenof("ins"), MP_NUMBER_INS },
-  { "INS", lenof("INS"), MP_NUMBER_INS },
-  { "nan", lenof("nan"), MP_NUMBER_NAN },
-  { "NAN", lenof("NAN"), MP_NUMBER_NAN },
+  { .pattern = "inf", .pattern_len = lenof("inf"), .value = MP_NUMBER_INF },
+  { .pattern = "INF", .pattern_len = lenof("INF"), .value = MP_NUMBER_INF },
+  { .pattern = "ins", .pattern_len = lenof("ins"), .value = MP_NUMBER_INS },
+  { .pattern = "INS", .pattern_len = lenof("INS"), .value = MP_NUMBER_INS },
+  { .pattern = "nan", .pattern_len = lenof("nan"), .value = MP_NUMBER_NAN },
+  { .pattern = "NAN", .pattern_len = lenof("NAN"), .value = MP_NUMBER_NAN },
 };
 
 inline uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_BASE_NUMBER *NUMBER, const bool negative) {
@@ -406,7 +406,7 @@ inline uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_BASE
     auto const triple = SPECIAL_NUMBER_PATTERNS[i];
     if (strcmp_o(input, triple.pattern) == triple.pattern_len && !isIdentChar(&input[triple.pattern_len])) {
       NUMBER->size = 0;
-      NUMBER->exp = negative ? - triple.value : triple.value;
+      NUMBER->exp = triple.value == MP_NUMBER_NAN ? MP_NUMBER_NAN : negative ? - triple.value : triple.value;
       NUMBER->BASE = BASE_LIMB_DATA[ADIC_TYPE_2].BASE;
       type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_FLOAT, 0);
       return triple.pattern_len;

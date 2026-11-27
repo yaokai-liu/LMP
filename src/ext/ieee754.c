@@ -45,7 +45,6 @@ uint32_t MP_FLOAT_to_ieee754_f##_w(FLOAT(_w) *restrict dest, const MP_FLOAT *res
     switch (mp_val->exp) {                                                                                    \
       case  MP_NUMBER_ZERO: { *dest =  0;                return 0; }                                          \
       case  MP_NUMBER_NAN : { *dest =  NAN;              return 0; }                                          \
-      case -MP_NUMBER_NAN : { *dest = -NAN;              return 0; }                                          \
       case  MP_NUMBER_INF : { *dest =  INFINITY;         return 0; }                                          \
       case -MP_NUMBER_INF : { *dest = -INFINITY;         return 0; }                                          \
       case  MP_NUMBER_INS : { *dest =  FLOAT##_w##_INS;  return 0; }                                          \

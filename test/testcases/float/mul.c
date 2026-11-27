@@ -52,14 +52,13 @@ static void run_mul_case(const FloatMulCase *c)
 
   MP_FLOAT_mul(&RES, &A, &B, &STDAllocator);
 
-  ck_assert_msg(abs(RES.size) == c->e_len,
-                "%s: result size %"PRI_SIZE" != %"PRI_SIZE, c->name, RES.size, c->e_len);
-  ck_assert_msg(abs(RES.exp) == c->e_exp,
-                "%s: result exp %"PRI_EXP" != %"PRI_EXP, c->name, RES.exp, c->e_exp);
+  ck_assert_msg(RES.size == c->e_len,
+                "%s: result size %"PRI_SIZE" != %"PRI_SIZE"\n", c->name, RES.size, c->e_len);
+  ck_assert_msg(RES.exp == c->e_exp,
+                "%s: result exp %"PRI_EXP" != %"PRI_EXP"\n", c->name, RES.exp, c->e_exp);
   for (int32_t i = 0; i < abs(c->e_len); i++) {
     ck_assert_msg(RES.limbs[i] == c->e[i],
-                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB, c->name, i,
-                  RES.limbs[i], c->e[i]);
+                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != %"PRI_LIMB"\n", c->name, i, RES.limbs[i], c->e[i]);
   }
 }
 
@@ -107,6 +106,14 @@ static const lmp_limb_t MA11[] = { LMP_LIMB_MAX, LMP_LIMB_MAX };
 static const lmp_limb_t MB11[] = { LMP_LIMB_MAX, LMP_LIMB_MAX };
 static const lmp_limb_t ME11[] = { 1, 0, LMP_LIMB_MAX - 1, LMP_LIMB_MAX };
 
+static const lmp_limb_t MA12[] = { 0 };
+static const lmp_limb_t MB12[] = { 0 };
+static const lmp_limb_t ME12[] = { 0 };
+
+static const lmp_limb_t MA13[] = { 1 };
+static const lmp_limb_t MB13[] = { 2 };
+static const lmp_limb_t ME13[] = { 0 };
+
 static const FloatMulCase abs_mul_cases[] = {
   { .name = "mul1_simple",      .a = MA1,  .b = MB1,  .e = ME1,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 1 },
   { .name = "mul2_small",       .a = MA2,  .b = MB2,  .e = ME2,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 1, .b_len = 1, .e_len = 1 },
@@ -119,6 +126,28 @@ static const FloatMulCase abs_mul_cases[] = {
   { .name = "mul9_zero_a",      .a = MA9,  .b = MB9,  .e = ME9,  .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 0, .b_len = 2, .e_len = 0 },
   { .name = "mul10_zero_b",     .a = MA10, .b = MB10, .e = ME10, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 0, .e_len = 0 },
   { .name = "mul11_chain",      .a = MA11, .b = MB11, .e = ME11, .a_exp = 0, .b_exp = 0, .e_exp = 0, .a_len = 2, .b_len = 2, .e_len = 4 },
+
+  { .name = "mul_special1",    .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_NAN, .b_exp = MP_NUMBER_ZERO, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special2",    .a = MA12, .b = MB12, .e = ME12, .a_exp = MP_NUMBER_ZERO, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special3",    .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_NAN, .b_exp = -MP_NUMBER_INF, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special4",    .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_NAN, .b_exp =  MP_NUMBER_INS, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special5",    .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_NAN, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special6",    .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_INF, .b_exp =  MP_NUMBER_INF, .e_exp =  MP_NUMBER_INF, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special7",    .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_INF, .b_exp =  MP_NUMBER_INS, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special8",    .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_INF, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special9",    .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_INF, .b_exp = MP_NUMBER_ZERO, .e_exp = MP_NUMBER_ZERO, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special10",   .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_INS, .b_exp =  MP_NUMBER_INF, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special11",   .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_INS, .b_exp =  MP_NUMBER_INS, .e_exp =  MP_NUMBER_INS, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special12",   .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_INS, .b_exp =  MP_NUMBER_NAN, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len = 0, .e_len = 0 },
+  { .name = "mul_special13",   .a = MA12, .b = MB12, .e = ME12, .a_exp =  MP_NUMBER_INS, .b_exp = MP_NUMBER_ZERO, .e_exp = MP_NUMBER_ZERO, .a_len = 0, .b_len = 0, .e_len = 0 },
+
+  { .name = "mul_special14",   .a = MA13, .b = MB13, .e = ME13, .a_exp = -MP_NUMBER_INS, .b_exp = 0, .e_exp = -MP_NUMBER_INS, .a_len = 0, .b_len =  1, .e_len = 0 },
+  { .name = "mul_special15",   .a = MA13, .b = MB13, .e = ME13, .a_exp = -MP_NUMBER_INS, .b_exp = 0, .e_exp =  MP_NUMBER_INS, .a_len = 0, .b_len = -1, .e_len = 0 },
+  { .name = "mul_special16",   .a = MA13, .b = MB13, .e = ME13, .a_exp = -MP_NUMBER_INF, .b_exp = 0, .e_exp =  MP_NUMBER_INF, .a_len = 0, .b_len = -1, .e_len = 0 },
+  { .name = "mul_special17",   .a = MA13, .b = MB13, .e = ME13, .a_exp =  MP_NUMBER_INF, .b_exp = 0, .e_exp =  MP_NUMBER_INF, .a_len = 0, .b_len =  1, .e_len = 0 },
+
+  { .name = "mul_unknown1",   .a = MA13, .b = MB13, .e = ME13, .a_exp = -10, .b_exp =   0, .e_exp =  MP_NUMBER_NAN, .a_len = 0, .b_len =  1, .e_len = 0 },
+  { .name = "mul_unknown2",   .a = MA13, .b = MB13, .e = ME13, .a_exp =   0, .b_exp =  10, .e_exp =  MP_NUMBER_NAN, .a_len = 1, .b_len =  0, .e_len = 0 },
 };
 
 

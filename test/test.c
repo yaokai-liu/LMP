@@ -52,6 +52,7 @@ int main()
   srunner_add_suite(sr, MP_TEST_float_mul_suite());
   srunner_add_suite(sr, MP_TEST_float_divmod_suite());
   srunner_add_suite(sr, MP_TEST_float_misc_suite());
+  srunner_add_suite(sr, MP_TEST_float_mul_base_exp_suite());
 
   srunner_add_suite(sr, MP_TEST_base_number_misc_suite());
 

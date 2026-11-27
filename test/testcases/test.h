@@ -64,6 +64,7 @@ Suite *MP_TEST_float_sub_suite();
 Suite *MP_TEST_float_mul_suite();
 Suite *MP_TEST_float_divmod_suite();
 Suite *MP_TEST_float_misc_suite();
+Suite *MP_TEST_float_mul_base_exp_suite();
 
 Suite *MP_TEST_base_number_misc_suite();
 

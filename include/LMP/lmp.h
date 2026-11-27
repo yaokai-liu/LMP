@@ -47,7 +47,12 @@
 typedef int64_t lmp_exp_t;
 typedef int32_t lmp_prec_t;
 typedef lmp_prec_t lmp_size_t;
-
+#define LMP_EXP_MAX           INT64_MAX
+#define LMP_EXP_MIN           INT64_MIN
+#define LMP_PREC_MAX          INT32_MAX
+#define LMP_PREC_MIN          INT32_MIN
+#define LMP_SIZE_MAX          LMP_PREC_MAX
+#define LMP_SIZE_MIN          LMP_PREC_MIN
 #ifndef _LMP_LIMB_WIDTH_
 #define _LMP_LIMB_WIDTH_        64
 typedef uint64_t  lmp_limb_t;
@@ -69,22 +74,41 @@ typedef uint256_t lmp_quarter_limb_t;
 #define LMP_HALF_LIMB_MAX     (~(lmp_half_limb_t)0)
 #define LMP_DOUBLE_LIMB_MAX   (~(lmp_double_limb_t)0)
 #define LMP_LIMB_VAL          (((lmp_double_limb_t)1) << LMP_LIMB_BIT)
-enum MP_NUMBER_SPECIAL_VALUE_TYPE : int32_t {
-  MP_NUMBER_ZERO = 0,
-  MP_NUMBER_INF,
+// MP_NUMBER_ZERO multiplied by any number except MP_NUMBER_NAN is MP_NUMBER_ZERO
+// (including ±MP_NUMBER_INF and ±MP_NUMBER_INS).
+// Note: MP_NUMBER_ZERO / MP_NUMBER_ZERO = MP_NUMBER_NAN.
+//
+// Indeterminate infinity rules (∞ - ∞, ∞ / ∞):
+//      MP_NUMBER_INF - MP_NUMBER_INF = MP_NUMBER_NAN (and NEG_INF - NEG_INF)
+//      MP_NUMBER_NEG_INF + MP_NUMBER_INF = MP_NUMBER_NAN
+//      MP_NUMBER_INF + MP_NUMBER_NEG_INF = MP_NUMBER_NAN
+//      ±MP_NUMBER_INF / ±MP_NUMBER_INF = MP_NUMBER_NAN
+//
+// Indeterminate infinitesimal rules (0 * ∞, 0 / 0):
+//      ±MP_NUMBER_INS * ±MP_NUMBER_INF = MP_NUMBER_NAN
+//      ±MP_NUMBER_INS / ±MP_NUMBER_INS = MP_NUMBER_NAN
+//
+// We always treat MP_NUMBER_NEG_INS is same with MP_NUMBER_INS,
+// and always use its absolute value. We apply
+//      MP_NUMBER_NEG_INS + MP_NUMBER_INS = ±MP_NUMBER_INS
+// and  MP_NUMBER_INS + MP_NUMBER_NEG_INS = ±MP_NUMBER_INS.
+// Both positive or negative are correct.
+// The MP_NUMBER_NEG_INS is used for placeholder that users shall
+// not use it.
+//
+// MP_NUMBER_NAN computed with any number (special or normal) is MP_NUMBER_NAN
+enum MP_NUMBER_SPECIAL_VALUE_TYPE : lmp_exp_t {
+  MP_NUMBER_ZERO = 0, // exact zero: represents absolute mathematical 0 (no underflow residue)
+  MP_NUMBER_INF, // infinity
   MP_NUMBER_INS, // infinitesimal
 
-  // For LMP itself, if special value is not in
-  // values above or their negative, and is not
-  // a bad value, then it will be treate as a NAN.
-  // Users can write custom functions to specify more
-  // special value.
+  // In libLMP itself, if a special value is not in
+  // values above or their negative, it will be treated as a NAN.
+  // Users can write custom functions to specify more special values.
 
-  MP_NUMBER_NAN = INT32_MAX,
+  MP_NUMBER_NAN = LMP_EXP_MIN, // not a number
   MP_NUMBER_NEG_INF = - MP_NUMBER_INF,
   MP_NUMBER_NEG_INS = - MP_NUMBER_INS,
-  MP_NUMBER_NEG_NAN = - MP_NUMBER_NAN,
-  MP_NUMBER_BAD_VALUE = INT32_MIN, // this value should not be reached
 };
 
 // INT = sgn(size) * sum(limbs[i] * pow(LMP_LIMB_VAL, i)),

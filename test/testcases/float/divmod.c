@@ -58,21 +58,21 @@ static void run_abs_divmod_case(const FloatDivmodCase *c)
 
   MP_FLOAT_divmod(&A, &B, &Q, &STDAllocator);
 
-  ck_assert_msg(abs(Q.size) == c->eq_len,
-                "%s: quotient size %"PRI_SIZE" != (expected) %"PRI_SIZE, c->name, Q.size, c->eq_len);
-  ck_assert_msg(abs(Q.exp) == c->eq_exp,
-                "%s: quotient exp %"PRI_EXP" != (expected) %"PRI_EXP, c->name, Q.exp, c->eq_exp);
+  ck_assert_msg(Q.size == c->eq_len,
+                "%s: quotient size %"PRI_SIZE" != (expected) %"PRI_SIZE"\n", c->name, Q.size, c->eq_len);
+  ck_assert_msg(Q.exp == c->eq_exp,
+                "%s: quotient exp %"PRI_EXP" != (expected) %"PRI_EXP"\n", c->name, Q.exp, c->eq_exp);
   for (int32_t i = 0; i < abs(c->eq_len); i++) {
     ck_assert_msg(Q.limbs[i] == c->eq[i],
-                  "%s: quotient limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB, c->name, i, Q.limbs[i], c->eq[i]);
+                  "%s: quotient limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB"\n", c->name, i, Q.limbs[i], c->eq[i]);
   }
-  ck_assert_msg(abs(A.size) == c->er_len,
-                "%s: remainder size %"PRI_SIZE" != (expected) %"PRI_SIZE, c->name, A.size, c->er_len);
-  ck_assert_msg(abs(A.exp) == c->er_exp,
-                "%s: remainder exp %"PRI_EXP" != (expected) %"PRI_EXP, c->name, A.exp, c->er_exp);
+  ck_assert_msg(A.size == c->er_len,
+                "%s: remainder size %"PRI_SIZE" != (expected) %"PRI_SIZE"\n", c->name, A.size, c->er_len);
+  ck_assert_msg(A.exp == c->er_exp,
+                "%s: remainder exp %"PRI_EXP" != (expected) %"PRI_EXP"\n", c->name, A.exp, c->er_exp);
   for (int32_t i = 0; i < abs(c->er_len); i++) {
     ck_assert_msg(A.limbs[i] == c->er[i],
-                  "%s: remainder limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB, c->name, i, A.limbs[i], c->er[i]);
+                  "%s: remainder limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB"\n", c->name, i, A.limbs[i], c->er[i]);
   }
 }
 
@@ -219,6 +219,21 @@ static const lmp_limb_t b20[] = { 0x39509fc63d0f5485ULL, 0xb3afe2e942856305ULL, 
 static const lmp_limb_t q20[] = { 0x4a0ULL };
 static const lmp_limb_t r20[] = { 0xe53d0041db8aef4dULL, 0xf00e22da0f178c7bULL, 0x77140026bb0b67bbULL, 0x364b2db098102a2ULL, 0x3308049f13dd0b01ULL, 0x6be37f8ba22fadfULL, 0xfb86d414b5363f63ULL, 0x632058e6883e7ULL };
 
+static const lmp_limb_t a21[] = { 7 };
+static const lmp_limb_t b21[] = { 3 };
+static const lmp_limb_t q21[] = { 3 };
+static const lmp_limb_t r21[] = { 2 };
+
+static const lmp_limb_t a22[] = { 0, 0, 0, 0, 1 };
+static const lmp_limb_t b22[] = { 1, 0, 0, 1 };
+static const lmp_limb_t q22[] = { LMP_LIMB_MAX };
+static const lmp_limb_t r22[] = { 1, LMP_LIMB_MAX, LMP_LIMB_MAX };
+
+static const lmp_limb_t a23[] = { 1, 0, 1, 1, 0, 1 };
+static const lmp_limb_t b23[] = { 1, 0, 1 };
+static const lmp_limb_t q23[] = { 1, 0, 0, 1 };
+static const lmp_limb_t r23[] = { 0 };
+
 static const FloatDivmodCase abs_divmod_cases[] = {
   { .name = "7/3",                      .a = a1,  .b = b1,  .eq = q1,  .er =  r1,  .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 1, .b_len = 1, .eq_len = 1, .er_len = 1, .q_prec = 1 },
   { .name = "5/9",                      .a = a2,  .b = b2,  .eq = q2,  .er =  r2,  .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 1, .b_len = 1, .eq_len = 0, .er_len = 1, .q_prec = 0 },
@@ -240,8 +255,7 @@ static const FloatDivmodCase abs_divmod_cases[] = {
   {.name = "random_case_17", .a = a17, .b = b17, .eq = q17, .er = r17, .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8, .q_prec = 1 },
   {.name = "random_case_18", .a = a18, .b = b18, .eq = q18, .er = r18, .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8, .q_prec = 1 },
   {.name = "random_case_19", .a = a19, .b = b19, .eq = q19, .er = r19, .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8, .q_prec = 1 },
-  {.name = "random_case_20", .a = a20, .b = b20, .eq = q20, .er = r20, .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8, .q_prec = 1 }
-
+  {.name = "random_case_20", .a = a20, .b = b20, .eq = q20, .er = r20, .a_exp = 0, .b_exp = 0, .eq_exp = 0, .er_exp = 0, .a_len = 8, .b_len = 8, .eq_len = 1, .er_len = 8, .q_prec = 1 },
 };
 
 START_TEST(test_divmod)
