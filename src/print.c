@@ -31,15 +31,12 @@
 #define LOWER false
 #define digit(n, _upper)  ((n) < 10 ? ('0' + (n)) : ((_upper) == UPPER ? ('A' + ((n) - 10)) : ('a' + ((n) - 10))))
 
-uint32_t MP_BASE_NUMBER_abs_to_string(char *dest, const uint32_t max_len, const MP_BASE_NUMBER *mp_val, const Allocator *allocator) {
+uint32_t MP_BASE_NUMBER_abs_to_string(char *dest, const uint32_t max_len, const MP_BASE_NUMBER *mp_val, const Allocator *) {
   if (mp_val->BASE.base < 2 || mp_val->BASE.base > 36 || max_len == 0) { return 0; }
   if (mp_val->size == 0) {  *dest = '0'; return 1; }
   const uint32_t size = mp_val->size;
 
-  if (max_len < mp_val->BASE.limb_width * size + 1) {
-    MP_INT_clear((MP_INT *)&mp_val, allocator);
-    return 0;
-  }
+  if (max_len < mp_val->BASE.limb_width * size + 1) { return 0; }
 
   char *ptr = dest;
   for (uint32_t i = size - 1; i < size; i--) {
@@ -52,7 +49,6 @@ uint32_t MP_BASE_NUMBER_abs_to_string(char *dest, const uint32_t max_len, const 
     ptr += mp_val->BASE.limb_width;
   }
 
-  MP_INT_clear((MP_INT *)&mp_val, allocator);
   return ptr - dest;
 }
 

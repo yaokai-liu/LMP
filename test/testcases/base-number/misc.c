@@ -26,7 +26,7 @@
  **/
 
 #include "test.h"
-#include "allocator.h"
+#include <allocator.h>
 
 #define MP_BASE_NUMBER_negative(val)                do { (val)->size = -(val)->size; } while(0)
 

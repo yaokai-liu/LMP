@@ -28,7 +28,7 @@
 #include "test.h"
 #include <stdio.h>
 #include "LMP/ext/ieee754.h"
-#include "allocator.h"
+#include <allocator.h>
 
 typedef struct {
   const char * name;

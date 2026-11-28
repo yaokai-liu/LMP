@@ -28,7 +28,9 @@
 #include "LMP/parse.h"
 #include "LMP/spec.h"
 #include "LMP/arith.h"
-#include "allocator.h"
+#include <allocator.h>
+
+#include "arith/mp-base-number.h"
 
 enum LMP_PARSE_MODE_MASK_TYPE : uint8_t {
   LMP_PARSE_SIGN_MASK = (uint8_t)~LMP_PARSE_NO_SIGN,
@@ -407,7 +409,6 @@ inline uint32_t try_special_number(const char *input, MP_NUM_TYPE *type, MP_BASE
     if (strcmp_o(input, triple.pattern) == triple.pattern_len && !isIdentChar(&input[triple.pattern_len])) {
       NUMBER->size = 0;
       NUMBER->exp = triple.value == MP_NUMBER_NAN ? MP_NUMBER_NAN : negative ? - triple.value : triple.value;
-      NUMBER->BASE = BASE_LIMB_DATA[ADIC_TYPE_2].BASE;
       type->type = MP_NUM_TYPE_OF(MP_NUM_LMP_STANDARD, MP_NUM_REPR_MP_FLOAT, 0);
       return triple.pattern_len;
     }
@@ -439,8 +440,8 @@ uint32_t LMP_parse_base_number(const char * const input, MP_NUM_TYPE *type,
     pText++;
     while (*pText == ' ' || *pText == '\t') { pText++; }
   }
+  uint32_t adic_type = ADIC_TYPE_10;
   if (isDecDigital(pText)) {
-    uint32_t adic_type = ADIC_TYPE_10;
     if (*pText == '0') {
       switch (pText[1]) {
         case 'x': case 'X': { pText += 2; adic_type = ADIC_TYPE_16; break; }
@@ -449,10 +450,13 @@ uint32_t LMP_parse_base_number(const char * const input, MP_NUM_TYPE *type,
         default: {  }
       }
     }
-    NUMBER->BASE = BASE_LIMB_DATA[adic_type].BASE;
+    allocator->memcpy(&NUMBER->BASE, &BASE_LIMB_DATA[adic_type].BASE, sizeof(MP_BASE));
     const uint32_t length = LMP_parse_num_digits(pText, type, NUMBER, negative, adic_type, allocator);
     if (!length) { return 0; }
     return pText + length - input;
   }
-  return try_special_number(pText, type, NUMBER, negative);
+  const uint32_t length = try_special_number(pText, type, NUMBER, negative);
+  if (length == 0) { return 0; }
+  allocator->memcpy(&NUMBER->BASE, &BASE_LIMB_DATA[adic_type].BASE, sizeof(MP_BASE));
+  return length;
 }

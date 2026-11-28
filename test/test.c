@@ -54,7 +54,13 @@ int main()
   srunner_add_suite(sr, MP_TEST_float_misc_suite());
   srunner_add_suite(sr, MP_TEST_float_mul_base_exp_suite());
 
+  srunner_add_suite(sr, MP_TEST_base_number_cmp_suite());
+  srunner_add_suite(sr, MP_TEST_base_number_add_suite());
+  srunner_add_suite(sr, MP_TEST_base_number_sub_suite());
+  srunner_add_suite(sr, MP_TEST_base_number_mul_suite());
+  srunner_add_suite(sr, MP_TEST_base_number_divmod_suite());
   srunner_add_suite(sr, MP_TEST_base_number_misc_suite());
+  srunner_add_suite(sr, MP_TEST_base_number_mul_base_exp_suite());
 
   srunner_add_suite(sr, parse_suite());
   srunner_add_suite(sr, print_suite());

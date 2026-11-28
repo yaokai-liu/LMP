@@ -19,14 +19,14 @@
  *
  * Project Name: LMP
  * Module Name: test/testcases/int
- * Filename: abs_cmp.c
+ * Filename: cmp.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
 #include "test.h"
-#include "allocator.h"
+#include <allocator.h>
 
 
 typedef struct {
@@ -43,10 +43,10 @@ static void run_cmp_case(const IntCmpCase *c)
   MP_INT A = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
   MP_INT B = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
 
-  int32_t got = MP_INT_abs_cmp(&A, &B);
+  int32_t got = MP_INT_cmp(&A, &B);
 
   ck_assert_msg(got == c->expected,
-                "%s: MP_INT_abs_cmp returned %"PRIi32", expected %"PRIi32"\n",
+                "%s: MP_INT_cmp returned %"PRIi32", expected %"PRIi32"\n",
                 c->name, got, c->expected);
 }
 

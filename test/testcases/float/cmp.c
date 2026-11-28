@@ -19,14 +19,14 @@
  *
  * Project Name: LMP
  * Module Name: test/testcases/float
- * Filename: abs_cmp.c
+ * Filename: cmp.c
  * Creator: Yaokai Liu
  * Create Date: 2026-10-17
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
 #include "test.h"
-#include "allocator.h"
+#include <allocator.h>
 
 
 typedef struct {
@@ -45,10 +45,10 @@ static void run_cmp_case(const FloatCmpCase *c)
   const MP_FLOAT A = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a, .exp = c->a_exp };
   const MP_FLOAT B   = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b, .exp = c->b_exp };
 
-  const int32_t got = MP_FLOAT_abs_cmp(&A, &B);
+  const int32_t got = MP_FLOAT_cmp(&A, &B);
 
   ck_assert_msg(got == c->expected,
-                "%s: MP_INT_abs_cmp returned %"PRIi32", expected %"PRIi32,
+                "%s: MP_INT_cmp returned %"PRIi32", expected %"PRIi32,
                 c->name, got, c->expected);
 }
 
@@ -65,12 +65,12 @@ START_TEST(test_MP_FLOAT_8) {
   lmp_limb_t limbs[2][2] = {{1, 2}, {2, 2}};
   MP_FLOAT num1 = {.prec = 2, .size =  2, .limbs = limbs[0]};
   MP_FLOAT num2 = {.prec = 2, .size = -2, .limbs = limbs[1]};
-  int32_t cmp1 = MP_FLOAT_abs_cmp(&num1, &num2);
-  ck_assert_int_eq(cmp1, -1);
+  int32_t cmp1 = MP_FLOAT_cmp(&num1, &num2);
+  ck_assert_int_eq(cmp1, 1);
   lmp_limb_t limbs2[2][2] = {{0, 2}, {2, 0}};
   MP_FLOAT num3 = {.prec = 2, .size =  2, .limbs = limbs2[0], .exp = -1};
-  MP_FLOAT num4 = {.prec = 2, .size = -1, .limbs = limbs2[1], .exp =  0};
-  int32_t cmp2 = MP_FLOAT_abs_cmp(&num3, &num4);
+  MP_FLOAT num4 = {.prec = 2, .size =  1, .limbs = limbs2[1], .exp =  0};
+  int32_t cmp2 = MP_FLOAT_cmp(&num3, &num4);
   ck_assert_int_eq(cmp2, 0);
 }
 END_TEST

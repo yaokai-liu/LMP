@@ -26,7 +26,7 @@
  **/
 
 #include "LMP/ext/ieee754.h"
-#include "extbit.h"
+#include <extbit.h>
 
 #define max(a, b)   ((a) >  (b) ? (a) :  (b))
 #define abs(a)      ((a) >  (0) ? (a) : -(a))

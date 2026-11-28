@@ -28,7 +28,7 @@
 #include <stdio.h>
 
 #include "test.h"
-#include "allocator.h"
+#include <allocator.h>
 
 typedef struct {
   const char       *name;
@@ -40,6 +40,9 @@ typedef struct {
   int32_t           e_len;
   int32_t           offset;
 } IntSubCase;
+
+extern void MP_INT_abs_sub_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *restrict op2, int32_t offset, const Allocator *allocator);
+
 
 static void run_abs_sub_offset_case(const IntSubCase *c)
 {

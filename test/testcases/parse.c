@@ -27,7 +27,7 @@
 
 #include "test.h"
 #include "LMP/parse.h"
-#include "allocator.h"
+#include <allocator.h>
 
 typedef struct {
   const char * name;

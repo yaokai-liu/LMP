@@ -73,7 +73,7 @@ int main () {
   // lmp_limb_t limbs2[2][2] = {{0, 2}, {2, 0}};
   // MP_FLOAT num3 = {.prec = 2, .size =  2, .limbs = limbs2[0], .exp = -1};
   // MP_FLOAT num4 = {.prec = 2, .size = -1, .limbs = limbs2[1], .exp =  0};
-  // int32_t cmp2 = MP_FLOAT_abs_cmp(&num3, &num4);
+  // int32_t cmp2 = MP_FLOAT_cmp(&num3, &num4);
   static const lmp_limb_t sA8[] = { 0, 1, 1 };
   static const lmp_limb_t sB8[] = { 0, 0, 2 };
   static const lmp_limb_t sE8[] = { 0, LMP_LIMB_MAX };

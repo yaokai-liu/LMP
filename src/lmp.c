@@ -26,10 +26,15 @@
  **/
 
 #include "LMP/lmp.h"
+#include <extbit.h>
 #include <stdlib.h>
-#include "extbit.h"
 #include <math.h>
 #include "LMP/arith.h"
+#include <extlimits.h>
+
+#include "arith/limb.h"
+#include "arith/mp-float.h"
+#include "arith/mp-int.h"
 
 #define max(a, b)   ((a) >  (b) ? (a) :  (b))
 #define min(a, b)   ((a) <  (b) ? (a) :  (b))
@@ -43,32 +48,6 @@
 #elifdef _MSC_VER
 #define ALWAYS_INLINE __forceinline
 #endif
-
-inline lmp_limb_t lmp_fast_pow(const lmp_half_limb_t base, lmp_exp_t exp) {
-  lmp_limb_t result = 1;
-  lmp_double_limb_t cache = base;
-  while (exp > 0) {
-    if (exp & 1) { result *= cache; }
-    cache *= cache;
-    exp >>= 1;
-  }
-  return result;
-}
-
-inline lmp_limb_t lmp_fast_quotient(const lmp_double_limb_t dividend, const lmp_double_limb_t dividend_follow, const lmp_double_limb_t divisor) {
-  const lmp_double_limb_t d_high = divisor >> LMP_LIMB_BIT;
-  lmp_limb_t quotient = (dividend >> LMP_LIMB_BIT) == d_high ? LMP_LIMB_MAX : dividend / d_high;
-  lmp_double_limb_t dividend_hat_high = quotient * d_high;
-  lmp_double_limb_t dividend_hat_tail = (lmp_double_limb_t)quotient * (lmp_limb_t)divisor;
-  if (dividend_hat_high + (dividend_hat_tail >> LMP_LIMB_BIT) < dividend_hat_high) {
-    dividend_hat_high -= d_high;
-    quotient -= 1;
-  }
-  dividend_hat_high += dividend_hat_tail >> LMP_LIMB_BIT;
-  dividend_hat_tail = (lmp_limb_t)dividend_hat_tail;
-  if (dividend_hat_high > dividend || (dividend_hat_high == dividend && dividend_hat_tail > dividend_follow)) { quotient -= 1; }
-  return quotient;
-}
 
 inline void MP_INT_init(MP_INT *val, const int32_t initial_alloc, const Allocator *allocator) {
   if (val->prec == 0) {
@@ -115,6 +94,21 @@ inline void MP_INT_clamp(MP_INT *val) {
 inline size_t MP_INT_bitsof(const MP_INT *val) {
   lmp_size_t size = abs(val->size);
   return (size - 1) * LMP_LIMB_BIT + extstd_bit_width(val->limbs[size - 1]);
+}
+
+_SHARED_API int32_t MP_INT_cmp(const MP_INT *val1, const MP_INT *val2) {
+  if (sgn(val1->size) > sgn(val2->size)) { return  1; }
+  if (sgn(val1->size) < sgn(val2->size)) { return -1; }
+  return MP_INT_abs_cmp(val1, val2);
+}
+
+inline int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2) {
+  const lmp_size_t size = max(abs(op1->size), abs(op2->size));
+  for (int32_t i = size - 1; i >= 0; i --) {
+    if (MP_INT_get_limb(op1, i) > MP_INT_get_limb(op2, i)) { return  1; }
+    if (MP_INT_get_limb(op1, i) < MP_INT_get_limb(op2, i)) { return -1; }
+  }
+  return 0;
 }
 
 inline lmp_limb_t MP_INT_left_shift_load(const MP_INT *restrict num, const int32_t index, const int32_t width) {
@@ -192,15 +186,6 @@ bool MP_INT_carry_check(const MP_INT *val) {
   return true;
 }
 
-inline int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2) {
-  const lmp_size_t size = max(abs(op1->size), abs(op2->size));
-  for (int32_t i = size - 1; i >= 0; i --) {
-    if (MP_INT_get_limb(op1, i) > MP_INT_get_limb(op2, i)) { return  1; }
-    if (MP_INT_get_limb(op1, i) < MP_INT_get_limb(op2, i)) { return -1; }
-  }
-  return 0;
-}
-
 inline bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, const int32_t offset) {
   const lmp_size_t size1 = abs(op1->size);
   const lmp_size_t size2 = abs(op2->size);
@@ -249,9 +234,15 @@ void MP_FLOAT_from_ieee754_float(MP_FLOAT *mp_val, float128_t val, const Allocat
   int32_t exponent = 0;
   uint128_t mantissa = 0;
   extstd_float128_decompose(val, &mantissa, &exponent, &sign);
+  if (exponent == INT_TYPE_MIN(exponent)) {
+    mp_val->size = 0;
+    if (mantissa != 0) { mp_val->exp = MP_NUMBER_NAN; }
+    else { mp_val->exp = sign ? MP_NUMBER_NEG_INF : MP_NUMBER_INF; }
+    return;
+  }
   MP_INT_from_c_uint((MP_INT *)mp_val, mantissa, allocator);
+  MP_FLOAT_mul_base_exp(mp_val, exponent, allocator);
   mp_val->size = sign ? -mp_val->size : mp_val->size;
-  mp_val->exp = exponent;
 }
 
 inline void MP_FLOAT_copy(MP_FLOAT *dest, const MP_FLOAT *src, const Allocator *allocator) {
@@ -309,6 +300,12 @@ inline void MP_FLOAT_tidy(MP_FLOAT *val) {
   if (val->size == 0) { val->exp = MP_NUMBER_ZERO; }
 }
 
+_SHARED_API int32_t MP_FLOAT_cmp(const MP_FLOAT *val1, const MP_FLOAT *val2) {
+  if (sgn(val1->size) > sgn(val2->size)) { return  1; }
+  if (sgn(val1->size) < sgn(val2->size)) { return -1; }
+  return MP_FLOAT_abs_cmp(val1, val2);
+}
+
 inline int32_t MP_FLOAT_abs_cmp(const MP_FLOAT *op1, const MP_FLOAT *op2) {
   const lmp_size_t size1 = abs(op1->size);
   const lmp_size_t size2 = abs(op2->size);
@@ -326,9 +323,8 @@ inline int32_t MP_FLOAT_abs_cmp(const MP_FLOAT *op1, const MP_FLOAT *op2) {
 
 inline void MP_BASE_NUMBER_clear(MP_BASE_NUMBER *val, const Allocator *allocator) {
   MP_FLOAT_clear((MP_FLOAT *)val, allocator);
-  val->BASE.limb_width = 0;
-  val->BASE.limb_val = 0;
-  val->BASE.base = 0;
+  const MP_BASE BASE = {.base = 0, .limb_width = 0, .limb_val = 0};
+  allocator->memcpy(&val->BASE, &BASE, sizeof(MP_BASE));
 }
 
 inline lmp_double_limb_t MP_BASE_INT_get_double_limbs(const MP_BASE_NUMBER *restrict num, const int32_t index) {
@@ -351,15 +347,15 @@ _SHARED_API void MP_BASE_NUMBER_init(MP_BASE_NUMBER *val, int32_t initial_alloc,
   const double base_width = extstd_has_single_bit(base) ? extstd_bit_width(base - 1) : LMP_LIMB_BIT / log2(base);
   const uint32_t BASE_LIMB_WIDTH = (uint32_t)base_width;
   const lmp_double_limb_t BASE_LIMB_VAL = lmp_fast_pow(base, BASE_LIMB_WIDTH);
-  val->BASE.limb_val = BASE_LIMB_VAL;
-  val->BASE.limb_width = BASE_LIMB_WIDTH;
-  val->BASE.base = base;
+
+  const MP_BASE BASE = {.base = base, .limb_width = BASE_LIMB_WIDTH, .limb_val = BASE_LIMB_VAL};
+  allocator->memcpy(&val->BASE, &BASE, sizeof(MP_BASE));
 }
 
 inline void MP_BASE_NUMBER_copy(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *src, const Allocator *allocator) {
   MP_FLOAT_realloc(dest, src->size, allocator);
   allocator->memcpy(dest->limbs, src->limbs, abs(src->size) * LMP_LIMB_SIZE);
-  dest->BASE = src->BASE;
+  allocator->memcpy(&dest->BASE, &src->BASE, sizeof(MP_BASE));
   dest->size = src->size;
   dest->exp = src->exp;
 }
@@ -394,7 +390,7 @@ bool MP_BASE_INT_carry_check(const MP_BASE_NUMBER *val) {
   return true;
 }
 
-void MP_BASE_INT_to_int(MP_INT *dest, const MP_BASE_NUMBER *src, const Allocator *allocator) {
+void MP_BASE_INT_to_int(MP_INT *dest, const MP_BASE_INT *src, const Allocator *allocator) {
   if (src->BASE.limb_val == 0) {
     MP_INT_copy(dest, (MP_INT *)src, allocator);
     MP_INT_clamp(dest);
@@ -413,7 +409,7 @@ void MP_BASE_INT_to_int(MP_INT *dest, const MP_BASE_NUMBER *src, const Allocator
   dest->size = sgn(src->size) * dest->size;
 }
 
-void MP_BASE_FLOAT_to_float(MP_FLOAT *dest, const MP_BASE_NUMBER *src, const Allocator *allocator) {
+void MP_BASE_FLOAT_to_float(MP_FLOAT *dest, const MP_BASE_FLOAT *src, const Allocator *allocator) {
   if (src->BASE.limb_val == 0) {
     MP_FLOAT_copy(dest, (MP_FLOAT *)src, allocator);
     MP_FLOAT_clamp(dest);
@@ -485,12 +481,11 @@ typedef struct BaseCache {
 } BaseCache;
 // static BaseCache LMP_GLOBAL_BASE_CACHE[] = {};
 
-void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const uint32_t base, const Allocator *allocator) {
+void MP_INT_to_base_int(MP_BASE_INT *dest, const MP_INT *mp_val, const uint32_t base, const Allocator *allocator) {
   if (base < 2) {
     dest->size = 0;
-    dest->BASE.base = base;
-    dest->BASE.limb_width = 0;
-    dest->BASE.limb_val = 0;
+    const MP_BASE BASE = {.base = base, .limb_width = 0, .limb_val = 0};
+    allocator->memcpy(&dest->BASE, &BASE, sizeof(MP_BASE));
     if (base == 0) {
       // polynomial's exp is its size, i.e. degree + 1
       dest->exp = mp_val->size;
@@ -504,9 +499,9 @@ void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const uin
   const double base_width = extstd_has_single_bit(base) ? extstd_bit_width(base - 1) : LMP_LIMB_BIT / log2(base);
   const uint32_t BASE_LIMB_WIDTH = (uint32_t)base_width;
   const lmp_double_limb_t BASE_LIMB_VAL = lmp_fast_pow(base, BASE_LIMB_WIDTH);
-  dest->BASE.limb_val = BASE_LIMB_VAL;
-  dest->BASE.limb_width = BASE_LIMB_WIDTH;
-  dest->BASE.base = base;
+  const MP_BASE BASE = {.base = base, .limb_width = BASE_LIMB_WIDTH, .limb_val = BASE_LIMB_VAL};
+  allocator->memcpy(&dest->BASE, &BASE, sizeof(MP_BASE));
+
   if (extstd_has_single_bit(base) && LMP_LIMB_BIT % (uint32_t)base_width == 0) {
     if (dest->prec < 0) {
       if (abs(mp_val->size) > -dest->prec) { dest->size = 0; return ; }
@@ -525,9 +520,6 @@ void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const uin
   const lmp_size_t size = abs(mp_val->size);
   if (size == 0) {
     dest->size = 0;
-    dest->BASE.limb_val = BASE_LIMB_VAL;
-    dest->BASE.limb_width = BASE_LIMB_WIDTH;
-    dest->BASE.base = base;
     dest->exp = 0;
     return;
   }
@@ -544,9 +536,6 @@ void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const uin
       dest->limbs[0] = mp_val->limbs[0];
     }
     dest->size = mp_val->size >= 0 ? 1 : -1;
-    dest->BASE.limb_val = BASE_LIMB_VAL;
-    dest->BASE.limb_width = BASE_LIMB_WIDTH;
-    dest->BASE.base = base;
     dest->exp = 0;
     return;
   }
@@ -629,12 +618,11 @@ void MP_INT_to_base_number(MP_BASE_NUMBER *dest, const MP_INT *mp_val, const uin
   dest->exp = 0;
 }
 
-void MP_FLOAT_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator * allocator) {
+void MP_FLOAT_to_base_float(MP_BASE_FLOAT *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator * allocator) {
   if (base < 2) {
     dest->size = 0;
-    dest->BASE.base = base;
-    dest->BASE.limb_width = 0;
-    dest->BASE.limb_val = 0;
+    const MP_BASE BASE = {.base = base, .limb_width = 0, .limb_val = 0};
+    allocator->memcpy(&dest->BASE, &BASE, sizeof(MP_BASE));
     if (base == 0) {
       // polynomial's exp is its size, i.e. degree + 1
       dest->exp = mp_val->size;
@@ -648,9 +636,8 @@ void MP_FLOAT_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint3
   const double base_width = extstd_has_single_bit(base) ? extstd_bit_width(base - 1) : LMP_LIMB_BIT / log2(base);
   const uint32_t BASE_LIMB_WIDTH = (uint32_t)base_width;
   const lmp_double_limb_t BASE_LIMB_VAL = lmp_fast_pow(base, BASE_LIMB_WIDTH);
-  dest->BASE.limb_val = (lmp_limb_t)BASE_LIMB_VAL;
-  dest->BASE.limb_width = BASE_LIMB_WIDTH;
-  dest->BASE.base = base;
+  const MP_BASE BASE = {.base = base, .limb_width = BASE_LIMB_WIDTH, .limb_val = BASE_LIMB_VAL};
+  allocator->memcpy(&dest->BASE, &BASE, sizeof(MP_BASE));
 
   if (extstd_has_single_bit(base) && LMP_LIMB_BIT % (uint32_t)base_width == 0) {
     if (dest->prec < 0) {
@@ -667,14 +654,7 @@ void MP_FLOAT_to_base_number(MP_BASE_NUMBER *dest, const MP_FLOAT *mp_val, uint3
   }
 
   const lmp_size_t size = abs(mp_val->size);
-  if (size == 0) {
-    dest->size = 0;
-    dest->BASE.limb_val = BASE_LIMB_VAL;
-    dest->BASE.limb_width = BASE_LIMB_WIDTH;
-    dest->BASE.base = base;
-    dest->exp = 0;
-    return;
-  }
+  if (size == 0) { dest->size = 0; dest->exp = mp_val->exp; return; }
   const lmp_exp_t target_exp = mp_val->exp + size;
   const lmp_prec_t target_prec = abs(dest->prec);
   const lmp_prec_t unified_alloc = aligned(target_prec + 1);
@@ -727,21 +707,19 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t ba
       mp_val->exp = mp_val->size == 0 ? MP_NUMBER_ZERO : sgn(mp_val->size) * MP_NUMBER_INF;
     }
     mp_val->size = 0;
-    mp_val->BASE.base = base;
-    mp_val->BASE.limb_width = 0;
-    mp_val->BASE.limb_val = 0;
+    const MP_BASE BASE = {.base = base, .limb_width = 0, .limb_val = 0};
+    allocator->memcpy(&mp_val->BASE, &BASE, sizeof(MP_BASE));
     return;
   }
   const lmp_size_t size = abs(mp_val->size);
   const uint32_t BASE_LIMB_WIDTH = (uint32_t)((double)LMP_LIMB_BIT / log2(base));
   const lmp_double_limb_t BASE_LIMB_VAL = lmp_fast_pow(base, BASE_LIMB_WIDTH);
   const int32_t target_size = ceil(mp_val->BASE.limb_width * size / log2(base) / BASE_LIMB_WIDTH);
+  const MP_BASE BASE = {.base = base, .limb_width = BASE_LIMB_WIDTH, .limb_val = BASE_LIMB_VAL};
+  allocator->memcpy(&mp_val->BASE, &BASE, sizeof(MP_BASE));
 
   if (mp_val->size == 0) {
     mp_val->size = 0;
-    mp_val->BASE.base = base;
-    mp_val->BASE.limb_width = BASE_LIMB_WIDTH;
-    mp_val->BASE.limb_val = BASE_LIMB_VAL;
     mp_val->exp = mp_val->exp;
     return;
   }
@@ -756,9 +734,6 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t ba
       mp_val->limbs[0] = mp_val->limbs[0];
     }
     mp_val->size = 1;
-    mp_val->BASE.limb_val = BASE_LIMB_VAL;
-    mp_val->BASE.limb_width = BASE_LIMB_WIDTH;
-    mp_val->BASE.base = base;
     mp_val->exp = 0;
     return;
   }
@@ -769,7 +744,7 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t ba
     MP_INT_init(&copy_val, size, allocator);
     MP_BASE_INT_to_int(&copy_val, mp_val, allocator);
     if (BASE_LIMB_VAL != 0) {
-      MP_INT_to_base_number(mp_val, &copy_val, base, allocator);
+      MP_INT_to_base_int(mp_val, &copy_val, base, allocator);
     }
     mp_val->exp = 0;
   } else {
@@ -777,10 +752,7 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t ba
     MP_FLOAT_init(&copy_val, size, allocator);
     MP_BASE_FLOAT_to_float(&copy_val, mp_val, allocator);
     if (BASE_LIMB_VAL != 0) {
-      MP_FLOAT_to_base_number(mp_val, &copy_val, base, allocator);
+      MP_FLOAT_to_base_float(mp_val, &copy_val, base, allocator);
     }
   }
-  mp_val->BASE.limb_width = BASE_LIMB_WIDTH;
-  mp_val->BASE.limb_val = BASE_LIMB_VAL;
-  mp_val->BASE.base = base;
 }

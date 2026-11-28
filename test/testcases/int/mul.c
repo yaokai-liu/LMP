@@ -26,7 +26,7 @@
  **/
 
 #include "test.h"
-#include "allocator.h"
+#include <allocator.h>
 
 
 typedef struct {

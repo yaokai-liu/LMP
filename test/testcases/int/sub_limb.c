@@ -26,7 +26,9 @@
  **/
 
 #include "test.h"
-#include "allocator.h"
+#include <allocator.h>
+
+extern void MP_INT_abs_sub_limb(MP_INT *dest, const MP_INT *op, lmp_limb_t val, const Allocator *allocator);
 
 
 typedef struct {

@@ -26,9 +26,11 @@
  **/
 
 #include "test.h"
-#include "allocator.h"
+#include <allocator.h>
 
 #define MP_INT_negative(val)                do { (val)->size = -(val)->size; } while(0)
+
+extern bool MP_INT_carry_check(const MP_INT *val);
 
 START_TEST(test_MP_INT_1) {
   MP_INT num = {};

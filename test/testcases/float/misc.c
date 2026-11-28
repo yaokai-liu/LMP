@@ -26,7 +26,7 @@
  **/
 
 #include "test.h"
-#include "allocator.h"
+#include <allocator.h>
 
 #define MP_FLOAT_negative(val)                do { (val)->size = -(val)->size; } while(0)
 
@@ -114,6 +114,25 @@ START_TEST(test_MP_FLOAT_7) {
 }
 END_TEST
 
+START_TEST(test_MP_FLOAT_8) {
+  lmp_limb_t limbs[2] = {0, 0};
+  MP_FLOAT num = {.prec = -2, .size = 2, .limbs = limbs, .exp = -1};
+  MP_FLOAT_from_ieee754_float(&num, NAN, &STDAllocator);
+  ck_assert_int_eq(num.size, 0);
+  ck_assert_int_eq(num.exp, MP_NUMBER_NAN);
+  MP_FLOAT_clear(&num, &STDAllocator);
+  MP_FLOAT_from_ieee754_float(&num, -INFINITY, &STDAllocator);
+  ck_assert_int_eq(num.size, 0);
+  ck_assert_int_eq(num.exp, MP_NUMBER_NEG_INF);
+  MP_FLOAT_clear(&num, &STDAllocator);
+  MP_FLOAT_from_ieee754_float(&num, 0.25, &STDAllocator);
+  ck_assert_int_eq(num.size, 1);
+  ck_assert_int_eq(num.exp, -1);
+  ck_assert_uint_eq(limbs[0], (1ULL << (62)));
+  MP_FLOAT_clear(&num, &STDAllocator);
+}
+END_TEST
+
 Suite *MP_TEST_float_misc_suite()
 {
   Suite *s = suite_create("float_misc");
@@ -126,6 +145,7 @@ Suite *MP_TEST_float_misc_suite()
   tcase_add_test(tc, test_MP_FLOAT_5);
   tcase_add_test(tc, test_MP_FLOAT_6);
   tcase_add_test(tc, test_MP_FLOAT_7);
+  tcase_add_test(tc, test_MP_FLOAT_8);
 
   suite_add_tcase(s, tc);
   return s;

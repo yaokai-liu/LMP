@@ -26,13 +26,15 @@
  **/
 
 #include "test.h"
-#include "allocator.h"
+#include <allocator.h>
 
 typedef struct {
   const char       *name;
   lmp_double_limb_t divisor;
   lmp_limb_t        expect;
 } IntInv3Case;
+
+extern lmp_double_limb_t MP_INT_abs_3limbs_inv(lmp_double_limb_t op);
 
 static void run_add_case(const IntInv3Case *c)
 {

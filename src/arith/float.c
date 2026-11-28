@@ -25,10 +25,11 @@
  * Copyright (c) 2026 Yaokai Liu. All rights reserved.
  **/
 
-#include <stdlib.h>
+#include <extbit.h>
 
+#include "limb.h"
 #include "LMP/arith.h"
-#include "extbit.h"
+#include "mp-float.h"
 
 #define max(a, b)   ((a) >  (b) ? (a) :  (b))
 #define abs(a)      ((a) >  (0) ? (a) : -(a))
