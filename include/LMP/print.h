@@ -31,6 +31,7 @@
 
 typedef struct BaseCache BaseCache;
 
+_SHARED_API uint32_t MP_BASE_NUMBER_to_string(char *dest, uint32_t max_len, const MP_BASE_NUMBER *mp_val, const Allocator *allocator);
 // Ignore sign of the 'mp_val'.
 // Print digital string in base of the 'mp_val'.
 // Always aligned to BASE_LIMB_WIDTH (by fill zero) + 1 char for sign.

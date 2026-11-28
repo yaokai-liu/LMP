@@ -58,8 +58,6 @@ _LOCAL_API void MP_INT_abs_sub_offset(MP_INT *rop, const MP_INT *op1, const MP_I
 // Force set quotient->size >= 0
 _LOCAL_API void MP_INT_abs_divmod(MP_INT *restrict dividend,const MP_INT *restrict divisor, MP_INT *restrict quotient, const Allocator *allocator);
 
-_LOCAL_API lmp_double_limb_t MP_INT_abs_3limbs_inv(lmp_double_limb_t op);
-
 _LOCAL_API bool MP_INT_carry_check(const MP_INT *val);
 _LOCAL_API int32_t MP_INT_abs_cmp(const MP_INT *op1, const MP_INT *op2);
 _LOCAL_API bool MP_INT_abs_offset_ge(const MP_INT *op1, const MP_INT *op2, int32_t offset);

@@ -286,27 +286,16 @@ _SHARED_API int32_t MP_FLOAT_cmp(const MP_FLOAT *val1, const MP_FLOAT *val2);
 #define MP_FLOAT_left_shift_load(num, index, bit_count)           MP_INT_left_shift_load((MP_INT *)(num), (index), (bit_count))
 #define MP_FLOAT_left_shift_load_double(num, index, bit_count)    MP_INT_left_shift_load_double((MP_INT *)(num), (index), (bit_count))
 
+_SHARED_API void MP_BASE_NUMBER_init(MP_BASE_NUMBER *val, int32_t initial_alloc, lmp_half_limb_t base, const Allocator *allocator);
+_SHARED_API void MP_BASE_NUMBER_copy(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *src, const Allocator *allocator);
 _SHARED_API void MP_BASE_NUMBER_clear(MP_BASE_NUMBER *val, const Allocator *allocator);
 #define MP_BASE_NUMBER_realloc(val, required, allocator)          MP_INT_realloc((MP_INT *)(val), (required), (allocator))
-#define MP_BASE_INT_init(val,  initial_alloc, allocator)          MP_INT_init((MP_INT *)(val), (initial_alloc), (allocator))
 #define MP_BASE_INT_get_limb(num, index)                          MP_INT_get_limb((const MP_INT *)(num), (index))
 _SHARED_API lmp_double_limb_t MP_BASE_INT_get_double_limbs(const MP_BASE_NUMBER *restrict num, int32_t index);
 _SHARED_API lmp_double_limb_t MP_BASE_INT_get_double_flat_limbs(const MP_BASE_NUMBER *restrict num, int32_t index);
 #define MP_BASE_INT_clamp(val)                                    MP_INT_clamp((MP_INT *)(val))
 #define MP_BASE_INT_cmp(val1, val2)                               MP_INT_cmp((MP_INT *)(val1), (MP_INT *)(val2))
 
-#define MP_BASE_FLOAT_init(val,  initial_alloc, allocator)        MP_FLOAT_init((MP_FLOAT *)(val), (initial_alloc), (allocator))
-#define MP_BASE_FLOAT_get_limb(num, index)                        MP_FLOAT_get_limb((num), (index))
-#define MP_BASE_FLOAT_get_double_limbs(num, index)                MP_BASE_INT_get_double_limbs((num), (index))
-#define MP_BASE_FLOAT_get_flat_limb(num, index)                   MP_FLOAT_get_flat_limb((num), (index))
-#define MP_BASE_FLOAT_get_double_flat_limbs(num, index)           MP_BASE_INT_get_double_flat_limbs((num), (index))
-#define MP_BASE_FLOAT_truncate(val)                               MP_FLOAT_truncate((MP_FLOAT *)(val))
-#define MP_BASE_FLOAT_clamp(val)                                  MP_FLOAT_clamp((MP_FLOAT *)(val))
-#define MP_BASE_FLOAT_tidy(val)                                   MP_FLOAT_tidy((MP_FLOAT *)(val))
-#define MP_BASE_FLOAT_cmp(val1, val2)                             MP_FLOAT_cmp((MP_FLOAT *)(val1), (MP_FLOAT *)(val2))
-
-_SHARED_API void MP_BASE_NUMBER_init(MP_BASE_NUMBER *val, int32_t initial_alloc, lmp_half_limb_t base, const Allocator *allocator);
-_SHARED_API void MP_BASE_NUMBER_copy(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *src, const Allocator *allocator);
 // Always assume 0 <= width <= BASE.limb_width
 // else is an unexpected behavior
 _SHARED_API lmp_limb_t MP_BASE_NUMBER_left_shift_load(const MP_BASE_NUMBER *mp_val, int32_t index, int32_t width);
@@ -320,5 +309,15 @@ _SHARED_API void MP_INT_to_base_int(MP_BASE_INT *dest, const MP_INT *mp_val, uin
 _SHARED_API void MP_FLOAT_to_base_float(MP_BASE_FLOAT *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
 // if (mp_val->BASE.base < 2), i.e. is a polynomial or base-INF, it will do nothing.
 _SHARED_API void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, lmp_half_limb_t base, const Allocator *allocator);
+
+#define MP_BASE_FLOAT_mantissa(p_float)                           ((MP_BASE_INT *)(p_float))
+#define MP_BASE_FLOAT_get_limb(num, index)                        MP_FLOAT_get_limb((num), (index))
+#define MP_BASE_FLOAT_get_double_limbs(num, index)                MP_BASE_INT_get_double_limbs((num), (index))
+#define MP_BASE_FLOAT_get_flat_limb(num, index)                   MP_FLOAT_get_flat_limb((num), (index))
+#define MP_BASE_FLOAT_get_double_flat_limbs(num, index)           MP_BASE_INT_get_double_flat_limbs((num), (index))
+#define MP_BASE_FLOAT_truncate(val)                               MP_FLOAT_truncate((MP_FLOAT *)(val))
+#define MP_BASE_FLOAT_clamp(val)                                  MP_FLOAT_clamp((MP_FLOAT *)(val))
+#define MP_BASE_FLOAT_tidy(val)                                   MP_FLOAT_tidy((MP_FLOAT *)(val))
+#define MP_BASE_FLOAT_cmp(val1, val2)                             MP_FLOAT_cmp((MP_FLOAT *)(val1), (MP_FLOAT *)(val2))
 
 #endif //LMP_H

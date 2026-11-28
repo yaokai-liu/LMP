@@ -56,8 +56,6 @@ Suite *MP_TEST_int_misc_suite();
 Suite *MP_TEST_int_cmp_suite();
 Suite *MP_TEST_int_abs_divmod_suite();
 
-Suite *abs_3limbs_inv_suite();
-
 Suite *MP_TEST_float_cmp_suite();
 Suite *MP_TEST_float_add_suite();
 Suite *MP_TEST_float_sub_suite();

@@ -376,7 +376,7 @@ inline lmp_double_limb_t MP_BASE_NUMBER_left_shift_load_double(const MP_BASE_NUM
   return limb3 * mp_val->BASE.limb_val + limb2;
 }
 
-bool MP_BASE_INT_carry_check(const MP_BASE_NUMBER *val) {
+bool MP_BASE_INT_carry_check(const MP_BASE_INT *val) {
   if (val->BASE.limb_val == 0) { return MP_INT_carry_check((const MP_INT *)val); }
   const lmp_size_t size = abs(val->size);
   for (lmp_size_t i = 0; i < size; i++) {

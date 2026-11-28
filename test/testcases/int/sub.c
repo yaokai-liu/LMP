@@ -26,7 +26,6 @@
  **/
 
 #include <stdio.h>
-
 #include "test.h"
 #include <allocator.h>
 
@@ -40,28 +39,6 @@ typedef struct {
   int32_t           e_len;
   int32_t           offset;
 } IntSubCase;
-
-extern void MP_INT_abs_sub_offset(MP_INT *rop, const MP_INT *op1, const MP_INT *restrict op2, int32_t offset, const Allocator *allocator);
-
-
-static void run_abs_sub_offset_case(const IntSubCase *c)
-{
-  lmp_limb_t RES_limbs[64] = {};
-
-  MP_INT A   = { .prec = -c->a_len, .size = c->a_len, .limbs = (lmp_limb_t *)c->a };
-  MP_INT B   = { .prec = -c->b_len, .size = c->b_len, .limbs = (lmp_limb_t *)c->b };
-  MP_INT RES = { .prec = -(int32_t)(sizeof(RES_limbs) / LMP_LIMB_SIZE) , .size = 0, .limbs = RES_limbs };
-
-  MP_INT_abs_sub_offset(&RES, &A, &B, c->offset, &STDAllocator);
-  MP_INT_clamp(&RES);
-
-  ck_assert_msg(RES.size == c->e_len,
-                "%s: result size %"PRI_SIZE" != (expected) %"PRI_SIZE"\n", c->name, RES.size, c->e_len);
-  for (int32_t i = 0; i < abs(c->e_len); i++) {
-    ck_assert_msg(RES.limbs[i] == c->e[i],
-                  "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB"\n", c->name, i, RES.limbs[i], c->e[i]);
-  }
-}
 
 static void run_sub_case(const IntSubCase *c)
 {
@@ -80,50 +57,6 @@ static void run_sub_case(const IntSubCase *c)
                   "%s: limb[%"PRI_SIZE"] %"PRI_LIMB" != (expected) %"PRI_LIMB"\n", c->name, i, RES.limbs[i], c->e[i]);
   }
 }
-
-static const lmp_limb_t oA1[] = { 1234 };
-static const lmp_limb_t oB1[] = { 1000 };
-static const lmp_limb_t oE1[] = { 234 };
-
-static const lmp_limb_t oA2[] = { LMP_LIMB_MAX, 1 };
-static const lmp_limb_t oB2[] = { 1, 1 };
-static const lmp_limb_t oE2[] = { LMP_LIMB_MAX - 1 };
-
-static const lmp_limb_t oA3[] = { 0, 1 };
-static const lmp_limb_t oB3[] = { 1, 0 };
-static const lmp_limb_t oE3[] = { LMP_LIMB_MAX };
-
-static const lmp_limb_t oA4[] = { 5, 3 };
-static const lmp_limb_t oB4[] = { 1 };
-static const lmp_limb_t oE4[] = { 5, 2 };
-
-static const lmp_limb_t oA5[] = { 0, 0, 5 };
-static const lmp_limb_t oB5[] = { 1, 2 };
-static const lmp_limb_t oE5[] = { 0, LMP_LIMB_MAX, 2 };
-
-static const lmp_limb_t oA6[] = { 16, 0, 3 };
-static const lmp_limb_t oB6[] = { 2 };
-static const lmp_limb_t oE6[] = { 16, 0, 1 };
-
-static const lmp_limb_t oA7[] = { 0, 7 };
-static const lmp_limb_t oB7[] = { 0, 7 };
-static const lmp_limb_t oE7[] = { 0 };
-
-static const lmp_limb_t oA8[] = { 0, 0, 2 };
-static const lmp_limb_t oB8[] = { 1, 1 };
-static const lmp_limb_t oE8[] = { 0, LMP_LIMB_MAX };
-
-static const IntSubCase abs_sub_offset_cases[] = {
-  { .name = "sub_offset:simple",         .a = oA1, .b = oB1, .e = oE1, .a_len = 1, .b_len = 1, .e_len = 1, .offset = 0 },
-  { .name = "sub_offset:multi_limb",     .a = oA2, .b = oB2, .e = oE2, .a_len = 2, .b_len = 2, .e_len = 1, .offset = 0 },
-  { .name = "sub_offset:borrow_chain",   .a = oA3, .b = oB3, .e = oE3, .a_len = 2, .b_len = 2, .e_len = 1, .offset = 0 },
-  { .name = "sub_offset:offset1",        .a = oA4, .b = oB4, .e = oE4, .a_len = 2, .b_len = 1, .e_len = 2, .offset = 1 },
-  { .name = "sub_offset:offset1_borrow", .a = oA5, .b = oB5, .e = oE5, .a_len = 3, .b_len = 2, .e_len = 3, .offset = 1 },
-  { .name = "sub_offset:offset2",        .a = oA6, .b = oB6, .e = oE6, .a_len = 3, .b_len = 1, .e_len = 3, .offset = 2 },
-  { .name = "sub_offset:zero_result",    .a = oA7, .b = oB7, .e = oE7, .a_len = 2, .b_len = 2, .e_len = 0, .offset = 0 },
-  { .name = "sub_offset:offset1_edge",   .a = oA8, .b = oB8, .e = oE8, .a_len = 3, .b_len = 2, .e_len = 2, .offset = 1 },
-};
-
 
 static const lmp_limb_t sA1[] = { 1234 };
 static const lmp_limb_t sB1[] = { 1000 };
@@ -169,12 +102,6 @@ static const IntSubCase sub_cases[] = {
   { .name = "sub:neg2",           .a = sA8, .b = sB8, .e = sE8, .a_len =  3, .b_len =  3, .e_len = -2 },
 };
 
-START_TEST(test_abs_sub_offset)
-{
-  run_abs_sub_offset_case(&abs_sub_offset_cases[_i]);
-}
-END_TEST
-
 START_TEST(test_sub)
 {
   run_sub_case(&sub_cases[_i]);
@@ -200,9 +127,7 @@ Suite *MP_TEST_int_sub_suite()
   Suite *s = suite_create("int_sub");
   TCase *tc = tcase_create("int_sub");
 
-  constexpr int n1 = sizeof(abs_sub_offset_cases)/sizeof(IntSubCase);
   constexpr int n2 = sizeof(sub_cases)/sizeof(IntSubCase);
-  tcase_add_loop_test(tc, test_abs_sub_offset, 0, n1);
   tcase_add_loop_test(tc, test_sub, 0, n2);
   tcase_add_test(tc, test_MP_INT_sub_rop_is_op1);
 

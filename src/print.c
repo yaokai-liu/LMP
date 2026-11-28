@@ -60,3 +60,10 @@ uint32_t MP_FLOAT_abs_to_base_exp_string(char *, const uint32_t, const MP_FLOAT 
   // TODO
   return 0;
 }
+
+uint32_t MP_BASE_NUMBER_to_string(char *dest, uint32_t max_len, const MP_BASE_NUMBER *mp_val, const Allocator *allocator) {
+  char *ptr = dest;
+  if (mp_val->size < 0) {  *ptr = '-'; ptr++; }
+  ptr += MP_BASE_NUMBER_abs_to_string(ptr, max_len - 1, mp_val, allocator);
+  return ptr - dest;
+}

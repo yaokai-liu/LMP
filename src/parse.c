@@ -277,7 +277,7 @@ inline uint32_t LMP_parse_num_digits(const char *const input, MP_NUM_TYPE *num_t
   uint32_t mantissa_len = 0;
   uint32_t int_part_len = 0;
  struct limb_pos curr_limb = { .start = pText, .end = nullptr };
-  MP_BASE_FLOAT_init(NUMBER, LMP_PARSE_ALLOC_SCALE * MP_ALLOC_LEN, allocator);
+  MP_BASE_NUMBER_init(NUMBER, LMP_PARSE_ALLOC_SCALE * MP_ALLOC_LEN, BASE_LIMB_DATA[adic_type].BASE.base, allocator);
   while (*pText && NUMBER->size <= LMP_PARSE_PREC_MAX) {
     if (isSeparator(pText)) {
       if (!fun_check(pText + 1)) { break; }

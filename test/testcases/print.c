@@ -41,7 +41,7 @@ typedef struct {
 static void run_print_case(const PrintCase *c) {
   char str[1024] = {};
   const MP_BASE_NUMBER NUMBER = {.prec = -64, .size = c->size, .limbs = (lmp_limb_t *)c->limbs};
-  const uint32_t length = MP_BASE_NUMBER_abs_to_string(str, 1024, &NUMBER, &STDAllocator);
+  const uint32_t length = MP_BASE_NUMBER_to_string(str, 1024, &NUMBER, &STDAllocator);
   str[length] = 0;
 
   ck_assert_msg(length == c->expacted_len,

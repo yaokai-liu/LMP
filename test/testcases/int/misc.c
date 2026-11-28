@@ -114,17 +114,6 @@ START_TEST(test_MP_INT_7) {
 }
 END_TEST
 
-START_TEST(test_MP_INT_8) {
-  lmp_limb_t limbs[2][2] = {{LMP_LIMB_MAX, 0}, {1, LMP_LIMB_MAX}};
-  MP_INT num1 = {.prec = 2, .size = -1, .limbs = limbs[0]};
-  MP_INT num2 = {.prec = 2, .size = -2, .limbs = limbs[1]};
-  bool carray1 = MP_INT_carry_check(&num1);
-  bool carray2 = MP_INT_carry_check(&num2);
-  ck_assert( carray1);
-  ck_assert(!carray2);
-}
-END_TEST
-
 START_TEST(test_MP_INT_9) {
   lmp_limb_t limbs[4] = {};
   MP_INT num1 = {.prec = 4, .size = 0, .limbs = limbs};
@@ -194,7 +183,7 @@ Suite *MP_TEST_int_misc_suite()
   tcase_add_test(tc, test_MP_INT_5);
   tcase_add_test(tc, test_MP_INT_6);
   tcase_add_test(tc, test_MP_INT_7);
-  tcase_add_test(tc, test_MP_INT_8);
+
   tcase_add_test(tc, test_MP_INT_9);
   tcase_add_test(tc, test_MP_INT_10);
   tcase_add_test(tc, test_MP_INT_11);

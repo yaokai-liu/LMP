@@ -331,7 +331,7 @@ void MP_BASE_INT_abs_divmod(MP_BASE_NUMBER *restrict dividend,const MP_BASE_NUMB
   quotient->size = size_quotient;
 
   MP_BASE_NUMBER INTERVAL = {};
-  MP_BASE_INT_init(&INTERVAL, size_divisor + 1, allocator);
+  MP_BASE_NUMBER_init(&INTERVAL, size_divisor + 1, dividend->BASE.base, allocator);
   if (overflow) {
     const lmp_double_limb_t n = MP_BASE_NUMBER_left_shift_load_double(dividend, -1, d_leading_zeros);
     lmp_limb_t q = n / d_high;
@@ -383,4 +383,34 @@ void MP_BASE_INT_abs_divmod(MP_BASE_NUMBER *restrict dividend,const MP_BASE_NUMB
     quotient->limbs[curr_q_idx] = q;
   }
   MP_BASE_NUMBER_clear(&INTERVAL, allocator);
+}
+
+
+void MP_BASE_INT_mul_limb(MP_BASE_INT *dest, const MP_BASE_INT *op, lmp_limb_t val, const Allocator *allocator) {
+
+}
+
+void MP_BASE_INT_add_limb(MP_BASE_INT *dest, const MP_BASE_INT *op, lmp_limb_t val, const Allocator *allocator) {
+
+}
+
+void MP_BASE_INT_sub_limb(MP_BASE_INT *dest, const MP_BASE_INT *op, lmp_limb_t val, const Allocator *allocator) {
+
+}
+
+void MP_BASE_INT_mul(MP_BASE_INT *restrict rop, const MP_BASE_INT *op1, const MP_BASE_INT *op2, const Allocator *allocator) {
+
+}
+
+void MP_BASE_INT_add(MP_BASE_INT *rop, const MP_BASE_INT *op1, const MP_BASE_INT * op2, const Allocator *allocator) {
+
+}
+
+void MP_BASE_INT_sub(MP_BASE_INT *rop, const MP_BASE_INT *op1, const MP_BASE_INT * restrict op2, const Allocator *allocator) {
+
+}
+
+void MP_BASE_INT_divmod(MP_BASE_INT *restrict dividend,const MP_BASE_INT *restrict divisor,
+                        MP_BASE_INT *restrict quotient, const Allocator *allocator) {
+
 }

@@ -29,6 +29,7 @@
 #define LMP_BASE_NUMBER_H
 #include "mp-int.h"
 #include "mp-float.h"
+
 // Allow (dest = op)
 // Always assume op is an integer
 // Always assume (op->BASE.base == dest->BASE.base)
@@ -82,9 +83,39 @@ _LOCAL_API void MP_BASE_INT_abs_sub_offset(MP_BASE_NUMBER *rop, const MP_BASE_NU
 _LOCAL_API void MP_BASE_INT_abs_divmod(MP_BASE_NUMBER *restrict dividend,const MP_BASE_NUMBER *restrict divisor,
                                        MP_BASE_NUMBER *restrict quotient, const Allocator *allocator);
 
-_LOCAL_API bool MP_BASE_INT_carry_check(const MP_BASE_NUMBER *val);
+_LOCAL_API bool MP_BASE_INT_carry_check(const MP_BASE_INT *val);
 #define MP_BASE_INT_abs_cmp(op1, op2)                             MP_INT_abs_cmp((const MP_INT *)(op1), (const MP_INT *)(op2))
 #define MP_BASE_INT_abs_offset_ge(op1, op2, offset)               MP_INT_abs_offset_ge((const MP_INT *)(op1), (const MP_INT *)(op2), (offset))
 #define MP_BASE_FLOAT_abs_cmp(op1, op2)                           MP_FLOAT_abs_cmp((const MP_FLOAT *)(op1), (const MP_FLOAT *)(op2))
 #define MP_BASE_FLOAT_carry_check(val)                            MP_BASE_INT_carry_check((val))
+
+#define MP_BASE_FLOAT_mantissa_abs_mul_limb(dest, op, val, allocator)   MP_BASE_INT_abs_mul_limb(MP_BASE_FLOAT_mantissa(dest), (MP_INT *)(op), (val), (allocator))
+#define MP_BASE_FLOAT_mantissa_abs_add_limb(dest, op, val, allocator)   MP_BASE_INT_abs_add_limb(MP_BASE_FLOAT_mantissa(dest), (MP_INT *)(op), (val), (allocator))
+#define MP_BASE_FLOAT_mantissa_abs_sub_limb(dest, op, val, allocator)   MP_BASE_INT_abs_sub_limb(MP_BASE_FLOAT_mantissa(dest), (MP_INT *)(op), (val), (allocator))
+// No truncating
+// Allow (op1 == op2)
+// Force set rop->size >= 0
+// Special value may cause unexpected behavior.
+// Always assume abs(op->prec) large enough. In other words,
+// precision of result is sum of that of both op1 and op2.
+_LOCAL_API void MP_BASE_FLOAT_normal_abs_mul(MP_BASE_FLOAT *restrict rop, const MP_BASE_FLOAT *op1, const MP_BASE_FLOAT *op2, const Allocator *allocator);
+// No truncating
+// Force set rop->size >= 0
+// Allow (rop = op1) or (rop = op2)
+// Special value may cause unexpected behavior.
+// Always assume abs(op->prec) large enough.
+_LOCAL_API void MP_BASE_FLOAT_normal_abs_add(MP_BASE_FLOAT *rop, const MP_BASE_FLOAT *op1, const MP_BASE_FLOAT *op2, const Allocator *allocator);
+// No truncating
+// Allow (rop = op1)
+// Force set rop->size >= 0
+// Special value may cause unexpected behavior.
+// Always assume abs(op1) >= abs(op2) * pow(LMP_LIMB_VAL, offset)
+_LOCAL_API void MP_BASE_FLOAT_normal_abs_sub(MP_BASE_FLOAT *rop, const MP_BASE_FLOAT *op1, const MP_BASE_FLOAT *restrict op2, const Allocator *allocator);
+// dividend as remainder
+// Force set dividend->size >= 0
+// Force set quotient->size >= 0
+// max precision follow the quotient->prec and not change the quotient->prec.
+_LOCAL_API void MP_BASE_FLOAT_normal_abs_divmod(MP_BASE_FLOAT *restrict dividend,const MP_BASE_FLOAT *restrict divisor,
+                                                MP_BASE_FLOAT *restrict quotient, const Allocator *allocator);
+
 #endif //LMP_BASE_NUMBER_H
