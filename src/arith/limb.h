@@ -30,6 +30,7 @@
 #include "LMP/lmp.h"
 
 _LOCAL_API lmp_limb_t lmp_fast_pow(lmp_half_limb_t base, lmp_exp_t exp);
+_LOCAL_API lmp_size_t lmp_trans_base(MP_BASE *dest, lmp_half_limb_t base, lmp_size_t size, const Allocator *allocator);
 _LOCAL_API lmp_limb_t lmp_fast_quotient(lmp_double_limb_t dividend, lmp_double_limb_t dividend_follow, lmp_double_limb_t divisor);
 
 #endif //LMP_LIMB_H

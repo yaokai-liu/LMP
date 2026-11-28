@@ -27,15 +27,10 @@
 
 #ifndef LMP_H
 #define LMP_H
-#include <stdint.h>
-#include <limits.h>
-
-#if CHAR_BIT != 8
-#error "CHAR_BIT is required with 8."
-#endif
-#include <allocator.h>
-#include <extfloat.h>
 #include <extint.h>
+#include <extlimits.h>
+#include <extfloat.h>
+#include <allocator.h>
 
 #ifndef USING_NTT_SIZE
 #define USING_NTT_SIZE  64
@@ -47,12 +42,13 @@
 typedef int64_t lmp_exp_t;
 typedef int32_t lmp_prec_t;
 typedef lmp_prec_t lmp_size_t;
-#define LMP_EXP_MAX           INT64_MAX
-#define LMP_EXP_MIN           INT64_MIN
-#define LMP_PREC_MAX          INT32_MAX
-#define LMP_PREC_MIN          INT32_MIN
-#define LMP_SIZE_MAX          LMP_PREC_MAX
-#define LMP_SIZE_MIN          LMP_PREC_MIN
+#define LMP_EXP_MAX           INT_TYPE_MAX((lmp_exp_t)0)
+#define LMP_EXP_MIN           INT_TYPE_MIN((lmp_exp_t)0)
+#define LMP_PREC_MAX          INT_TYPE_MAX((lmp_prec_t)0)
+#define LMP_PREC_MIN          INT_TYPE_MIN((lmp_prec_t)0)
+#define LMP_SIZE_MAX          INT_TYPE_MAX((lmp_size_t)0)
+#define LMP_SIZE_MIN          INT_TYPE_MIN((lmp_size_t)0)
+
 #ifndef _LMP_LIMB_WIDTH_
 #define _LMP_LIMB_WIDTH_        64
 typedef uint64_t  lmp_limb_t;
@@ -174,7 +170,6 @@ typedef struct MP_BASE {
 //    i from 0 to (abs(size) - 1), i.e. abs(size) = degree(NUMBER) + 1
 // else:
 //    NUMBER = MP_FLOAT_SPECIAL_VALUE_TYPE(exp)
-//    if (prec > 0) limbs will be released.
 //    In this situation, the 'limbs' will not be used by the library,
 //    users can use this field for other means.
 //    But if this value will interactive in the library's arith part,
@@ -220,6 +215,34 @@ typedef struct MP_BASE_NUMBER {
   // the base struct of the number
   MP_BASE     BASE;
 } MP_BASE_INT, MP_BASE_FLOAT, MP_BASE_NUMBER;
+
+static_assert(CHAR_BIT == 8);
+// Requirement for LMP Number structs
+static_assert(offsetof(MP_FLOAT,  prec) == offsetof(MP_INT,  prec));
+static_assert(offsetof(MP_FLOAT,  size) == offsetof(MP_INT,  size));
+static_assert(offsetof(MP_FLOAT, limbs) == offsetof(MP_INT, limbs));
+static_assert(offsetof(MP_BASE_INT,  prec) == offsetof(MP_INT,  prec));
+static_assert(offsetof(MP_BASE_INT,  size) == offsetof(MP_INT,  size));
+static_assert(offsetof(MP_BASE_INT, limbs) == offsetof(MP_INT, limbs));
+static_assert(offsetof(MP_BASE_FLOAT,  prec) == offsetof(MP_FLOAT,  prec));
+static_assert(offsetof(MP_BASE_FLOAT,  size) == offsetof(MP_FLOAT,  size));
+static_assert(offsetof(MP_BASE_FLOAT, limbs) == offsetof(MP_FLOAT, limbs));
+static_assert(offsetof(MP_BASE_FLOAT,   exp) == offsetof(MP_FLOAT,   exp));
+static_assert(offsetof(MP_BASE_NUMBER,  prec) == offsetof(MP_BASE_FLOAT,  prec));
+static_assert(offsetof(MP_BASE_NUMBER,  size) == offsetof(MP_BASE_FLOAT,  size));
+static_assert(offsetof(MP_BASE_NUMBER, limbs) == offsetof(MP_BASE_FLOAT, limbs));
+static_assert(offsetof(MP_BASE_NUMBER,   exp) == offsetof(MP_BASE_FLOAT,   exp));
+static_assert(offsetof(MP_BASE_NUMBER,  BASE.base) == offsetof(MP_BASE_FLOAT,  BASE.base));
+static_assert(offsetof(MP_BASE_NUMBER,  BASE.limb_width) == offsetof(MP_BASE_FLOAT,  BASE.limb_width));
+static_assert(offsetof(MP_BASE_NUMBER,  BASE.limb_val) == offsetof(MP_BASE_FLOAT,  BASE.limb_val));
+static_assert(offsetof(MP_BASE_NUMBER,  BASE.base) == offsetof(MP_BASE_INT,  BASE.base));
+static_assert(offsetof(MP_BASE_NUMBER,  BASE.limb_width) == offsetof(MP_BASE_INT,  BASE.limb_width));
+static_assert(offsetof(MP_BASE_NUMBER,  BASE.limb_val) == offsetof(MP_BASE_INT,  BASE.limb_val));
+// Requirement for LMP special value
+static_assert(MP_NUMBER_ZERO == (lmp_exp_t)0);
+static_assert(MP_NUMBER_NEG_INF == -MP_NUMBER_INF);
+static_assert(MP_NUMBER_NEG_INS == -MP_NUMBER_INS);
+static_assert(MP_NUMBER_NAN == INT_TYPE_MIN((lmp_exp_t)0));
 
 _SHARED_API void MP_INT_init(MP_INT *val,  int32_t initial_alloc, const Allocator *allocator);
 _SHARED_API void MP_INT_realloc(MP_INT *val,  int32_t required, const Allocator *allocator);

@@ -344,12 +344,7 @@ _SHARED_API void MP_BASE_NUMBER_init(MP_BASE_NUMBER *val, int32_t initial_alloc,
     val->prec = initial_alloc >= 0 ? prec : -prec;
     val->size = 0;
   }
-  const double base_width = extstd_has_single_bit(base) ? extstd_bit_width(base - 1) : LMP_LIMB_BIT / log2(base);
-  const uint32_t BASE_LIMB_WIDTH = (uint32_t)base_width;
-  const lmp_double_limb_t BASE_LIMB_VAL = lmp_fast_pow(base, BASE_LIMB_WIDTH);
-
-  const MP_BASE BASE = {.base = base, .limb_width = BASE_LIMB_WIDTH, .limb_val = BASE_LIMB_VAL};
-  allocator->memcpy(&val->BASE, &BASE, sizeof(MP_BASE));
+  lmp_trans_base(&val->BASE, base, 0, allocator);
 }
 
 inline void MP_BASE_NUMBER_copy(MP_BASE_NUMBER *dest, const MP_BASE_NUMBER *src, const Allocator *allocator) {
@@ -483,9 +478,7 @@ typedef struct BaseCache {
 
 void MP_INT_to_base_int(MP_BASE_INT *dest, const MP_INT *mp_val, const uint32_t base, const Allocator *allocator) {
   if (base < 2) {
-    dest->size = 0;
-    const MP_BASE BASE = {.base = base, .limb_width = 0, .limb_val = 0};
-    allocator->memcpy(&dest->BASE, &BASE, sizeof(MP_BASE));
+    dest->size = lmp_trans_base(&dest->BASE, base, 0, allocator);
     if (base == 0) {
       // polynomial's exp is its size, i.e. degree + 1
       dest->exp = mp_val->size;
@@ -496,13 +489,15 @@ void MP_INT_to_base_int(MP_BASE_INT *dest, const MP_INT *mp_val, const uint32_t 
     }
     return;
   }
-  const double base_width = extstd_has_single_bit(base) ? extstd_bit_width(base - 1) : LMP_LIMB_BIT / log2(base);
-  const uint32_t BASE_LIMB_WIDTH = (uint32_t)base_width;
-  const lmp_double_limb_t BASE_LIMB_VAL = lmp_fast_pow(base, BASE_LIMB_WIDTH);
-  const MP_BASE BASE = {.base = base, .limb_width = BASE_LIMB_WIDTH, .limb_val = BASE_LIMB_VAL};
-  allocator->memcpy(&dest->BASE, &BASE, sizeof(MP_BASE));
+  const lmp_size_t size = abs(mp_val->size);
+  if (size == 0) {
+    dest->size = 0;
+    dest->exp = 0;
+    return;
+  }
+  lmp_size_t dest_size = lmp_trans_base(&dest->BASE, base, size, allocator);
 
-  if (extstd_has_single_bit(base) && LMP_LIMB_BIT % (uint32_t)base_width == 0) {
+  if (extstd_has_single_bit(base) && LMP_LIMB_BIT % dest->BASE.limb_width == 0) {
     if (dest->prec < 0) {
       if (abs(mp_val->size) > -dest->prec) { dest->size = 0; return ; }
     } else if (dest->prec >= 1) {
@@ -517,13 +512,6 @@ void MP_INT_to_base_int(MP_BASE_INT *dest, const MP_INT *mp_val, const uint32_t 
     return;
   }
 
-  const lmp_size_t size = abs(mp_val->size);
-  if (size == 0) {
-    dest->size = 0;
-    dest->exp = 0;
-    return;
-  }
-  int32_t dest_size = ceil(size * base_width / BASE_LIMB_WIDTH);
 
   if (dest_size == 1) {
     if (dest->prec < 0) {
@@ -554,7 +542,7 @@ void MP_INT_to_base_int(MP_BASE_INT *dest, const MP_INT *mp_val, const uint32_t 
     ptr = allocator->realloc(cache->limbs, alloc_limbs * sizeof(lmp_limb_t));
     if (ptr) { cache->limbs = ptr; } else if (free_cache) { allocator->free(cache->mpint); cache->limbs = nullptr; }
     if (cache->count == 0) {
-      cache->limbs[0] = BASE_LIMB_VAL;
+      cache->limbs[0] = dest->BASE.limb_width;
       cache->mpint[0] = (MP_INT){.prec = -1, .size = 1, .limbs = &cache->limbs[0]};
       cache->count += 1;
     }
@@ -620,9 +608,7 @@ void MP_INT_to_base_int(MP_BASE_INT *dest, const MP_INT *mp_val, const uint32_t 
 
 void MP_FLOAT_to_base_float(MP_BASE_FLOAT *dest, const MP_FLOAT *mp_val, uint32_t base, const Allocator * allocator) {
   if (base < 2) {
-    dest->size = 0;
-    const MP_BASE BASE = {.base = base, .limb_width = 0, .limb_val = 0};
-    allocator->memcpy(&dest->BASE, &BASE, sizeof(MP_BASE));
+    dest->size = lmp_trans_base(&dest->BASE, base, 0, allocator);
     if (base == 0) {
       // polynomial's exp is its size, i.e. degree + 1
       dest->exp = mp_val->size;
@@ -633,13 +619,11 @@ void MP_FLOAT_to_base_float(MP_BASE_FLOAT *dest, const MP_FLOAT *mp_val, uint32_
     }
     return;
   }
-  const double base_width = extstd_has_single_bit(base) ? extstd_bit_width(base - 1) : LMP_LIMB_BIT / log2(base);
-  const uint32_t BASE_LIMB_WIDTH = (uint32_t)base_width;
-  const lmp_double_limb_t BASE_LIMB_VAL = lmp_fast_pow(base, BASE_LIMB_WIDTH);
-  const MP_BASE BASE = {.base = base, .limb_width = BASE_LIMB_WIDTH, .limb_val = BASE_LIMB_VAL};
-  allocator->memcpy(&dest->BASE, &BASE, sizeof(MP_BASE));
+  const lmp_size_t size = abs(mp_val->size);
+  if (size == 0) { dest->size = 0; dest->exp = mp_val->exp; return; }
+  lmp_trans_base(&dest->BASE, base, size, allocator);
 
-  if (extstd_has_single_bit(base) && LMP_LIMB_BIT % (uint32_t)base_width == 0) {
+  if (extstd_has_single_bit(base) && LMP_LIMB_BIT % dest->BASE.limb_width == 0) {
     if (dest->prec < 0) {
       if (abs(mp_val->size) > -dest->prec) { dest->size = 0; return ; }
     } else if (dest->prec >= 1) {
@@ -653,8 +637,6 @@ void MP_FLOAT_to_base_float(MP_BASE_FLOAT *dest, const MP_FLOAT *mp_val, uint32_
     return;
   }
 
-  const lmp_size_t size = abs(mp_val->size);
-  if (size == 0) { dest->size = 0; dest->exp = mp_val->exp; return; }
   const lmp_exp_t target_exp = mp_val->exp + size;
   const lmp_prec_t target_prec = abs(dest->prec);
   const lmp_prec_t unified_alloc = aligned(target_prec + 1);
@@ -666,7 +648,7 @@ void MP_FLOAT_to_base_float(MP_BASE_FLOAT *dest, const MP_FLOAT *mp_val, uint32_
     DIVISOR.limbs[0] = 1;
     // TODO: use Fast Power
     for (lmp_exp_t i = 0; i < target_exp; i++) {
-      MP_FLOAT_mantissa_abs_mul_limb(&DIVISOR, &DIVISOR, BASE_LIMB_VAL, allocator);
+      MP_FLOAT_mantissa_abs_mul_limb(&DIVISOR, &DIVISOR, dest->BASE.limb_val, allocator);
       MP_FLOAT_truncate(&DIVISOR, target_prec + 1);
     }
     MP_FLOAT_copy((MP_FLOAT *)dest, mp_val, allocator);
@@ -679,7 +661,7 @@ void MP_FLOAT_to_base_float(MP_BASE_FLOAT *dest, const MP_FLOAT *mp_val, uint32_
     MULTIPLIER.limbs[0] = 1;
     // TODO: use Fast Power
     for (lmp_exp_t i = 0; i < -target_exp; i++) {
-      MP_FLOAT_mantissa_abs_mul_limb(&MULTIPLIER, &MULTIPLIER, BASE_LIMB_VAL, allocator);
+      MP_FLOAT_mantissa_abs_mul_limb(&MULTIPLIER, &MULTIPLIER, dest->BASE.limb_val, allocator);
       MP_FLOAT_truncate(&MULTIPLIER, target_prec + 1);
     }
     MP_FLOAT_normal_abs_mul(&UNIFIED_VAL, &MULTIPLIER, mp_val, allocator);
@@ -688,7 +670,7 @@ void MP_FLOAT_to_base_float(MP_BASE_FLOAT *dest, const MP_FLOAT *mp_val, uint32_
   }
   const lmp_size_t unified_size = abs(UNIFIED_VAL.size);
   for (lmp_prec_t i = 0; i < target_prec; i++) {
-    MP_FLOAT_mantissa_abs_mul_limb(&UNIFIED_VAL, &UNIFIED_VAL, BASE_LIMB_VAL, allocator);
+    MP_FLOAT_mantissa_abs_mul_limb(&UNIFIED_VAL, &UNIFIED_VAL, dest->BASE.limb_val, allocator);
     dest->limbs[target_prec - 1 - i] = UNIFIED_VAL.limbs[unified_size];
     UNIFIED_VAL.limbs[unified_size] = 0;
   }
@@ -706,17 +688,11 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t ba
     } else  {
       mp_val->exp = mp_val->size == 0 ? MP_NUMBER_ZERO : sgn(mp_val->size) * MP_NUMBER_INF;
     }
-    mp_val->size = 0;
-    const MP_BASE BASE = {.base = base, .limb_width = 0, .limb_val = 0};
-    allocator->memcpy(&mp_val->BASE, &BASE, sizeof(MP_BASE));
+    mp_val->size = lmp_trans_base(&mp_val->BASE, base, 0, allocator);
     return;
   }
   const lmp_size_t size = abs(mp_val->size);
-  const uint32_t BASE_LIMB_WIDTH = (uint32_t)((double)LMP_LIMB_BIT / log2(base));
-  const lmp_double_limb_t BASE_LIMB_VAL = lmp_fast_pow(base, BASE_LIMB_WIDTH);
-  const int32_t target_size = ceil(mp_val->BASE.limb_width * size / log2(base) / BASE_LIMB_WIDTH);
-  const MP_BASE BASE = {.base = base, .limb_width = BASE_LIMB_WIDTH, .limb_val = BASE_LIMB_VAL};
-  allocator->memcpy(&mp_val->BASE, &BASE, sizeof(MP_BASE));
+  const int32_t target_size = lmp_trans_base(&mp_val->BASE, base, size, allocator);
 
   if (mp_val->size == 0) {
     mp_val->size = 0;
@@ -743,7 +719,7 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t ba
     MP_INT copy_val = {};
     MP_INT_init(&copy_val, size, allocator);
     MP_BASE_INT_to_int(&copy_val, mp_val, allocator);
-    if (BASE_LIMB_VAL != 0) {
+    if (mp_val->BASE.limb_val != 0) {
       MP_INT_to_base_int(mp_val, &copy_val, base, allocator);
     }
     mp_val->exp = 0;
@@ -751,7 +727,7 @@ void MP_BASE_NUMBER_change_base(MP_BASE_NUMBER *mp_val, const lmp_half_limb_t ba
     MP_FLOAT copy_val = {};
     MP_FLOAT_init(&copy_val, size, allocator);
     MP_BASE_FLOAT_to_float(&copy_val, mp_val, allocator);
-    if (BASE_LIMB_VAL != 0) {
+    if (mp_val->BASE.limb_val != 0) {
       MP_FLOAT_to_base_float(mp_val, &copy_val, base, allocator);
     }
   }

@@ -51,4 +51,5 @@ _LOCAL_API uint32_t MP_FLOAT_abs_to_base_string(char *dest, uint32_t max_len, co
 // Notice: EXP is based on BASE.base instead of BASE.limb_val.
 // Notice: (1 < base < 37) is required.
 _LOCAL_API uint32_t MP_FLOAT_abs_to_base_exp_string(char *dest, uint32_t max_len, const MP_FLOAT *mp_val, uint32_t base, const Allocator *allocator);
+
 #endif //LMP_PRINT_H

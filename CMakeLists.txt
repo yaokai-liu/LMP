@@ -12,7 +12,7 @@ include_directories(${extstd_INCLUDE_DIRS})
 
 file(GLOB_RECURSE LMP_SRC RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} src/*.c src/*.h)
 add_library(LMP SHARED ${LMP_SRC})
-target_link_libraries(LMP PRIVATE m extstd::extstd)
+target_link_libraries(LMP PRIVATE extstd::extstd)
 target_compile_definitions(LMP PRIVATE "_SHARED_LIB_" $<$<BOOL:${ENABLE_TEST_COV}>:_TEST_LOCAL_API_>)
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 target_include_directories(${PROJECT_NAME} PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include> $<INSTALL_INTERFACE:include>)
